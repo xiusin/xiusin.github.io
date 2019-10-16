@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>深入理解mysql四种隔离级别及底层实现原理（MVCC和锁） | Xiusin</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571198822167">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1571198822167" class="site-logo">
+        <h1 class="site-title">Xiusin</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="/leecode" class="site-nav">
+            leecode
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">深入理解mysql四种隔离级别及底层实现原理（MVCC和锁）</h2>
+            <div class="post-date">2019-09-17</div>
+            
+            <div class="post-content">
+              <h1 id="一-acid特性">一、ACID特性</h1>
+<p>持久性，我们就不讲了，易懂。</p>
+<h2 id="原子性">原子性</h2>
+<p>在同一个事务内部的一组操作必须全部执行成功（或者全部失败）。</p>
+<p>为了保证事务操作的原子性，必须实现基于日志的REDO/UNDO机制：将所有对数据的更新操作都写入日志，如果一个事务中的一部分操作已经成功，但以后的操作，由于断电/系统崩溃/其它的软硬件错误而无法继续，则通过回溯日志，将已经执行成功的操作撤销，从而达到“全部操作失败”的目的。</p>
+<p>最常见的场景是，数据库系统崩溃后重启，此时数据库处于不一致的状态，必须先执行一个crash recovery的过程：读取日志进行REDO（重演将所有已经执行成功但尚未写入到磁盘的操作，保证持久性），再对所有到崩溃时尚未成功提交的事务进行UNDO（撤销所有执行了一部分但尚未提交的操作，保证原子性）。crash recovery结束后，数据库恢复到一致性状态，可以继续被使用。</p>
+<p>某个应用在执行转帐的数据库操作时，必须在同一个事务内部调用对帐户A和帐户B的操作，才能保证数据的一致性。</p>
+<p>但是，原子性并不能完全保证一致性。在多个事务并行进行的情况下，即使保证了每一个事务的原子性，仍然可能导致数据不一致的结果。</p>
+<p>例如，事务1需要将100元转入帐号A：先读取帐号A的值，然后在这个值上加上100。但是，在这两个操作之间，另一个事务2修改了帐号A的值，为它增加了100元。那么最后的结果应该是A增加了200元。但事实上，事务1最终完成后，帐号A只增加了100元，因为事务2的修改结果被事务1覆盖掉了。</p>
+<p>简而言之，就是：原子性仅能够保证单个事务的一致性。就像redis一样，也只能保证单操作的线程安全，并不能保证多操作下的线程安全。</p>
+<h2 id="一致性">一致性</h2>
+<p>按照我个人的理解，在事务处理的ACID属性中，一致性是最基本的属性，其它的三个属性都为了保证一致性而存在的。</p>
+<p>我们举个反例来理解下一致性概念。例如：从帐户A转一笔钱到帐户B上，如果帐户A上的钱减少了，而帐户B上的钱却没有增加，那么我们认为此时数据处于不一致的状态。</p>
+<p>为了保证并发情况下的一致性，引入了隔离性，即保证每一个事务能够看到的数据总是一致的，就好象其它并发事务并不存在一样。</p>
+<h2 id="隔离性">隔离性</h2>
+<p>数据库四种隔离级别，以及常见的几种读异常，大家应该都是耳熟能详的，但数据库底层是怎么实现隔离性的呢？都采用了哪些技术呢？</p>
+<h1 id="主要有两个技术mvcc多版本并发控制和锁">主要有两个技术：MVCC(多版本并发控制)和锁。</h1>
+<h2 id="mvcc多版本并发控制">MVCC(多版本并发控制)</h2>
+<p>多版本并发控制，顾名思义，在并发访问的时候，数据存在版本的概念，可以有效地提升数据库并发能力，常见的数据库如MySQL、MS SQL Server、IBM DB2、Hbase、MongoDB等等都在使用。</p>
+<p>简单讲，如果没有MVCC，当想要读取的数据被其他事务用排它锁锁住时，只能互斥等待；而这时MVCC可以通过提供历史版本从而实现读取被锁的数据的历史版本，从而避免了互斥等待。</p>
+<p>InnoDB采用的MVCC实现方式是：在需要时，通过undo日志构造出历史版本。</p>
+<h1 id="锁">锁</h1>
+<h3 id="shared-locks共享锁s锁">Shared Locks(共享锁/S锁)</h3>
+<p>若事务T对数据对象A加上S锁，则事务T只能读A；其他事务只能再对A加S锁，而不能加X锁，直到T释放A上的S锁。这就保证了其他事务可以读A，但在T释放A上的S锁之前不能对A做任何修改。</p>
+<h3 id="exclusive-locks排它锁x锁">Exclusive Locks(排它锁/X锁)</h3>
+<p>若事务T对数据对象A加上X锁，则只允许T读取和修改A，其它任何事务都不能再对A加任何类型的锁，直到T释放A上的锁。它防止任何其它事务获取资源上的锁，直到在事务的末尾将资源上的原始锁释放为止。在更新操作(INSERT、UPDATE 或 DELETE)过程中始终应用排它锁。</p>
+<p>注意：排他锁会阻止其它事务再对其锁定的数据加读或写的锁，但是不加锁的就没办法控制了。</p>
+<h3 id="record-locks行锁">Record Locks(行锁)</h3>
+<p>行锁，顾名思义，是加在索引行(对！是索引行！不是数据行！)上的锁。比如<code>select * from user where id=1 and id=10 for update</code>，就会在id=1和id=10的索引行上加Record Lock。</p>
+<h3 id="gap-locks间隙锁">Gap Locks(间隙锁)</h3>
+<p>间隙锁，它会锁住两个索引之间的区域。比如<code>select * from user where id&gt;1 and id&lt;10 for update</code>，就会在id为(1,10)的索引区间上加Gap Lock。<br>
+###Next-Key Locks(间隙锁)###<br>
+也叫间隙锁，它是Record Lock + Gap Lock形成的一个闭区间锁。比如<code>select * from user where id&gt;=1 and id&lt;=10 for update</code>，就会在id为[1,10]的索引闭区间上加Next-Key Lock。</p>
+<p>这样组合起来就有，行级共享锁，表级共享锁，行级排它锁，表级排它锁。</p>
+<h2 id="什么时候会加锁">什么时候会加锁？</h2>
+<p>在数据库增删改查四种操作中，insert、delete和update都是会加排它锁(Exclusive Locks)的，而select只有显式声明才会加锁:<br>
+select: 即最常用的查询，是不加任何锁的<br>
+select ... lock in share mode: 会加共享锁(Shared Locks)<br>
+select ... for update: 会加排它锁</p>
+<h2 id="四种隔离级别">四种隔离级别</h2>
+<p>不同的隔离级别是在数据可靠性和并发性之间的均衡取舍，隔离级别越高，对应的并发性能越差，数据越安全可靠。</p>
+<h3 id="read-uncommitted">READ UNCOMMITTED</h3>
+<p>顾名思义，事务之间可以读取彼此未提交的数据。机智如你会记得，在前文有说到所有写操作都会加排它锁，那还怎么读未提交呢？</p>
+<p>机智如你，前面我们介绍排它锁的时候，有这种说明：</p>
+<p>排他锁会阻止其它事务再对其锁定的数据加读或写的锁，但是对不加锁的读就不起作用了。</p>
+<p>READ UNCOMMITTED隔离级别下, 读不会加任何锁。而写会加排他锁，并到事务结束之后释放。</p>
+<h4 id="实例1">实例1：</h4>
+<p>查-写：查并没有阻止写，表明查肯定并没有加锁，要不写肯定就阻塞了。写很明显，会加排它锁的。</p>
+<h4 id="实例2">实例2：</h4>
+<p>写-写：阻塞，表明，写会加排它锁。</p>
+<h3 id="read-committed">READ COMMITTED</h3>
+<p>顾名思义，事务之间可以读取彼此已提交的数据。</p>
+<p>InnoDB在该隔离级别(READ COMMITTED)写数据时，使用排它锁, 读取数据不加锁而是使用了MVCC机制。</p>
+<p>因此，在读已提交的级别下，都会通过MVCC获取当前数据的最新快照，不加任何锁，也无视任何锁(因为历史数据是构造出来的，身上不可能有锁)。</p>
+<p>但是，该级别下还是遗留了不可重复读和幻读问题：</p>
+<p>MVCC版本的生成时机: 是每次select时。这就意味着，如果我们在事务A中执行多次的select，在每次select之间有其他事务更新了我们读取的数据并提交了，那就出现了不可重复读，即：重复读时，会出现数据不一致问题，后面我们会讲解超支现象，就是这种引起的。</p>
+<h3 id="repeatable-read">REPEATABLE READ</h3>
+<p>READ COMMITTED级别不同的是MVCC版本的生成时机，即：一次事务中只在第一次select时生成版本，后续的查询都是在这个版本上进行，从而实现了可重复读。</p>
+<p>但是因为MVCC的快照只对读操作有效，对写操作无效，举例说明会更清晰一点：</p>
+<p>事务A依次执行如下3条sql，事务B在语句1和2之间，插入10条age=20的记录，事务A就幻读了。</p>
+<ol>
+<li>select count(1) from user where age=20;</li>
+</ol>
+<p>-- return 0: 当前没有age=20的</p>
+<ol start="2">
+<li>update user set name=test where age=20;</li>
+</ol>
+<p>-- Affects 10 rows: 因为事务B刚写入10条age=20的记录，而写操作是不受MVCC影响，能看到最新数据的，所以更新成功，而一旦操作成功，这些被操作的数据就会对当前事务可见</p>
+<ol start="3">
+<li>select count(1) from user where age=20;</li>
+</ol>
+<p>-- return 10: 出现幻读</p>
+<p>REPEATABLE READ级别，可以防止大部分的幻读，但像前边举例读-写-读的情况，使用不加锁的select依然会幻读。</p>
+<h3 id="serialisable">SERIALISABLE</h3>
+<p>大杀器，该级别下，会自动将所有普通select转化为select ... lock in share mode执行，即针对同一数据的所有读写都变成互斥的了，可靠性大大提高，并发性大大降低。</p>
+<p>读-写，写-写均互斥。</p>
+<h2 id="总结几类读异常">总结：几类读异常</h2>
+<p>读-写-读，引起的异常</p>
+<p>脏读：读取了脏数据(不存在的数据)。<br>
+​    事务一读<br>
+​    事务二写(未提交)<br>
+​    事务二读(脏数据)<br>
+​    事务二回滚</p>
+<p>不可重复读：既可以读取修改的数据，也可以读取新增的数据(幻读)。<br>
+​    事务一读<br>
+​    事务二写(更新已提交)<br>
+​    事务二读(数据不一致，不可重复读)</p>
+<p>幻读：仅可以读取新增的数据，但是无法读取修改的数据；<br>
+​    事务一读<br>
+​    事务二写(新增已提交)<br>
+​    事务二读(数据不一致，幻读)<br>
+附命令<br>
+查看表的加锁情况:<code>select * from information_schema.INNODB_LOCKS;</code></p>
+<p>事务状态 <code>select * from information_schema.INNODB_TRX;</code></p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://xiusin.github.io/tag/e-FLWpTX1" class="tag">
+                    MYSQL
+                  </a>
+                
+                  <a href="https://xiusin.github.io/tag/W5UTXfVoKc" class="tag">
+                    隔离级别
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/shu-ju-ku-shi-wu-ge-chi-ji-bie-zang-du-huan-du-bu-ke-chong-fu-du-qing-xi-jie-shi">
+                  <h3 class="post-title">
+                    数据库事务隔离级别-- 脏读、幻读、不可重复读（清晰解释）
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

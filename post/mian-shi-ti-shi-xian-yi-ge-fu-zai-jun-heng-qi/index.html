@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>面试题 - 实现一个负载均衡器 | Xiusin</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571198822167">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1571198822167" class="site-logo">
+        <h1 class="site-title">Xiusin</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="/leecode" class="site-nav">
+            leecode
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">面试题 - 实现一个负载均衡器</h2>
+            <div class="post-date">2019-09-23</div>
+            
+            <div class="post-content">
+              <p>bilibili视频上看的一个面试题, 看了很久, 也想了很久, 自己平时都是做web后端开发,很少接触到并发编程,  最后困难的实现了一下:</p>
+<blockquote>
+<p>描述: 实现一个负载器, 可以注册多个worker工作, 每个worker的工作能力不同, lb也不能阻塞.  <a href="https://www.bilibili.com/video/av58159544/?spm_id_from=333.788.videocard.17">哔哩哔哩网址</a></p>
+</blockquote>
+<pre><code class="language-go">package test_dir
+
+import (
+	&quot;fmt&quot;
+	&quot;testing&quot;
+	&quot;time&quot;
+)
+var workerQueue = make(chan *worker)
+
+type loadBalance struct {
+	tasks  chan func(int)
+}
+
+type worker struct {
+	id    int
+	queue chan func(int)
+}
+
+func (w *worker) work() {
+	for t := range w.queue {
+		t(w.id)
+	}
+}
+
+func (w *worker) submit(task func(int)) {
+	w.queue &lt;- task
+}
+
+func (l *loadBalance) submit(task func(int)) {
+			go func() { l.tasks &lt;- task }()   //不可阻塞LB
+}
+
+func (l *loadBalance) wait() {
+	go func() {
+		for {
+			w := &lt;-workerQueue // 获取一个worker, 没有可用的会阻塞在这
+			f := &lt;-l.tasks // 获取一个task任务, 没有也会阻塞
+			go func() {
+				w.submit(f) // 提交任务给worker, 如果塞不进去会阻塞当前worker重回workerQueue
+				workerQueue &lt;- w
+			}()
+		}
+	}()
+	select {}
+}
+
+// 注册负载
+func LB(workerPowerNum ...int) *loadBalance {
+	for k, v := range workerPowerNum {
+		worker := &amp;worker{queue: make(chan func(int), v), id: k + 1}
+		// 添加到ch
+		go func() { workerQueue &lt;- worker }()
+		go worker.work()
+	}
+	return &amp;loadBalance{tasks: make(chan func(int))}
+}
+
+func Test_LB(t *testing.T) {
+	lb := LB(4, 1, 2, 5, 6)
+	for i := 0; i &lt; 20; i++ {
+		lb.submit(func(v int) func(int) {
+			return func(i int) {
+				time.Sleep(time.Second)
+				fmt.Println(&quot;任务执行完成: &quot;, v, &quot;机器编号&quot;, i)
+			}
+		}(i))
+	}
+	lb.wait()
+}
+</code></pre>
+<p>输出:</p>
+<pre><code>=== RUN   Test_LB
+任务执行完成:  0 机器编号 2
+任务执行完成:  1 机器编号 3
+任务执行完成:  4 机器编号 1
+任务执行完成:  2 机器编号 4
+任务执行完成:  3 机器编号 5
+任务执行完成:  19 机器编号 3
+任务执行完成:  12 机器编号 5
+任务执行完成:  18 机器编号 2
+任务执行完成:  11 机器编号 1
+任务执行完成:  16 机器编号 1
+任务执行完成:  17 机器编号 2
+任务执行完成:  5 机器编号 5
+任务执行完成:  13 机器编号 1
+任务执行完成:  6 机器编号 5
+任务执行完成:  14 机器编号 1
+任务执行完成:  7 机器编号 5
+任务执行完成:  15 机器编号 1
+任务执行完成:  8 机器编号 5
+任务执行完成:  9 机器编号 5
+任务执行完成:  10 机器编号 5
+</code></pre>
+<p>自己跑测试结果能基本符合,也不知道是不是符合题意, 但是视频最后博主说要实现LB和worker的状态分离: <code>我自己用了第三个变量workerQueue ::&gt;_&lt;::,技穷了</code>, 不要暴力检测的: <code>各种锁什么的临界</code>, 大家可以各自实现一下完美需求.</p>
+<blockquote>
+<p>最后发现用select{}阻塞进程会报死锁异常, 不知到大家为啥不会报死锁~~</p>
+</blockquote>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://xiusin.github.io/tag/003YhPAZu" class="tag">
+                    面试题
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/shuang-huan-cun-shu-ju-ku-shuang-xie-yi-zhi-xing-wen-ti-jiu-ying-gai-zhe-me-jie-jue">
+                  <h3 class="post-title">
+                     双缓存数据库双写一致性问题
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

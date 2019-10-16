@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>text2img文本变图片的使用 | Xiusin</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571198822167">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1571198822167" class="site-logo">
+        <h1 class="site-title">Xiusin</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="/leecode" class="site-nav">
+            leecode
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">text2img文本变图片的使用</h2>
+            <div class="post-date">2019-09-17</div>
+            
+            <div class="post-content">
+              <h1 id="需求描述">需求描述</h1>
+<p>自己在写技术博客需要一个图片来作为文章的封面, 由于懒惰和时间成本没有开发这项功能.  在对接 web 端以及小程序端都需要封面图来撑起来大大的版面怎么办, 那么这个 <code>text2img</code>的扩展包就起作用了, 它能用指定的文本来生成固定格式的图片. 效果如下:</p>
+<figure data-type="image" tabindex="1"><img src="https://www.mirchen.com/img/5.jpg" alt="https://www.mirchen.com/img/5.jpg"></figure>
+<p>好, 那我们现在开始吧.</p>
+<h1 id="命令行使用">命令行使用</h1>
+<p>扩展地址: https://github.com/Iwark/text2img.git</p>
+<p>该项目支持命令和开发包源码方式使用, 以下逐一介绍</p>
+<h2 id="二进制文件下载">二进制文件下载</h2>
+<p>可以到https://github.com/Iwark/text2img/releases来下载官方发行的二进制包.</p>
+<p>或者使用命令:</p>
+<pre><code class="language-shell">go get github.com/Iwark/text2img/cmd/text2img
+</code></pre>
+<p>这种方式直接可以将二进制文件添加到环境变量中进行使用:</p>
+<pre><code class="language-shell"># 基本使用
+$ text2img -h
+Usage of text2img:
+  -bgimg string
+    	path to the background image 	#背景图, 如不设置则随机生成一个背景色
+  -fontpath string	
+    	path to the font	#要生成图片字体使用的字体路径
+  -output string
+    	path to the output image (default &quot;image.jpg&quot;)	#输出图片名称
+  -text string
+    	text to draw	#文字内容
+
+</code></pre>
+<p>我们要生成随机背景颜色的图片:</p>
+<pre><code class="language-shell">$ text2img -fontpath=&quot;fonts/font.ttf&quot; -output=&quot;test.jpg&quot; -text=&quot;text2img generates the image from a text&quot;
+</code></pre>
+<figure data-type="image" tabindex="2"><img src="https://camo.githubusercontent.com/dcb4b5d949ffdfb329716d49af2947f1d96e0638/68747470733a2f2f692e696d6775722e636f6d2f334d6a4c3150672e6a7067" alt=""></figure>
+<p>我们要生成指定背景图片和指定内容的图片,我们可以使用下面的命令:</p>
+<pre><code class="language-shell">$ text2img -fontpath=&quot;fonts/font.ttf&quot; -output=&quot;test.jpg&quot; -text=&quot;text2img generates the image from a text&quot; -bgimg=&quot;gophers.jpg&quot;
+</code></pre>
+<figure data-type="image" tabindex="3"><img src="https://camo.githubusercontent.com/4eed21383601def6b937e5a0d6a7121304a4dcea/68747470733a2f2f692e696d6775722e636f6d2f4d574e563434662e6a7067" alt=""></figure>
+<p>以上是命令行的基本用法.</p>
+<h1 id="go-代码">GO 代码</h1>
+<h2 id="使用命令下载第三方包">使用命令下载第三方包</h2>
+<pre><code class="language-shell">go get -v go get github.com/Iwark/text2img
+</code></pre>
+<p>在我们项目中可能这样使用:</p>
+<pre><code class="language-go">package main
+
+import (
+  &quot;image/jpeg&quot;
+  &quot;os&quot;
+
+  &quot;github.com/Iwark/text2img&quot;
+)
+
+func Text2Img(name, str string) error {
+	workingDir, _ := os.Getwd()
+	f, err := os.Open(workingDir + &quot;/&quot; + name)
+	if os.IsExist(err) {
+		return nil
+	}
+	f.Close()
+	path := workingDir + &quot;/public/font/WeiRuanYaHei.ttf&quot;
+	d, err := text2img.NewDrawer(text2img.Params{
+		FontPath: path,
+	})
+	if err != nil {
+		return err
+	}
+	img, err := d.Draw(str)
+	if err != nil {
+		return err
+	}
+	file, err := os.Create(workingDir + &quot;/&quot; + name)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	return jpeg.Encode(file, img, &amp;jpeg.Options{Quality: 100})
+}
+
+func main (){
+    err := Text2Img(&quot;mypic.png&quot;, &quot;Hello Gin Web Developer&quot;)
+    if err != nil {
+        painc(err)
+    }
+}
+
+</code></pre>
+<p>这样我们就可以在我们项目图片中使用起来, 随意切换封面图是否上传还是自动生成.</p>
+<p>虽然这个功能很简单,但是比较实用, 平时自己做功能的时候一般不会考虑到类似这样的需求. 在自己小程序中发现如果没有图片封面闲的很空洞, 所以在这里做一下记录.</p>
+
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/shi-yong-golang-shi-yu-dao-de-yi-xie-keng">
+                  <h3 class="post-title">
+                    使用Golang时遇到的一些坑
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

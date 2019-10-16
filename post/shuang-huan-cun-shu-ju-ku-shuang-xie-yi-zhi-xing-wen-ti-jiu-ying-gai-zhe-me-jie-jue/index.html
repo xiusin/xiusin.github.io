@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title> 双缓存数据库双写一致性问题 | Xiusin</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571198822167">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1571198822167" class="site-logo">
+        <h1 class="site-title">Xiusin</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="/leecode" class="site-nav">
+            leecode
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title"> 双缓存数据库双写一致性问题</h2>
+            <div class="post-date">2019-09-20</div>
+            
+            <div class="post-content">
+              <p>缓存存储，也是数据的冗余。</p>
+<ul>
+<li>数据库访问数据，磁盘IO，慢;</li>
+<li>缓存里访问数据，存操作，快;</li>
+<li>数据库里的热数据，可在缓存冗余一份;</li>
+<li>先访问缓存，如果存在，能大大的提升访问速度，降低数据库压力;</li>
+</ul>
+<p>这些，是缓存的核心读加速原理。</p>
+<p>但是，一旦没有缓存，或者一旦涉及写操作，流程会比没有缓存更加复杂，今天我们就来解决这个问题</p>
+<ol>
+<li>为什么数据库和缓存中的数据会不一致</li>
+<li>不一致优化思路</li>
+<li>如何保证数据库与缓存的一致性</li>
+</ol>
+<p><strong>一、假设先写数据库，再淘汰缓存</strong></p>
+<figure data-type="image" tabindex="1"><img src="https://xiusin.github.io/post-images/assets/1568961361-9654e686f17a5827715cc6e94e39d394" alt="双缓存数据库双写一致性问题就应该这么解决"></figure>
+<p>假设先写数据库，再淘汰缓存：第一步写数据库操作成功，第二步淘汰缓存失败，则会出现DB中是新数据，Cache中是旧数据，数据不一致【如上图：db中是新数据，cache中是旧数据】。</p>
+<figure data-type="image" tabindex="2"><img src="https://xiusin.github.io/post-images/assets/1568961361-e869abfb0bacc753d2e9b2936029824b" alt="双缓存数据库双写一致性问题就应该这么解决"></figure>
+<p><strong>二、假设先淘汰缓存，再写数据库：</strong></p>
+<p>第一步淘汰缓存成功，第二步写数据库失败，则只会引发一次Cache miss【如上图：cache中无数据，db中是旧数据】。</p>
+<p>结论：先淘汰缓存，再写数据库。</p>
+<p>引发大家热烈讨论的点是“先操作缓存，在写数据库成功之前，如果有读请求发生，可能导致旧数据入缓存，引发数据不一致”，这就是本文要讨论的主题。</p>
+<p><strong>写流程</strong></p>
+<p>（1）先淘汰cache</p>
+<p>（2）再写db</p>
+<p><strong>读流程</strong></p>
+<p>（1）先读cache，如果数据命中hit则返回</p>
+<p>（2）如果数据未命中miss则读db</p>
+<p>（3）将db中读取出来的数据入缓存</p>
+<p>什么情况下可能出现缓存和数据库中数据不一致呢？</p>
+<figure data-type="image" tabindex="3"><img src="https://xiusin.github.io/post-images/assets/1568961361-089929f9fbbdfa9a8329d7c736c92bd6" alt="双缓存数据库双写一致性问题就应该这么解决"></figure>
+<p>在分布式环境下，数据的读写都是并发的，上游有多个应用，通过一个服务的多个部署（为了保证可用性，一定是部署多份的），对同一个数据进行读写，在数据库层面并发的读写并不能保证完成顺序，也就是说后发出的读请求很可能先完成（读出脏数据）：</p>
+<p>（a）发生了写请求A，A的第一步淘汰了cache（如上图中的1）</p>
+<p>（b）A的第二步写数据库，发出修改请求（如上图中的2）</p>
+<p>（c）发生了读请求B，B的第一步读取cache，发现cache中是空的（如上图中的步骤3）</p>
+<p>（d）B的第二步读取数据库，发出读取请求，此时A的第二步写数据还没完成，读出了一个脏数据放入cache（如上图中的步骤4）</p>
+<p>即在数据库层面，后发出的请求4比先发出的请求2先完成了，读出了脏数据，脏数据又入了缓存，缓存与数据库中的数据不一致出现了</p>
+<p>能否做到先发出的请求一定先执行完成呢？常见的思路是“串行化”，今天将和大家一起探讨“串行化”这个点。</p>
+<p>先一起细看一下，在一个服务中，并发的多个读写SQL一般是怎么执行的</p>
+<figure data-type="image" tabindex="4"><img src="https://xiusin.github.io/post-images/assets/1568961361-4bcf06e1280bf4f7b9164f7d7fd0cc0b" alt="双缓存数据库双写一致性问题就应该这么解决"></figure>
+<p>上图是一个service服务的上下游及服务内部详细展开，细节如下：</p>
+<ol>
+<li>service的上游是多个业务应用，上游发起请求对同一个数据并发的进行读写操作，上例中并发进行了一个uid=1的余额修改（写）操作与uid=1的余额查询（读）操作</li>
+<li>service的下游是数据库DB，假设只读写一个DB</li>
+<li>中间是服务层service，它又分为了这么几个部分</li>
+</ol>
+<p>提问：任务队列其实已经做了任务串行化的工作，能否保证任务不并发执行？</p>
+<p>答：不行，因为</p>
+<p>（1）1个服务有多个工作线程，串行弹出的任务会被并行执行</p>
+<p>（2）1个服务有多个数据库连接，每个工作线程获取不同的数据库连接会在DB层面并发执行</p>
+<p>提问：假设1个服务只有1条数据库连接，能否保证任务不并发执行？</p>
+<p>答：不行，因为</p>
+<p>（1）1个服务只有1条数据库连接，只能保证在一个服务器上的请求在数据库层面是串行执行的</p>
+<p>（2）因为服务是分布式部署的，多个服务上的请求在数据库层面仍可能是并发执行的</p>
+<p>提问：假设服务只部署一份，且1个服务只有1条连接，能否保证任务不并发执行？</p>
+<p>答：可以，全局来看请求是串行执行的，吞吐量很低，并且服务无法保证可用性</p>
+<p>完了，看似无望了，</p>
+<blockquote>
+<p>1）任务队列不能保证串行化</p>
+<p>2）单服务多数据库连接不能保证串行化</p>
+<p>3）多服务单数据库连接不能保证串行化</p>
+<p>4）单服务单数据库连接可能保证串行化，但吞吐量级低，且不能保证服务的可用性，几乎不可行，那是否还有解？</p>
+</blockquote>
+<p>退一步想，其实不需要让全局的请求串行化，而只需要“让同一个数据的访问能串行化”就行。</p>
+<p>在一个服务内，如何做到“让同一个数据的访问串行化”，只需要“让同一个数据的访问通过同一条DB连接执行”就行。</p>
+<p>如何做到“让同一个数据的访问通过同一条DB连接执行”，只需要“在DB连接池层面稍微修改，按数据取连接即可”</p>
+<p>获取DB连接的CPool.GetDBConnection()【返回任何一个可用DB连接】改CPool.GetDBConnection(longid)【返回id取模相关联的DB连接】</p>
+<p>这个修改的好处是：</p>
+<p>（1）简单，只需要修改DB连接池实现，以及DB连接获取处</p>
+<p>（2）连接池的修改不需要关注业务，传入的id是什么含义连接池不关注，直接按照id取模返回DB连接即可</p>
+<p>（3）可以适用多种业务场景，取用户数据业务传入user-id取连接，取订单数据业务传入order-id取连接即可</p>
+<p>这样的话，就能够保证同一个数据例如uid在数据库层面的执行一定是串行的</p>
+<p>稍等稍等，服务可是部署了很多份的，上述方案只能保证同一个数据在一个服务上的访问，在DB层面的执行是串行化的，实际上服务是分布式部署的，在全局范围内的访问仍是并行的，怎么解决呢？能不能做到同一个数据的访问一定落到同一个服务呢？</p>
+<p>上面分析了服务层service的上下游及内部结构，再一起看一下应用层上下游及内部结构</p>
+<figure data-type="image" tabindex="5"><img src="https://xiusin.github.io/post-images/assets/1568961361-530d7d099df58279ed442efa2f9d8f46" alt="双缓存数据库双写一致性问题就应该这么解决"></figure>
+<p>上图是一个业务应用的上下游及服务内部详细展开，细节如下：</p>
+<p>（1）业务应用的上游不确定是啥，可能是直接是http请求，可能也是一个服务的上游调用</p>
+<p>（2）业务应用的下游是多个服务service</p>
+<p>（3）中间是业务应用，它又分为了这么几个部分</p>
+<p>（3.1）最上层是任务队列【或许web-server例如tomcat帮你干了这个事情了】</p>
+<p>（3.2）中间是工作线程【或许web-server的工作线程或者cgi工作线程帮你干了线程分派这个事情了】，每个工作线程完成实际的业务任务，典型的工作任务是通过服务连接池进行RPC调用</p>
+<p>（3.3）最下层是服务连接池，所有的RPC调用都是通过服务连接池往下游服务去发包执行的</p>
+<p>工作线程的典型工作流是这样的：</p>
+<p>voidwork_thread_routine(){</p>
+<p>Task t = TaskQueue.pop(); // 获取任务</p>
+<p>// 任务逻辑处理，组成一个网络包packet，调用下游RPC接口</p>
+<p>ServiceConnection c = CPool.GetServiceConnection(); // 从Service连接池获取一个Service连接</p>
+<p>c.Send(packet); // 通过Service连接发送报文执行RPC请求</p>
+<p>CPool.PutServiceConnection(c); // 将Service连接放回Service连接池</p>
+<p>}</p>
+<p>似曾相识吧？没错，只要对服务连接池进行少量改动：</p>
+<p>获取Service连接的CPool.GetServiceConnection()【返回任何一个可用Service连接】改为</p>
+<p>CPool.GetServiceConnection(longid)【返回id取模相关联的Service连接】</p>
+<p>这样的话，就能够保证同一个数据例如uid的请求落到同一个服务Service上。</p>
+<p>由于数据库层面的读写并发，引发的数据库与缓存数据不一致的问题（本质是后发生的读请求先返回了），可能通过两个小的改动解决：</p>
+<p>（1）修改服务Service连接池，id取模选取服务连接，能够保证同一个数据的读写都落在同一个后端服务上</p>
+<p>（2）修改数据库DB连接池，id取模选取DB连接，能够保证同一个数据的读写在数据库层面是串行的</p>
+<p>提问：取模访问服务是否会影响服务的可用性？</p>
+<p>答：不会，当有下游服务挂掉的时候，服务连接池能够检测到连接的可用性，取模时要把不可用的服务连接排除掉。</p>
+<p>提问：取模访问服务与取模访问DB，是否会影响各连接上请求的负载均衡？</p>
+<p>答：不会，只要数据访问id是均衡的，从全局来看，由id取模获取各连接的概率也是均等的，即负载是均衡的。</p>
+<hr>
+<p>原网址: <a href="https://www.toutiao.com/a6738033269255700996/?tt_from=weixin&amp;utm_campaign=client_share&amp;wxshare_count=1&amp;timestamp=1568939776&amp;app=news_article&amp;utm_source=weixin&amp;utm_medium=toutiao_android&amp;req_id=2019092008361501002607720717C39C89&amp;group_id=6738033269255700996">访问</a></p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://xiusin.github.io/tag/X9cuCTbYm" class="tag">
+                    缓存一致性
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/yi-wen-gao-dong-mysql-de-join-liao-yi-liao-miao-sha-jia-gou-she-ji">
+                  <h3 class="post-title">
+                    一文搞懂MySQL的Join-聊一聊秒杀架构设计
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>PHP中的Traits详解 | Xiusin</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571198822167">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1571198822167" class="site-logo">
+        <h1 class="site-title">Xiusin</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="/leecode" class="site-nav">
+            leecode
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">PHP中的Traits详解</h2>
+            <div class="post-date">2019-09-17</div>
+            
+            <div class="post-content">
+              <blockquote>
+<p>原文链接：<a href="http://tabalt.net/blog/php-traits/">http://tabalt.net/blog/php-traits/</a></p>
+</blockquote>
+<p>PHP是单继承的语言，在PHP 5.4 Traits出现之前，PHP的类无法同时从两个基类继承属性或方法。php的Traits和Go语言的组合功能类似，通过在类中使用use关键字声明要组合的Trait名称，而具体某个Trait的声明使用trait关键词，Trait不能直接实例化。具体用法请看下面的代码：</p>
+<pre><code class="language-php">&lt;?php
+    trait Drive {
+        public $carName = 'trait';
+        public function driving() {
+            echo &quot;driving {$this-&gt;carName}\n&quot;;
+        }
+    }
+    class Person {
+        public function eat() {
+            echo &quot;eat\n&quot;;
+        }
+    }
+    class Student extends Person {
+        use Drive;
+        public function study() {
+            echo &quot;study\n&quot;;
+        }
+    }
+    $student = new Student();
+    $student-&gt;study();
+    $student-&gt;eat();
+    $student-&gt;driving();
+</code></pre>
+<p>输出结果如下：</p>
+<pre><code>study
+eat
+driving trait
+</code></pre>
+<p>上面的例子中，Student类通过继承Person，有了eat方法，通过组合Drive，有了driving方法和属性carName。</p>
+<p>如果Trait、基类和本类中都存在某个同名的属性或者方法，最终会保留哪一个呢？通过下面的代码测试一下：</p>
+<pre><code class="language-php">&lt;?php
+    trait Drive {
+        public function hello() {
+            echo &quot;hello drive\n&quot;;
+        }
+        public function driving() {
+            echo &quot;driving from drive\n&quot;;
+        }
+    }
+    class Person {
+        public function hello() {
+            echo &quot;hello person\n&quot;;
+        }
+        public function driving() {
+            echo &quot;driving from person\n&quot;;
+        }
+    }
+    class Student extends Person {
+        use Drive;
+        public function hello() {
+            echo &quot;hello student\n&quot;;
+        }
+    }
+    $student = new Student();
+    $student-&gt;hello();
+    $student-&gt;driving();
+</code></pre>
+<p>输出结果如下：</p>
+<pre><code>hello student
+driving from drive
+</code></pre>
+<p>因此得出结论：当方法或属性同名时，当前类中的方法会覆盖 trait的 方法，而 trait 的方法又覆盖了基类中的方法。</p>
+<p>如果要组合多个Trait，通过逗号分隔 Trait名称：</p>
+<pre><code>use Trait1, Trait2;
+</code></pre>
+<p>如果多个Trait中包含同名方法或者属性时，会怎样呢？答案是当组合的多个Trait包含同名属性或者方法时，需要明确声明解决冲突，否则会产生一个致命错误。</p>
+<pre><code class="language-php">&lt;?php
+trait Trait1 {
+    public function hello() {
+        echo &quot;Trait1::hello\n&quot;;
+    }
+    public function hi() {
+        echo &quot;Trait1::hi\n&quot;;
+    }
+}
+trait Trait2 {
+    public function hello() {
+        echo &quot;Trait2::hello\n&quot;;
+    }
+    public function hi() {
+        echo &quot;Trait2::hi\n&quot;;
+    }
+}
+class Class1 {
+    use Trait1, Trait2;
+}
+</code></pre>
+<p>输出结果如下：</p>
+<pre><code>PHP Fatal error:  Trait method hello has not been applied, because there are collisions with other trait methods on Class1 in ~/php54/trait_3.php on line 20
+</code></pre>
+<p>使用<code>insteadof</code>和<code>as</code>操作符来解决冲突，<code>insteadof</code>是使用某个方法替代另一个，而<code>as</code>是给方法取一个别名，具体用法请看代码：</p>
+<pre><code class="language-php">&lt;?php
+trait Trait1 {
+    public function hello() {
+        echo &quot;Trait1::hello\n&quot;;
+    }
+    public function hi() {
+        echo &quot;Trait1::hi\n&quot;;
+    }
+}
+trait Trait2 {
+    public function hello() {
+        echo &quot;Trait2::hello\n&quot;;
+    }
+    public function hi() {
+        echo &quot;Trait2::hi\n&quot;;
+    }
+}
+class Class1 {
+    use Trait1, Trait2 {
+        Trait2::hello insteadof Trait1;
+        Trait1::hi insteadof Trait2;
+    }
+}
+class Class2 {
+    use Trait1, Trait2 {
+        Trait2::hello insteadof Trait1;
+        Trait1::hi insteadof Trait2;
+        Trait2::hi as hei;
+        Trait1::hello as hehe;
+    }
+}
+$Obj1 = new Class1();
+$Obj1-&gt;hello();
+$Obj1-&gt;hi();
+echo &quot;\n&quot;;
+$Obj2 = new Class2();
+$Obj2-&gt;hello();
+$Obj2-&gt;hi();
+$Obj2-&gt;hei();
+$Obj2-&gt;hehe();
+</code></pre>
+<p>输出结果如下：</p>
+<pre><code>Trait2::hello
+Trait1::hi
+
+Trait2::hello
+Trait1::hi
+Trait2::hi
+Trait1::hello
+</code></pre>
+<p><code>as</code>关键词还有另外一个用途，那就是<code>修改</code>方法的访问控制：</p>
+<pre><code class="language-php">&lt;?php
+    trait Hello {
+        public function hello() {
+            echo &quot;hello,trait\n&quot;;
+        }
+    }
+    class Class1 {
+        use Hello {
+            hello as protected;
+        }
+    }
+    class Class2 {
+        use Hello {
+            Hello::hello as private hi;
+        }
+    }
+    $Obj1 = new Class1();
+    $Obj1-&gt;hello(); # 报致命错误，因为hello方法被修改成受保护的
+    $Obj2 = new Class2();
+    $Obj2-&gt;hello(); # 原来的hello方法仍然是公共的
+    $Obj2-&gt;hi();  # 报致命错误，因为别名hi方法被修改成私有的
+</code></pre>
+<p>Trait 也能组合Trait，Trait中支持抽象方法、静态属性及静态方法，测试代码如下：</p>
+<pre><code class="language-php">&lt;?php
+trait Hello {
+    public function sayHello() {
+        echo &quot;Hello\n&quot;;
+    }
+}
+trait World {
+    use Hello;
+    public function sayWorld() {
+        echo &quot;World\n&quot;;
+    }
+    abstract public function getWorld();
+    public function inc() {
+        static $c = 0;
+        $c = $c + 1;
+        echo &quot;$c\n&quot;;
+    }
+    public static function doSomething() {
+        echo &quot;Doing something\n&quot;;
+    }
+}
+class HelloWorld {
+    use World;
+    public function getWorld() {
+        return 'get World';
+    }
+}
+$Obj = new HelloWorld();
+$Obj-&gt;sayHello();
+$Obj-&gt;sayWorld();
+echo $Obj-&gt;getWorld() . &quot;\n&quot;;
+HelloWorld::doSomething();
+$Obj-&gt;inc();
+$Obj-&gt;inc();
+</code></pre>
+<p>输出结果如下：</p>
+<pre><code>Hello
+World
+get World
+Doing something
+1
+2
+</code></pre>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://xiusin.github.io/tag/RaBOEiWy-D" class="tag">
+                    PHP
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/shi-yong-php-cs-fixer-zi-dong-gui-fan-hua-ni-de-php-dai-ma">
+                  <h3 class="post-title">
+                    使用PHP-CS-Fixer自动规范化你的PHP代码
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

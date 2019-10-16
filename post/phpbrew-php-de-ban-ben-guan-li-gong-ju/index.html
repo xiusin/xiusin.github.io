@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Phpbrew Php的版本管理工具 | Xiusin</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571198822167">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1571198822167" class="site-logo">
+        <h1 class="site-title">Xiusin</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="/leecode" class="site-nav">
+            leecode
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Phpbrew Php的版本管理工具</h2>
+            <div class="post-date">2019-09-17</div>
+            
+            <div class="post-content">
+              <h3 id="phpbrew-的-介绍">PHPBREW 的 介绍</h3>
+<blockquote>
+<p>官方地址: http://phpbrew.github.io/phpbrew/</p>
+</blockquote>
+<p>有 rbenv 和 pyenv ，当然也存在 phpenv，<br>
+他们有什么用呢，其实就是可以快速的在多个语言的版本之间来回切换，方便测试。当然，这样的事 Travis-ci 也可以做到，<br>
+并且不需要做多余的事（其实还是有多余的事的需要项目根目录下有个 .travis.yml 文件，而且 travis-ci 严重依赖 Github），<br>
+但怎么取舍就看个人了，不过我是两个都用的，就算我不需要使用多个 PHP 版本，<br>
+使用 PHPBrew 安装 PHP 也挺方便的（PS：我使用 pyenv 和 rbenv 其实也就这个理由），<br>
+因为系统所带的 PHP 的版本并不一定总是你所需要的那个，而 PHPBrew 却可以安装几乎所有的 PHP 版本。</p>
+<h3 id="其他相似工具">其他相似工具</h3>
+<p>大多数语言编程的时候,都会碰到在不同版本下的代码兼容性问题,测试代码兼容性,或者调试老旧代码,需要不同的语言版本环境.<br>
+ruby有了rbenv,rvm,nodejs也有nvm,当然php也应该有个类似的 <code>phpenv</code> , <code>php-version</code> , <code>phpbrew</code>. 以 Github上 star数来选择工具,那么必然是 phpbrew , 别问为什么,大家觉得好才是真的好.</p>
+<h3 id="安装-mac">安装 (Mac)</h3>
+<pre><code class="language-bash">$ brew install phpbrew
+==&gt; Installing homebrew/php/phpbrew
+==&gt; Downloading https://homebrew.bintray.com/bottles-php/phpbrew-1.22.5_1.sierra
+######################################################################## 100.0%
+==&gt; Pouring phpbrew-1.22.5_1.sierra.bottle.tar.gz
+==&gt; Caveats
+phpbrew is now installed!
+
+To start using it, please run
+  'phpbrew init'
+
+You can change phpbrew home with PHPBREW_ROOT and PHPBREW_HOME env vars
+==&gt; Summary
+🍺  /usr/local/Cellar/phpbrew/1.22.5_1: 5 files, 2MB
+</code></pre>
+<h3 id="初始化">初始化</h3>
+<pre><code class="language-bash">$ phpbrew init
+Using root: /Users/mirchen/.phpbrew
+Initialization successfully finished!
+&lt;=====================================================&gt;
+Phpbrew environment is initialized, required directories are created under
+
+    /Users/mirchen/.phpbrew
+
+Paste the following line(s) to the end of your ~/.bashrc and start a
+new shell, phpbrew should be up and fully functional from there:
+
+    source /Users/mirchen/.phpbrew/bashrc
+
+To enable PHP version info in your shell prompt, please set PHPBREW_SET_PROMPT=1
+in your '~/.bashrc' before you source '~/.phpbrew/bashrc'
+
+    export PHPBREW_SET_PROMPT=1
+
+To enable .phpbrewrc file searching, please export the following variable:
+
+    export PHPBREW_RC_ENABLE=1
+
+For further instructions, simply run 'phpbrew' to see the help message.
+
+Enjoy phpbrew at $HOME!!
+
+&lt;=====================================================&gt;
+
+</code></pre>
+<h3 id="按照命令提醒添加环境变量">按照命令提醒添加环境变量</h3>
+<p>由于我用的是 zsh 所以直接加入到 zsh 文件内</p>
+<pre><code class="language-bash">echo 'source /Users/mirchen/.phpbrew/bashrc' &gt; .zshrc
+-----
+#  加载 zsh
+source ~/.zshrc
+-------
+# 查看环境变量
+PHPBREW_HOME=/Users/mirchen/.phpbrew
+PHPBREW_BIN=/Users/mirchen/.phpbrew/bin
+PHPBREW_ROOT=/Users/mirchen/.phpbrew
+PHPBREW_VERSION_REGEX=^([[:digit:]]+\.){2}[[:digit:]]+$
+</code></pre>
+<h3 id="查看已知可安装的-php-版本">查看已知可安装的 php 版本</h3>
+<pre><code class="language-bash">$ phpbrew known
+===&gt; Fetching release list...
+Downloading https://secure.php.net/releases/index.php?json&amp;version=7&amp;max=100 via curl extension
+Downloading https://secure.php.net/releases/index.php?json&amp;version=5&amp;max=100 via curl extension
+7.2: 7.2.1, 7.2.0 ...
+7.1: 7.1.13, 7.1.12, 7.1.11, 7.1.10, 7.1.9, 7.1.8, 7.1.7, 7.1.6 ...
+7.0: 7.0.27, 7.0.26, 7.0.25, 7.0.24, 7.0.23, 7.0.22, 7.0.21, 7.0.20 ...
+5.6: 5.6.33, 5.6.32, 5.6.31, 5.6.30, 5.6.29, 5.6.28, 5.6.27, 5.6.26 ...
+5.5: 5.5.37, 5.5.36, 5.5.35, 5.5.34, 5.5.33, 5.5.32, 5.5.31, 5.5.30 ...
+5.4: 5.4.45, 5.4.44, 5.4.43, 5.4.42, 5.4.41, 5.4.40, 5.4.39, 5.4.38 ...
+--------------------
+# 更新已知可安装版本  
+$ phpbrew known --update
+# 更新旧版本 &lt; 5.4
+$ phpbrew known --old
+# 更新发布版本信息:
+$ phpbrew update
+===&gt; Fetching release list...
+Downloading https://secure.php.net/releases/index.php?json&amp;version=7&amp;max=100 via curl extension
+Downloading https://secure.php.net/releases/index.php?json&amp;version=5&amp;max=100 via curl extension
+7.2: 2 releases
+7.1: 14 releases
+7.0: 28 releases
+5.6: 34 releases
+5.5: 38 releases
+5.4: 28 releases
+===&gt; Done
+</code></pre>
+<h3 id="安装php版本">安装php版本</h3>
+<p>这里我们选择最新版的php7.2.1版本进行安装演示:</p>
+<ol>
+<li>执行安装命令(开发时在ubuntu 上)</li>
+</ol>
+<pre><code class="language-bash">  # 根据提醒安装相关依赖
+  apt-get install libxml2-dev(缺少libxml) libreadline-dev (缺少readline.h)  libxslt1-dev(libxslt)
+  # 安装7.2.1
+  phpbrew install 7.2.1 +default # 默认扩展,提供常用扩展
+
+  =================安装阶段==================
+  # 中间环境问题导致无法贴出来安装过程的代码, 反正就是拉代码 编译..
+</code></pre>
+<ol start="2">
+<li>附加测试安装</li>
+</ol>
+<pre><code class="language-bash">$ phpbrew install --test 5.6.1
+</code></pre>
+<ol start="3">
+<li>开启debug信息安装</li>
+</ol>
+<pre><code class="language-bash">$ phpbrew -d install --test 5.4.0
+</code></pre>
+<ol start="4">
+<li>其他低版本安装</li>
+</ol>
+<pre><code class="language-bash">phpbrew install --old 5.2.13 # &lt; 5.3
+</code></pre>
+<ol start="5">
+<li></li>
+</ol>
+<h3 id="其他命令">其他命令</h3>
+<ol>
+<li>临时切换</li>
+</ol>
+<pre><code class="language-bash">phpbrew use 5.4.22
+# 与switch一致,只不过是临时性的
+</code></pre>
+<ol start="2">
+<li>永久切换</li>
+</ol>
+<pre><code class="language-bash">$ phpbrew switch php-7.2.1
+$ php -v
+PHP 7.2.1 (cli) (built: Jan 15 2018 10:58:19) ( NTS )
+Copyright (c) 1997-2017 The PHP Group
+Zend Engine v3.2.0, Copyright (c) 1998-2017 Zend Technologies
+$ phpbrew switch php-7.2.0
+$ php -v # 查看新版本
+PHP 7.2.0 (cli) (built: Jan 15 2018 14:53:48) ( NTS )
+Copyright (c) 1997-2017 The PHP Group
+Zend Engine v3.2.0, Copyright (c) 1998-2017 Zend Technologies
+</code></pre>
+<ol start="3">
+<li>关闭phpbrew提供的环境</li>
+</ol>
+<pre><code class="language-bash">$ phpbrew off
+$ php -v
+# 环境变回系统
+PHP 7.2.1-1+ubuntu16.04.1+deb.sury.org+1 (cli) (built: Jan  5 2018 13:54:13) ( NTS )
+Copyright (c) 1997-2017 The PHP Group
+Zend Engine v3.2.0, Copyright (c) 1998-2017 Zend Technologies
+    with Zend OPcache v7.2.1-1+ubuntu16.04.1+deb.sury.org+1, Copyright (c) 1999-2017, by Zend Technologies
+</code></pre>
+<ol start="4">
+<li>查看安装过的版本列表</li>
+</ol>
+<pre><code class="language-bash">$ phpbrew list
+*php-7.2.1 # 当前使用版本前面会有个 *
+php-7.2.0
+</code></pre>
+<ol start="5">
+<li>清除构建目录 (非删除版本)</li>
+</ol>
+<pre><code class="language-bash">$ phpbrew clean php-7.2.0
+Running make clean: /usr/bin/make -C '/root/.phpbrew/build/php-7.2.0' --quiet 'clean'
+Distribution is cleaned up. Woof!
+</code></pre>
+<h3 id="扩展安装-和-详细用法参考官方wiki">扩展安装 和 详细用法参考官方wiki</h3>
+<blockquote>
+<p>https://github.com/phpbrew/phpbrew/wiki</p>
+</blockquote>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://xiusin.github.io/tag/MXGArL3MU" class="tag">
+                    开发工具
+                  </a>
+                
+                  <a href="https://xiusin.github.io/tag/RaBOEiWy-D" class="tag">
+                    PHP
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/redis-de-fa-bu-ding-yue-he-dui-lie-mo-xing-de-xiao-xi-dui-lie-shi-xian">
+                  <h3 class="post-title">
+                    redis的发布订阅和队列模型的消息队列实现
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

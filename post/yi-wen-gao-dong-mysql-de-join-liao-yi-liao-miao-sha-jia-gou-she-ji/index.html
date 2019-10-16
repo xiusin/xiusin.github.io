@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>一文搞懂MySQL的Join-聊一聊秒杀架构设计 | Xiusin</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571198822167">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1571198822167" class="site-logo">
+        <h1 class="site-title">Xiusin</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="/leecode" class="site-nav">
+            leecode
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">一文搞懂MySQL的Join-聊一聊秒杀架构设计</h2>
+            <div class="post-date">2019-09-17</div>
+            
+            <div class="post-content">
+              <p><strong>MySQL的Join到底能不能用</strong></p>
+<p>经常听到2种观点：</p>
+<ul>
+<li>join性能低，尽量少用</li>
+<li>多表join时，变为多个SQL进行多次查询</li>
+</ul>
+<p>其实对于上面的观点一定程度上是正确的，但不是完全正确。但之所以流传这么广，主要还是没有搞清楚实际状态，而根据实际使用中总结出来的一些模糊规律。只有了解的MySQL的Join实际执行方式，就会知道上面2种观点是一种模糊的规律，这种规律并不能指导我们实际开发。下面就说说MySQL的实际join执行方式。</p>
+<p><strong>MySQL的Join是如何执行的</strong></p>
+<p>join可以说一种集合的运算，比如left join,right join,inner join,full join,outer join，cross join等，这些集合间的计算关系对应在高中数学集合里面的交集，并集，补集，全集等。但在实际的代码中，join运算基本上是通过多层循环来实现的。</p>
+<p>举一个例子，假设有t1,t2两张表，表结构分别如下：</p>
+<pre><code>create table t1(  
+id int not null AUTO_INCREMENT,  
+username varchar(20) not null default '',  
+age int not null default 0,  
+PRIMARY key(`id`)  
+)ENGINE=INNODB DEFAULT CHARSET=UTF8MB4;  
+create table t2(  
+id int not null auto_increment,  
+username varchar(20) not null default '',  
+score int not null defalut 0,  
+primarykey(`id`)  
+))ENGINE=INNODB DEFAULT CHARSET=UTF8MB4;  
+</code></pre>
+<p>假设t1有100条数据，t2表有200条数</p>
+<p>查询sql为：</p>
+<pre><code>select t1.*, t2.* from t1 left join t2 on(t1.username=t2.username)  
+</code></pre>
+<p>那么这条SQL的执行步骤如下：</p>
+<ol>
+<li>从表t1中取一行数据r1</li>
+<li>从r1中，取出字段username到表t2中查询</li>
+<li>取出表t2中满足条件的行，跟r1组成一行，作为结果集的一部份</li>
+<li>重复执行步骤1,2,3,直到表t1的所以数据循环完毕</li>
+</ol>
+<p>基本上先遍历t，1,然后根据t1中的每行数据中的username，去表t2中查找满足条件的记录。基本就是2层循环。</p>
+<p><strong>如何优化join查询</strong></p>
+<p>从上面可以看出，join本质是循环，这里的开销如下：</p>
+<ol>
+<li>遍历t1数据，读取数据为t1表的行数，假设行数为n,则复杂度也为n</li>
+<li>根据t1的匹配字段username去t2中一行一行的查询数据</li>
+<li>这个过程，因为MySQL的数据存储结构为二叉树，时间复杂度为log2(m) m为t2表的总行数</li>
+<li>那么总复杂度近似为 n+n(2log2(m))</li>
+</ol>
+<p><strong>从上面的步骤可以看出，优化方向：</strong></p>
+<ol>
+<li>降低t1查询时的开销，主要是磁盘io开销，避免全表扫描，用索引</li>
+<li>降低t2查询时的开销，也用索引</li>
+<li>将数据量多的表做被驱动表，小表作驱动表，m取了对数，大表数据量大对复杂度的影响没有线性增长</li>
+<li>缓存t1表，不用每次去磁盘load,比如一次缓存100条，那么能显著降低磁盘读数据次数，t2每次与缓存中的t1数据进行比较</li>
+<li>随机磁盘读比较耗费磁盘性能，转为顺序读，因为二叉树的存储结构，每次非主键查找，有一个回表的动作，即根据主键再次查询需要的数据</li>
+</ol>
+<p><strong>优化的基本方法：</strong></p>
+<ol>
+<li>减少循环次数，减少磁盘IO次数，变随机IO为顺序IO</li>
+<li>其实MySQL针对上面的优化方法有对应的算法：</li>
+<li>Simple Nested Loop Join 最普通的循环，这个要避免</li>
+<li>Block Nested Loop Join 主要是针对t2表上没有索引，在步骤2将t2中的每一行数据跟join buffer数据做对比，这样将磁盘操作转为内存操作进行比较，但是如果被驱动表的数据比较大的话，也影响性能，主要是cache pool被占满，导致MySQL性能下降</li>
+<li>Index Nested Join 就是都通过主键进行查找关联，这种性能比较好</li>
+</ol>
+<p>Batched Key Access Join 这个是 Index Nested Join上做的优化，因为回表的存在，随机操作io也很耗费性能，这个算法的核心在于通过辅助索引去查找时，将得到的主键进行排序，然后按照主键递增的顺序进行查找，对磁盘的读接近顺序读，从而优化性能</p>
+<p><strong>到底要不用Join</strong></p>
+<p>从上面的分析我们可以看到，用Join还是可行的，只要性能可控且在接受范围内，还是能减少代码复杂度的。需要避免的是join的表没有索引，不然这样的SQL发线上是灾难性的。</p>
+<p>Join还是可以大胆的使用，只要把握好几个原则：</p>
+<ol>
+<li>尽量让join的列是索引列，而且最好是类型相同,尽可能是主键索引</li>
+<li>尽量将小表做驱动表（这一点MySQL在5.6某个版本后能自动完成）</li>
+<li>养成将写好的SQL进行explain的好习惯，观察SQL的执行过程</li>
+</ol>
+<hr>
+<p>原网址: <a href="https://www.toutiao.com/a6722330833031528968/">访问</a></p>
+
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/gao-bing-fa-chang-jing-xia-huan-cun-de-chang-jian-wen-ti">
+                  <h3 class="post-title">
+                    高并发场景下缓存的常见问题
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

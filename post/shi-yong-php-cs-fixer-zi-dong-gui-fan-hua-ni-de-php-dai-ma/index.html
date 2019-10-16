@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>使用PHP-CS-Fixer自动规范化你的PHP代码 | Xiusin</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571198822167">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1571198822167" class="site-logo">
+        <h1 class="site-title">Xiusin</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="/leecode" class="site-nav">
+            leecode
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">使用PHP-CS-Fixer自动规范化你的PHP代码</h2>
+            <div class="post-date">2019-09-17</div>
+            
+            <div class="post-content">
+              <p>良好的代码规范可以提高代码可读性，团队沟通维护成本。最推荐大家遵守的是 php-fig（PHP Framework Interop Group） 组织定义的 PSR-1 、 PSR-2 两个。不了解的同学可以先通过连接点击过去阅读下。</p>
+<p>这篇文章主要介绍下两个工具让你的代码符合规范。</p>
+<h1 id="php-cs-fixer">PHP-CS-Fixer</h1>
+<p>项目地址： https://github.com/FriendsOfPHP/PHP-CS-Fixer<br>
+使用效果可见今天 PHPHub 的一次 <a href="https://github.com/summerblue/phphub/commit/131e38a7b0dcf32477bee6db4373979be410f015">commit</a></p>
+<h1 id="通过安装-composer-安装">通过安装 Composer 安装</h1>
+<pre><code>composer.phar global require friendsofphp/php-cs-fixer
+</code></pre>
+<p>然后，确保<code>~/.composer/vendor/bin</code>目录在你的PATH中。</p>
+<pre><code>export PATH=&quot;$PATH:$HOME/.composer/vendor/bin&quot;
+</code></pre>
+<p>其他安装方法参考官方的 <a href="https://github.com/FriendsOfPHP/PHP-CS-Fixer#installation">Installation</a></p>
+<h1 id="使用">使用</h1>
+<p>使用 <code>fix</code> 指令修复文件夹或文件的代码风格</p>
+<pre><code>php php-cs-fixer.phar fix /path/to/dir
+php php-cs-fixer.phar fix /path/to/file
+</code></pre>
+<p><code>--verbose</code> 选项用于展示应用了的规则，默认是文本<code>（txt）</code>格式。</p>
+<p>使用 <code>--level</code> 选项设置修复至的「规范」。</p>
+<pre><code>php php-cs-fixer.phar fix /path/to/project --level=psr0
+php php-cs-fixer.phar fix /path/to/project --level=psr1
+php php-cs-fixer.phar fix /path/to/project --level=psr2
+php php-cs-fixer.phar fix /path/to/project --level=symfony
+</code></pre>
+<p>默认情况下执行的是 <code>PSR-2</code> 的所有选项以及一些附加选项（主要是 <code>symfony</code> 相关的）。还有一些属于『贡献级别』的选项，你可以通过 <code>--fixers</code> 选择性的添加，<code>--fixers</code> 的多个条件要用逗号分开：</p>
+<pre><code>php-cs-fixer fix /path/dir --fixers=linefeed,short_tag,indentation
+</code></pre>
+<p>如果有需要的话也可以使用 <code>-name_of_fixer</code> 采取黑名单的方式设定禁用哪些选项。如果同时设定了 <code>--fixers</code> 和 <code>-name_of_fixer</code>，前者的优先级更高。</p>
+<p>同时使用 <code>--dry-run</code> 和 <code>--diff</code> 命令可以显示出需要修改的汇总，但是并不实际修改。</p>
+<p>通过以下方式也可以查看有哪些内容是会修改的，但是并不实际改动文件：</p>
+<pre><code>cat foo.php | php-cs-fixer fix --diff -
+</code></pre>
+<h1 id="自定义配置">自定义配置</h1>
+<p><code>--config</code> 选项可以用来设置选取目录以及文件进行分析并格式化，但是这个选项只能设置一些常见的已知的项目，比如 <code>symfony</code>：</p>
+<pre><code># For the Symfony 2.3+ branch
+php-cs-fixer fix /path/to/sf23 --config=sf23
+</code></pre>
+<p>已有选项：</p>
+<ul>
+<li>default 默认配置</li>
+<li>magento magento 项目</li>
+<li>sf23 symfony 的项目</li>
+</ul>
+<p>更多时候，我们可以通过配置文件来自定义格式化选项以及搜索的目录和文件。自定义配置通过在项目根目录添加一个<code>.php_cs</code> 文件的方式实现。</p>
+<p>设置本身就是 PHP 代码，最后返回一个 <code>Symfony\CS\ConfigInterface</code> 的实例即可。你可以设置格式化的选项、级别、文件以及目录。</p>
+<p>下面是一个简单的例子：</p>
+<pre><code class="language-php">&lt;?php
+
+$finder = Symfony\CS\Finder\DefaultFinder::create()
+    -&gt;exclude('somedir') // 忽略 somedir
+    -&gt;in(__DIR__) // 当前目录
+;
+
+return Symfony\CS\Config\Config::create()
+    -&gt;fixers(['strict_param', 'short_array_syntax']) // 添加两个选项
+    -&gt;finder($finder)
+;
+
+</code></pre>
+<p>如果你想完全自定义格式化选项，就需要将格式化级别清空，并指定好所有需要的选项：</p>
+<pre><code class="language-php">&lt;?php
+
+$finder = Symfony\CS\Finder\DefaultFinder::create()
+    -&gt;in(__DIR__)
+;
+
+return Symfony\CS\Config\Config::create()
+    -&gt;level(Symfony\CS\FixerInterface::NONE_LEVEL)
+    -&gt;fixers(['trailing_spaces', 'encoding'])
+    -&gt;finder($finder)
+;
+</code></pre>
+<p>你也可以通过在选项前面添加 <code>-</code> 的方式来禁用某些选项，比如下面这个例子不采用 <code>PSR-0</code>：</p>
+<pre><code class="language-php">&lt;?php
+
+$finder = Symfony\CS\Finder\DefaultFinder::create()
+    -&gt;exclude('somedir')
+    -&gt;in(__DIR__)
+;
+
+return Symfony\CS\Config\Config::create()
+    -&gt;fixers(['-psr0'])
+    -&gt;finder($finder)
+;
+</code></pre>
+<p>默认条件下的格式化级别是 symfony (最严格)，你可以修改这个级别：</p>
+<pre><code class="language-php">&lt;?php
+
+return Symfony\CS\Config\Config::create()
+    -&gt;level(Symfony\CS\FixerInterface::PSR2_LEVEL)
+;
+
+</code></pre>
+<p>通过这些设置选项的组合，可以很轻易的定制出自己想要的效果。</p>
+<p>你也可以通过 <code>--config-file</code> 选项指定 <code>.php_cs</code> 文件的位置。</p>
+<p>启用缓存可以在后续的执行中加快速度，通过以下方法设置：</p>
+<pre><code class="language-php">&lt;?php
+
+return Symfony\CS\Config\Config::create()
+    -&gt;setUsingCache(true)
+;
+</code></pre>
+<h1 id="编辑器插件">编辑器插件</h1>
+<p>下面这些编辑器/IDE 的插件可以帮你简化格式化的工作：</p>
+<ul>
+<li><a href="https://github.com/Glavin001/atom-beautify">Atom</a></li>
+<li><a href="http://tzfrs.de/2015/01/automatically-format-code-to-match-psr-standards-with-phpstorm">PhpStorm</a></li>
+<li><a href="https://github.com/stephpy/vim-php-cs-fixer">Vim</a></li>
+</ul>
+<p>更多使用方式参见 <a href="https://github.com/FriendsOfPHP/PHP-CS-Fixer#usage">Usage</a></p>
+<h1 id="格式化选项">格式化选项</h1>
+<ul>
+<li>
+<p>psr0 [PSR-0]<br>
+PSR-0 的路径和命名空间标准</p>
+</li>
+<li>
+<p>encoding [PSR-1]<br>
+文件必须是不带 BOM 的 UTF-8 编码；</p>
+</li>
+<li>
+<p>short_tag [PSR-1]<br>
+只能使用 <?php ?> 和 <?= ?> 两种 PHP 代码标签；</p>
+</li>
+<li>
+<p>braces [PSR-2]<br>
+所有语句块都必须包含在花括号内，且位置以及缩进是符合标准的；</p>
+</li>
+<li>
+<p>class_definition [PSR-2]<br>
+class、trait、interfaces 关键字和名称之间只能有一个空格；</p>
+</li>
+<li>
+<p>elseif [PSR-2]<br>
+使用 elseif 替代 else if；</p>
+</li>
+<li>
+<p>eof_ending [PSR-2]<br>
+文件必须以空白行结尾；</p>
+</li>
+<li>
+<p>function_call_space [PSR-2]<br>
+调用函数和方法时，函数名和方法名与参数扩展之间不能有空格；</p>
+</li>
+<li>
+<p>function_declaration [PSR-2]<br>
+函数声明时空格的使用需要符合 PSR-2；</p>
+</li>
+<li>
+<p>indentation [PSR-2]<br>
+代码必须使用四个空格缩进而不是制表符；</p>
+</li>
+<li>
+<p>line_after_namespace [PSR-2]<br>
+命名空间的声明后必须有一个空白行；</p>
+</li>
+<li>
+<p>linefeed [PSR-2]<br>
+所有 PHP 文件都只能使用 LF(Unix) 结尾；</p>
+</li>
+<li>
+<p>lowercase_constants [PSR-2]<br>
+PHP 常量 true、false 和 null 必须使用小写；</p>
+</li>
+<li>
+<p>lowercase_keywords [PSR-2]<br>
+PHP 关键字必须都是小写；</p>
+</li>
+<li>
+<p>method_argument_space [PSR-2]<br>
+方法声明及调用时，参数之间的逗号前不能有空格，逗号后必须有一个空格；</p>
+</li>
+<li>
+<p>multiple_use [PSR-2]<br>
+每个 use 只能声明一个元素；</p>
+</li>
+<li>
+<p>parenthesis [PSR-2]<br>
+圆括号内两侧不能有空格；</p>
+</li>
+<li>
+<p>php_closing_tag [PSR-2]<br>
+纯 PHP 文件必须省略 ?&gt; 标签；</p>
+</li>
+<li>
+<p>single_line_after_imports [PSR-2]<br>
+每个 use 声明独立一行，且 use 语句块之后要有一个空白行；</p>
+</li>
+<li>
+<p>trailing_spaces [PSR-2]<br>
+删除非空行之后多余的空格；</p>
+</li>
+<li>
+<p>visibility [PSR-2]<br>
+每个属性和方法都必须指定作用域是 public、protected 还是 private，abstract 和 final 必须位于作用域关键字之前，static 必须位于作用域之后；</p>
+</li>
+<li>
+<p>array_element_no_space_before_comma [symfony]<br>
+数组声明中，逗号之前不能有空格；</p>
+</li>
+<li>
+<p>array_element_white_space_after_comma [symfony]<br>
+数组声明中，逗号之后必须有一个人空格；</p>
+</li>
+<li>
+<p>blankline_after_open_tag [symfony]<br>
+PHP 开始标签的同一行不能有代码，且下面必须有一个空白行；</p>
+</li>
+<li>
+<p>concat_without_spaces [symfony]<br>
+点连接符左右两边不能有多余的空格；</p>
+</li>
+<li>
+<p>double_arrow_multiline_whitespaces [symfony]<br>
+=&gt; 操作符两端不能有多个空白行；</p>
+</li>
+<li>
+<p>duplicate_semicolon [symfony]<br>
+删除重复的分号；</p>
+</li>
+<li>
+<p>empty_return [symfony]<br>
+return 语句如果没有任何返回的话直接写 return 即可（不用 return null）；</p>
+</li>
+<li>
+<p>extra_empty_lines [symfony]<br>
+删除多余的空白行；</p>
+</li>
+<li>
+<p>function_typehint_space [symfony]<br>
+修正函数参数和类型提示之间的缺失的空格问题；</p>
+</li>
+<li>
+<p>include [symfony]<br>
+include 和文件路径之间需要有一个空格，文件路径不需要用括号括起来；</p>
+</li>
+<li>
+<p>join_function [symfony]<br>
+使用 join 替换 implode 函数；</p>
+</li>
+<li>
+<p>list_commas [symfony]<br>
+删除 list 语句中多余的逗号；</p>
+</li>
+<li>
+<p>method_argument_default_value [symfony]<br>
+函数参数中有默认值的参数不能位于无默认值的参数之前；</p>
+</li>
+<li>
+<p>multiline_array_trailing_comma [symfony]<br>
+多行数组最后一个元素应该也有一个逗号；</p>
+</li>
+<li>
+<p>namespace_no_leading_whitespace [symfony]<br>
+命名空间前面不应该有空格；</p>
+</li>
+<li>
+<p>new_with_braces [symfony]<br>
+使用 new 新建实例时后面都应该带上括号；</p>
+</li>
+<li>
+<p>no_blank_lines_after_class_opening [symfony]<br>
+类开始标签后不应该有空白行；</p>
+</li>
+<li>
+<p>no_empty_lines_after_phpdocs [symfony]<br>
+PHP 文档块开始开始元素下面不应该有空白行；</p>
+</li>
+<li>
+<p>object_operator [symfony]<br>
+T_OBJECT_OPERATOR (-&gt;) 两端不应有空格；</p>
+</li>
+<li>
+<p>operators_spaces [symfony]<br>
+二进制操作符两端至少有一个空格；</p>
+</li>
+<li>
+<p>phpdoc_indent [symfony]<br>
+phpdoc 应该保持缩进；</p>
+</li>
+<li>
+<p>phpdoc_inline_tag [symfony]<br>
+修正 phpdoc 内联标签格式，使标签与后续内容始终位于一行；</p>
+</li>
+<li>
+<p>phpdoc_no_access [symfony]<br>
+@access 不应该出现在 phpdoc 中；</p>
+</li>
+<li>
+<p>phpdoc_no_empty_return [symfony]<br>
+@return void 和 @return null 不应该出现在 phpdoc 中；</p>
+</li>
+<li>
+<p>phpdoc_no_package [symfony]<br>
+@package 和 @subpackage 不应该出现在 phpdoc 中；</p>
+</li>
+<li>
+<p>phpdoc_params [symfony]<br>
+@param, @throws, @return, @var, 和 @type 等 phpdoc 标签都要垂直对齐；</p>
+</li>
+<li>
+<p>phpdoc_scalar [symfony]<br>
+phpdoc 标量类型声明时应该使用 int 而不是 integer，bool 而不是 boolean，float 而不是 real 或者 double；</p>
+</li>
+<li>
+<p>phpdoc_separation [symfony]<br>
+phpdoc 中注释相同的属性应该放在一起，不同的属性之间应该有一个空白行分割；</p>
+</li>
+<li>
+<p>phpdoc_short_description [symfony]<br>
+phpdoc 的简要描述应该以 .、! 或 ? 结尾；</p>
+</li>
+<li>
+<p>phpdoc_to_comment [symfony]<br>
+文档块应该都是结构化的元素；</p>
+</li>
+<li>
+<p>phpdoc_trim [symfony]<br>
+除了文档块最开始的部分和最后的部分，phpdoc 开始和结束都应该是有内容的；</p>
+</li>
+<li>
+<p>phpdoc_type_to_var [symfony]<br>
+@type 需要使用 @var 代替；</p>
+</li>
+<li>
+<p>phpdoc_types [symfony]<br>
+phpdoc 中应该正确使用大小写；</p>
+</li>
+<li>
+<p>phpdoc_var_without_name [symfony]<br>
+@var 和 @type 注释中不应该包含变量名；</p>
+</li>
+<li>
+<p>pre_increment [symfony]<br>
+不应该使用 ++i 或 --i 的用法；</p>
+</li>
+<li>
+<p>print_to_echo [symfony]<br>
+如果可能的话，使用 echo 代替 print 语句；</p>
+</li>
+<li>
+<p>remove_leading_slash_use [symfony]<br>
+删除 use 前的空行；</p>
+</li>
+<li>
+<p>remove_lines_between_uses [symfony]<br>
+删除 use 语句块中的空行；</p>
+</li>
+<li>
+<p>return [symfony]<br>
+return 之前应该有一个空行；</p>
+</li>
+<li>
+<p>self_accessor [symfony]<br>
+在当前类中使用 self 代替类名；</p>
+</li>
+<li>
+<p>short_bool_cast [symfony]<br>
+bool 类型数据前不应该试用两个感叹号；</p>
+</li>
+<li>
+<p>single_array_no_trailing_comma [symfony]<br>
+PHP 单行数组最后一个元素后面不应该有空格；</p>
+</li>
+<li>
+<p>single_blank_line_before_namespace [symfony]<br>
+命名空间声明前应该有一个空白行；</p>
+</li>
+<li>
+<p>single_quote [symfony]<br>
+简单字符串应该使用单引号代替双引号；</p>
+</li>
+<li>
+<p>spaces_after_semicolon [symfony]<br>
+修复分号后面的空格；</p>
+</li>
+<li>
+<p>spaces_before_semicolon [symfony]<br>
+禁止只有单行空格和分号的写法；</p>
+</li>
+<li>
+<p>spaces_cast [symfony]<br>
+变量和修饰符之间应该有一个空格；</p>
+</li>
+<li>
+<p>standardize_not_equal [symfony]<br>
+使用 &lt;&gt; 代替 !=；</p>
+</li>
+<li>
+<p>ternary_spaces [symfony]<br>
+三元运算符之间的空格标准化；</p>
+</li>
+<li>
+<p>trim_array_spaces [symfony]<br>
+数组需要格式化成和函数/方法参数类似，上下没有空白行；</p>
+</li>
+<li>
+<p>unalign_double_arrow [symfony]<br>
+不对其 =&gt;；</p>
+</li>
+<li>
+<p>unalign_equals [symfony]<br>
+不对其等号；</p>
+</li>
+<li>
+<p>unary_operators_spaces [symfony]<br>
+一元运算符和运算数需要相邻；</p>
+</li>
+<li>
+<p>unneeded_control_parentheses [symfony]<br>
+删除控制结构语句中多余的括号；</p>
+</li>
+<li>
+<p>unused_use [symfony]<br>
+删除没有用到的 use 语句；</p>
+</li>
+<li>
+<p>whitespacy_lines [symfony]<br>
+删除空白行中多余的空格；</p>
+</li>
+</ul>
+<p>当我们使用 PHP-CS-Fixer 让我们现有的代码规范化之后，我们怎么确保以后开发的代码，以及别人 pr 的代码都能正确的符合代码风格规范呢？</p>
+<h1 id="styleci">StyleCI</h1>
+<p>项目地址：https://github.com/StyleCI/StyleCI</p>
+<p>官方网站：https://styleci.io/</p>
+<p><code>StyleCI</code> 是一个 <code>Laravel5</code> 项目，功能实现也是由 <code>PHP-CS-Fixer</code> 驱动。</p>
+<p>它可以自己分析你项目的 <code>pull request</code>，并且在你 <code>merge</code> 前显示出分析的结果。<br>
+<img src="http://bucket-blog.oss-cn-shanghai.aliyuncs.com/YcpinIiulC.jpg" alt=""></p>
+<p>这两个都是好工具，对于规范项目代码风格很有帮助，推荐给大家。写得不是很详细，勿怪 😄</p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://xiusin.github.io/tag/3DnFO4FwD" class="tag">
+                    PHP扩展
+                  </a>
+                
+                  <a href="https://xiusin.github.io/tag/RaBOEiWy-D" class="tag">
+                    PHP
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/zmq-ji-chu-yong-fa">
+                  <h3 class="post-title">
+                    ZMQ基础用法
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

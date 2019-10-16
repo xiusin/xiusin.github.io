@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>swoole实现简单多人在线聊天群发 | Xiusin</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571198822167">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1571198822167" class="site-logo">
+        <h1 class="site-title">Xiusin</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="/leecode" class="site-nav">
+            leecode
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">swoole实现简单多人在线聊天群发</h2>
+            <div class="post-date">2019-09-17</div>
+            
+            <div class="post-content">
+              <p>由于本文的能力有限，有好多聊天逻辑的细节没有实现，只实现了群发，具体代码如下所示：</p>
+<pre><code class="language-php">&lt;?php
+$serv = new swoole_websocket_server(&quot;127.0.0.1&quot;, 3999);
+//服务的基本设置
+$serv-&gt;set(array(
+    'worker_num' =&gt; 2,
+    'reactor_num' =&gt; 8,
+    'task_worker_num' =&gt; 1,
+    'dispatch_mode' =&gt; 2,
+    'debug_mode' =&gt; 1,
+    'daemonize' =&gt; true,
+    'log_file' =&gt; __DIR__ . '/log/webs_swoole.log',
+    'heartbeat_check_interval' =&gt; 60,
+    'heartbeat_idle_time' =&gt; 600,
+));
+$serv-&gt;on('connect', function ($serv, $fd) {
+// echo &quot;客户端:$fd 已连接.&quot;.PHP_EOL;
+});
+//测试receive
+$serv-&gt;on(&quot;receive&quot;, function (swoole_server $serv, $fd, $from_id, $data) {
+// echo &quot;接收到消息#{$from_id}: receive $data &quot;.PHP_EOL;
+});
+$serv-&gt;on('open', function ($server, $req) {
+// echo &quot;server#{$server-&gt;worker_pid}: handshake success with fd#{$req-&gt;fd}&quot;.PHP_EOL;;
+// echo PHP_EOL;
+});
+$serv-&gt;on('message', function ($server, $frame) {
+// echo &quot;message: &quot;.$frame-&gt;data.PHP_EOL;
+    $msg = json_decode($frame-&gt;data, true);
+    switch ($msg['type']) {
+        case 'login':
+            $server-&gt;push($frame-&gt;fd, &quot;欢迎欢迎~&quot;);
+            break;
+        default:
+            break;
+    }
+    $msg['fd'] = $frame-&gt;fd;
+    $server-&gt;task($msg);
+});
+$serv-&gt;on(&quot;workerstart&quot;, function ($server, $workerid) {
+// echo &quot;workerstart: &quot;.$workerid.PHP_EOL;
+// echo PHP_EOL;
+});
+$serv-&gt;on(&quot;task&quot;, &quot;on_task&quot;);
+$serv-&gt;on(&quot;finish&quot;, function ($serv, $task_id, $data) {
+    return;
+});
+$serv-&gt;on('close', function ($server, $fd, $from_id) {
+// echo &quot;connection close: &quot;.$fd.PHP_EOL;
+// echo PHP_EOL;
+});
+$serv-&gt;start();
+function on_task($serv, $task_id, $from_id, $data)
+{
+    switch ($data['type']) {
+        case 'login':
+            $send_msg = &quot;说:我来了~&quot;;
+            break;
+        default:
+            $send_msg = &quot;说:{$data['msg']['speak']}&quot;;
+            break;
+    }
+    foreach ($serv-&gt;connections as $conn) {
+        if ($conn != $data['fd']) {
+            if (strpos($data['msg']['name'], &quot;游客&quot;) === 0) {
+                $name = $data['msg']['name'] . &quot;_&quot; . $data['fd'];
+            } else {
+                $name = $data['msg']['name'];
+            }
+        } else {
+            $name = &quot;我&quot;;
+        }
+        $serv-&gt;push($conn, $name . $send_msg);
+    }
+    return;
+}
+
+function on_finish($serv, $task_id, $data)
+{
+    return true;
+}
+</code></pre>
+<p>前端代码:</p>
+<pre><code class="language-html">&lt;!DOCTYPE html PUBLIC &quot;-//W3C//DTD HTML 4.01 Transitional//EN&quot; &quot;http://www.w3.org/TR/html4/loose.dtd&quot;&gt;
+&lt;html&gt;
+
+    &lt;head&gt;
+        &lt;meta http-equiv=&quot;Content-Type&quot; content=&quot;text/html; charset=UTF-8&quot;&gt;
+        &lt;title&gt;
+            WebSocket测试
+        &lt;/title&gt;
+        &lt;script language=&quot;javascript&quot; type=&quot;text/javascript&quot; src=&quot;jquery-1.12.0.min.js&quot;&gt;
+        &lt;/script&gt;
+    &lt;/head&gt;
+
+    &lt;body&gt;
+        &lt;h2&gt;
+            WebSocket Test
+        &lt;/h2&gt;
+        昵称：
+        &lt;input type=&quot;text&quot; id=&quot;name&quot; size=&quot;5&quot; value=&quot;游客&quot; /&gt;
+        &lt;input type=&quot;text&quot; id=&quot;content&quot;&gt;
+        &lt;button onclick=&quot;speak_to_all()&quot;&gt;
+            发送
+        &lt;/button&gt;
+        &lt;br/&gt;
+        &lt;br/&gt;
+        &lt;textarea id=&quot;message&quot; style=&quot;overflow-x:hidden&quot; rows=&quot;10&quot; cols=&quot;50&quot;&gt;
+        &lt;/textarea&gt;
+        &lt;div id=&quot;output&quot;&gt;
+        &lt;/div&gt;
+    &lt;/body&gt;
+    &lt;script language=&quot;javascript&quot; type=&quot;text/javascript&quot;&gt;
+        var wsUri = &quot;ws://127.0.0.1:3999/&quot;;
+        var output;
+        function init() {
+            output = document.getElementById(&quot;output&quot;);
+            testWebSocket();
+        }
+        function testWebSocket() {
+            websocket = new WebSocket(wsUri);
+            websocket.onopen = function(evt) {
+                onOpen(evt)
+            };
+            websocket.onclose = function(evt) {
+                onClose(evt)
+            };
+            websocket.onmessage = function(evt) {
+                onMessage(evt)
+            };
+            websocket.onerror = function(evt) {
+                onError(evt)
+            };
+        }
+        function get_speak_msg() {
+            var name = document.getElementById(&quot;name&quot;).value;
+            var speak = document.getElementById(&quot;content&quot;).value;
+            var json_msg = '{&quot;name&quot;:&quot;' + name + '&quot;,&quot;speak&quot;:\&quot;' + speak + '&quot;}';
+            return json_msg;
+        }
+        function pack_msg(type, msg) {
+            return '{&quot;type&quot;:&quot;' + type + '&quot;,&quot;msg&quot;:' + msg + '}';
+        }
+        function onOpen(evt) {
+            append_speak(&quot;已经联通服务器.........&quot;);
+            speak_msg = get_speak_msg();
+            send_msg = pack_msg(&quot;login&quot;, speak_msg);
+            doSend(send_msg);
+        }
+        function onClose(evt) {
+            append_speak(&quot;俺老孙去也！&quot;);
+        }
+        function onMessage(evt) {
+            append_speak(evt.data);
+        }
+        function onError(evt) {
+            alert(evt.data);
+        }
+        function doSend(message) {
+            websocket.send(message);
+        }
+        function append_speak(new_msg) {
+            document.getElementById(&quot;message&quot;).value = document.getElementById(&quot;message&quot;).value + new_msg + &quot;\n&quot;;
+            document.getElementById('message').scrollTop = document.getElementById('message').scrollHeight;
+        }
+        function speak_to_all() {
+            send_msg = pack_msg(&quot;speak&quot;, get_speak_msg());
+            if (document.getElementById(&quot;content&quot;).value == &quot;&quot;) {
+                return;
+            }
+            doSend(send_msg);
+            document.getElementById(&quot;content&quot;).value = &quot;&quot;;
+        }
+        init();
+    &lt;/script&gt;
+
+&lt;/html&gt;
+</code></pre>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://xiusin.github.io/tag/Xvdye0JOU" class="tag">
+                    Swoole
+                  </a>
+                
+                  <a href="https://xiusin.github.io/tag/RaBOEiWy-D" class="tag">
+                    PHP
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/php-zhong-de-traits-xiang-jie">
+                  <h3 class="post-title">
+                    PHP中的Traits详解
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>redis的发布订阅和队列模型的消息队列实现 | Xiusin</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571198822167">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1571198822167" class="site-logo">
+        <h1 class="site-title">Xiusin</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="/leecode" class="site-nav">
+            leecode
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">redis的发布订阅和队列模型的消息队列实现</h2>
+            <div class="post-date">2019-09-17</div>
+            
+            <div class="post-content">
+              <h1 id="redis用来消息队列的模型">redis用来消息队列的模型</h1>
+<blockquote>
+<p>定义公共载入文件</p>
+</blockquote>
+<pre><code class="language-php">&lt;?php
+//redis_connectionner.php
+$redis = new Redis();
+$redis-&gt;connect('127.0.0.1',6379);
+return $redis;
+</code></pre>
+<ul>
+<li>
+<p>利用redis的生产者消费模式进行消息队列 （不建议使用）, 有些时候可能会出现程序莫名其妙的卡住,问题不好复现</p>
+<ul>
+<li>利用redis的生产者和消费者模型进行消息队列实现</li>
+</ul>
+<blockquote>
+<p>创建生产者(发布消息 | 入队)文件</p>
+</blockquote>
+<pre><code class="language-php">&lt;?php
+//enqueue.php
+$redis = require &quot;../redis_connectionner.php&quot;;
+fwrite(STDOUT, &quot;生产者 -&gt; 消息队列服务器(redis)过程演示:&quot; . PHP_EOL);
+$str = &quot;qwertyuiopasdfghjklzxcvbnm1234567890&quot;;
+while (true) {
+	$char = $str[rand(0, strlen($str) - 1)];
+	sleep(1);
+	$redis-&gt;rpush(&quot;tasks&quot;,$char);
+	fwrite(STDOUT, &quot;入队:$char&quot; . PHP_EOL);
+}
+
+</code></pre>
+<blockquote>
+<p>创建消费者(处理消息 | 出队)文件</p>
+</blockquote>
+<pre><code class="language-php">&lt;?php
+//dequeue.php
+$redis = require &quot;../redis_connectionner.php&quot;;
+fwrite(STDOUT, &quot;消费者 &lt;- 消息队列服务器(redis)过程演示:&quot; . PHP_EOL);
+
+while (true) {
+	sleep(1);
+	$value = $redis-&gt;lpop('tasks');
+	if ($value) {
+		fwrite(STDOUT, &quot;出队:&quot; . $value . PHP_EOL);
+	} else {
+		fwrite(STDOUT, &quot;队列为空&quot; . PHP_EOL);
+	}
+}
+
+</code></pre>
+<blockquote>
+<p>启动入队文件</p>
+</blockquote>
+<pre><code class="language-bash">root@haochen /mnt/e/queue/demo_redis_queue
+  # php enqueue.php                                                                                                     !654
+生产者 -&gt; 消息队列服务器(redis)过程演示:
+入队:r
+入队:3
+入队:n
+入队:u
+入队:g
+入队:m
+入队:m
+入队:r
+</code></pre>
+<blockquote>
+<p>执行出队文件</p>
+</blockquote>
+<pre><code class="language-bash">    root@haochen /mnt/e/queue/demo_redis_queue
+      # php dequeue.php                                                                                                     !655
+    消费者 &lt;- 消息队列服务器(redis)过程演示:
+    出队:r
+    出队:3
+    出队:n
+    出队:u
+    出队:g
+    出队:m
+    出队:m
+    出队:r
+    队列为空
+    队列为空
+
+</code></pre>
+</li>
+</ul>
+<p>** 利用redis生产者消费者模式可以实现简单的队列, 但是据说在某些时候队列可能会卡住,导致对接无法进行.无法复现,只能说一下 **</p>
+<ul>
+<li>
+<p>利用redis发布订阅模式实现消息队列</p>
+<blockquote>
+<p>创建发布文件</p>
+</blockquote>
+<pre><code class="language-php">&lt;?php
+$redis = require &quot;../redis_connectionner.php&quot;;
+fwrite(STDOUT, &quot;发布 -&gt; 消息队列服务器(redis)过程演示:&quot; . PHP_EOL);
+$str = &quot;qwertyuiopasdfghjklzxcvbnm1234567890&quot;;
+$char = $str[rand(0, strlen($str) - 1)];
+$redis-&gt;publish(&quot;tasks&quot;,$char);
+fwrite(STDOUT, &quot;入队:$char&quot; . PHP_EOL);
+</code></pre>
+<blockquote>
+<p>创建订阅文件</p>
+</blockquote>
+<pre><code class="language-php">&lt;?php
+$redis = require &quot;../redis_connectionner.php&quot;;
+fwrite(STDOUT, &quot;订阅 &lt;- 消息队列服务器(redis)过程演示:&quot; . PHP_EOL);
+
+while (true) {
+	sleep(1);
+	$value = $redis-&gt;subscribe(['tasks'],'callback');	//无法获取到任务的时候会阻塞进程,直到发布者发布新的消息
+}
+
+function callback($instance,$channelName,$message){
+	fwrite(STDOUT,&quot;任务模型:&quot; . $channelName.&quot;,&quot;);
+	if ($message) {
+		fwrite(STDOUT, &quot;出队:&quot; . $message . PHP_EOL);
+	} else {
+		fwrite(STDOUT, &quot;队列为空&quot; . PHP_EOL);
+	}
+}
+
+</code></pre>
+<blockquote>
+<p>先运行订阅.php</p>
+</blockquote>
+<pre><code class="language-bash">root@haochen /mnt/e/queue/demo_redis_push_sub_queue
+# php subscribe.php                                                                                                   !658
+订阅 &lt;- 消息队列服务器(redis)过程演示:
+#处于阻塞状态, 等待发布出来的消息队列
+</code></pre>
+<blockquote>
+<p>再启动另一个窗口运行发布者</p>
+</blockquote>
+<pre><code>root@haochen:/mnt/e/queue/demo_redis_push_sub_queue# php publish.php
+发布 -&gt; 消息队列服务器(redis)过程演示:
+入队:y
+</code></pre>
+<blockquote>
+<p>订阅窗口则会立即执行发布的任务</p>
+</blockquote>
+<pre><code># php subscribe.php    
+订阅 &lt;- 消息队列服务器(redis)过程演示:
+任务模型:tasks,出队:y
+</code></pre>
+</li>
+</ul>
+<p>** 在练习代码的时候出现了订阅端抛出异常 <code>PHP Fatal error: Uncaught RedisException: read error on connection</code>  **</p>
+<blockquote>
+<p>解决办法</p>
+</blockquote>
+<p>由于redis扩展也是基于php 的socket方式实现，因此该参数值同样会起作用。找到了问题就比较好解决了：</p>
+<pre><code class="language-ini">1. 修改php.ini设置default_socket_timeout = 600
+2.ini_set('default_socket_timeout', -1);
+3.修改redis.conf, timeout 设为0
+</code></pre>
+<h1 id="参考资料">参考资料</h1>
+<ul>
+<li><a href="http://blog.csdn.net/u010832551/article/details/50485536">解决phpredis 'RedisException' with message 'read error on connection'</a></li>
+<li><a href="http://blog.csdn.net/qmhball/article/details/52575133">phpredis subscribe超时问题及解决</a></li>
+</ul>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://xiusin.github.io/tag/RaBOEiWy-D" class="tag">
+                    PHP
+                  </a>
+                
+                  <a href="https://xiusin.github.io/tag/JENxKgSnvJ" class="tag">
+                    消息队列
+                  </a>
+                
+                  <a href="https://xiusin.github.io/tag/bajlEyrR_Y" class="tag">
+                    Redis
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/text2img-wen-ben-bian-tu-pian-de-shi-yong">
+                  <h3 class="post-title">
+                    text2img文本变图片的使用
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

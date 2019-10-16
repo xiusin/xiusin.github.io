@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>从99.9%CPU浅谈Golang的定时器实现原理 | Xiusin</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571198822167">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1571198822167" class="site-logo">
+        <h1 class="site-title">Xiusin</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="/leecode" class="site-nav">
+            leecode
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">从99.9%CPU浅谈Golang的定时器实现原理</h2>
+            <div class="post-date">2019-09-16</div>
+            
+            <div class="post-content">
+              <h2 id="1-情景描述">1. 情景描述：</h2>
+<blockquote>
+<p>线上某系统大约运行了半个多月的时间，突然发现系统的交易处理时间延迟从最初的70ms 变成7s，也就是系统性能下降了100倍左右。经过一番盘查发现top命令下的系统CPU占用率几乎达到99.9%，然后重启系统之后问题未重现，第二天top一下CPU 20%, 第三天CPU占用率到30%，而且还有上升趋势。</p>
+</blockquote>
+<p>从上面的情景描述看，显然是系统中某种消耗CPU资源的任务发生了泄露。通过pprof最终定位到系统的timer调度占用几乎所有的CPU时间。这引起了笔者的极大兴趣，于是笔者通过google神奇进行golang cpu timer相关的搜索。随后<a href="https://link.jianshu.com/?t=http%3A%2F%2Ffiisio.me%2Fpages%2Fgo_deep_cpu_optimization.html%23">golang语言Api系统中CPU功耗优化300倍的过程</a>这篇文章的博主给了笔者很大启发，应该是程序中某些地方的Tick的使用姿势不对，于是笔者开始了对<code>time.After</code>和<code>time.Tick</code>背后原理的追溯。</p>
+<h2 id="2-定时器的使用">2. 定时器的使用</h2>
+<p>golang的定时器的使用非常简单，一般我们用的比较多的就是Timer和Ticker，如下所示：</p>
+<pre><code>
+for {
+    select {
+    case &lt;- time.After(10 * time.Microsecond):
+        fmt.Println(&quot;hello timer&quot;)
+    }
+}
+
+
+for {
+    select {
+    case &lt;- time.Tick(10 * time.Microsecond):
+        fmt.Println(&quot;hello, tick&quot;)
+    }
+}
+
+</code></pre>
+<p>乍一看这两种调用方式都没有问题，而且短时间测试两种方式的效果看起来一样，然后如果测试时你使用top命令查看两种场景下的进程CPU占用率，你会大吃一惊，截图如下：</p>
+<figure data-type="image" tabindex="1"><img src="https://xiusin.github.io/post-images/assets/1554790014-e3099bf295e4d8b6dd2a28d5f023b2d9.png" alt=""></figure>
+<p>场景1-time_after</p>
+<figure data-type="image" tabindex="2"><img src="https://xiusin.github.io/post-images/assets/1554790014-c6c1e996cc65da3b369f9c3edd1f84bb.png" alt=""></figure>
+<p>场景2-time_tick</p>
+<p>从上面两图中可以看出After的用法比同用法下的Tick的CPU占用率小很多，而且tick的CPU占用率是很快就上升到100%的，如果这里的间隔时间设置稍微大一些可以更加明显的观察到Tick进程的CPU占用率上升的情况，那这是什么原因呢？</p>
+<h2 id="3定时器的实现原理">3.定时器的实现原理</h2>
+<p>记得哪里看过一句话，<code>源码面前，了无秘密</code>。我们还是顺着Tick和After方法的源码探寻事情的真相吧.</p>
+<ul>
+<li>After的相关源码</li>
+</ul>
+<pre><code>
+func After(d Duration) &lt;-chan Time {
+    return NewTimer(d).C
+}
+
+
+func NewTimer(d Duration) *Timer {
+    c := make(chan Time, 1)
+    t := &amp;Timer{
+        C: c,
+        r: runtimeTimer{
+            when: when(d),
+            f:    sendTime,
+            arg:  c,
+        },
+    }
+    startTimer(&amp;t.r)
+    return t
+}
+
+</code></pre>
+<ul>
+<li>Tick的相关源码</li>
+</ul>
+<pre><code>
+func Tick(d Duration) &lt;-chan Time {
+    if d &lt;= 0 {
+        return nil
+    }
+    return NewTicker(d).C
+}
+
+
+func NewTicker(d Duration) *Ticker {
+    if d &lt;= 0 {
+        panic(errors.New(&quot;non-positive interval for NewTicker&quot;))
+    }
+    
+    
+    
+    c := make(chan Time, 1)
+    t := &amp;Ticker{
+        C: c,
+        r: runtimeTimer{
+            when:   when(d),
+            period: int64(d),
+            f:      sendTime,
+            arg:    c,
+        },
+    }
+    startTimer(&amp;t.r)
+    return t
+}
+
+</code></pre>
+<p>从Timer和Ticker的源码中可以看出，其启动都是通过startTimer进行启动的，startTimer的实现在<a href="https://link.jianshu.com/?t=https%3A%2F%2Fgithub.com%2Fgolang%2Fgo%2Fblob%2Fmaster%2Fsrc%2Fruntime%2Ftime.go">runtime/time.go</a>中。</p>
+<pre><code>
+
+
+func startTimer(t *timer) {
+    if raceenabled {
+        racerelease(unsafe.Pointer(t))
+    }
+    addtimer(t)
+}
+
+func addtimer(t *timer) {
+    tb := t.assignBucket()
+    lock(&amp;tb.lock)
+    tb.addtimerLocked(t)
+    unlock(&amp;tb.lock)
+}
+
+
+
+
+func (tb *timersBucket) addtimerLocked(t *timer) {
+    
+    
+    if t.when &lt; 0 {
+        t.when = 1&lt;&lt;63 - 1
+    }
+    t.i = len(tb.t)
+    tb.t = append(tb.t, t)
+    siftupTimer(tb.t, t.i)
+    if t.i == 0 {
+        
+        if tb.sleeping {
+            tb.sleeping = false
+            notewakeup(&amp;tb.waitnote)
+        }
+        if tb.rescheduling {
+            tb.rescheduling = false
+            goready(tb.gp, 0)
+        }
+    }
+    if !tb.created {
+        tb.created = true
+        go timerproc(tb)
+    }
+}
+
+</code></pre>
+<pre><code>type timersBucket struct {
+    lock         mutex
+    gp           *g
+    created      bool
+    sleeping     bool
+    rescheduling bool
+    sleepUntil   int64
+    waitnote     note
+    t            []*timer
+}
+
+</code></pre>
+<p>定时器处理逻辑</p>
+<pre><code>func timerproc(tb *timersBucket) {
+    tb.gp = getg()
+    for {
+        lock(&amp;tb.lock)
+        tb.sleeping = false
+        now := nanotime()
+        delta := int64(-1)
+        for {
+            if len(tb.t) == 0 { 
+                delta = -1
+                break
+            }
+            t := tb.t[0] 
+            delta = t.when - now
+            if delta &gt; 0 { 
+                break
+            }
+            if t.period &gt; 0 { 
+                
+                t.when += t.period * (1 + -delta/t.period)
+                siftdownTimer(tb.t, 0)
+            } else {
+                
+                
+                last := len(tb.t) - 1
+                if last &gt; 0 {
+                    tb.t[0] = tb.t[last]
+                    tb.t[0].i = 0
+                }
+                tb.t[last] = nil
+                tb.t = tb.t[:last]
+                if last &gt; 0 {
+                    siftdownTimer(tb.t, 0)
+                }
+                t.i = -1 
+            }
+            f := t.f
+            arg := t.arg
+            seq := t.seq
+            unlock(&amp;tb.lock)
+            if raceenabled {
+                raceacquire(unsafe.Pointer(t))
+            }
+            f(arg, seq) 
+            lock(&amp;tb.lock)
+        }
+        if delta &lt; 0 || faketime &gt; 0 {
+            
+            tb.rescheduling = true
+            goparkunlock(&amp;tb.lock, &quot;timer goroutine (idle)&quot;, traceEvGoBlock, 1)
+            continue
+        }
+        
+        tb.sleeping = true
+        tb.sleepUntil = now + delta
+        noteclear(&amp;tb.waitnote)
+        unlock(&amp;tb.lock)
+        notetsleepg(&amp;tb.waitnote, delta)
+    }
+}
+
+</code></pre>
+<p>以上便是定时器调用的主要逻辑，这里总结一下基本原理：</p>
+<ol>
+<li>所有timer统一使用一个最小堆结构去维护，按照timer的when（到期时间）比较大小；</li>
+<li>timer处理线程从堆顶开始处理每个timer, 对于到期的timer, 如果其period&gt;0, 则表明该timer 属于Ticker类型，调整其下次到期时间并调整其在堆中的位置，否则从堆中移除该timer;</li>
+<li>调用该timer的处理函数以及其他相关工作；</li>
+</ol>
+<h2 id="4-再论定时器的正确使用姿势">4. 再论定时器的正确使用姿势</h2>
+<p>从第3节的源码中我们可以看到After和Tick其实是一个创建了一个单次的timer一个是创建了一个永久性的timer。因此场景2中Tick的用法会导致进程中创建无数个Tick，这最终导致了timer处理线程忙死。因此，使用Tick进行定时任务的话我们可以将Tick对象建在循环外面：</p>
+<pre><code>    tick := time.Tick(10 * time.Microsecond)
+    for {
+        select {
+        case &lt;- tick:
+            fmt.Printf(&quot;hello, tick 2&quot;)
+        }
+    }
+
+</code></pre>
+<p>其次golang的处理方式中也可以看出，go的timer的处理和用户端程序定义的间隔时间不一定完全精准，用户的回调函数执行时间越长单个timer对堆中其他邻近timer的影响越大。因此timer的回调函数一定是执行时间越短越好。</p>
+<p>原网址: <a href="https://www.jianshu.com/p/c9e8aaa13415">访问</a></p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://xiusin.github.io/tag/V8iLpgvyZ" class="tag">
+                    定时器优化
+                  </a>
+                
+                  <a href="https://xiusin.github.io/tag/8QTdjVvR4" class="tag">
+                    golang
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/tong-guo-li-zi-li-jie-for-range">
+                  <h3 class="post-title">
+                    通过例子理解For range
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

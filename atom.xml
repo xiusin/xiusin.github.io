@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://xiusin.github.io</id>
+    <title>Xiusin</title>
+    <updated>2019-10-16T04:10:55.791Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://xiusin.github.io"/>
+    <link rel="self" href="https://xiusin.github.io/atom.xml"/>
+    <subtitle>山不向我来，我便向它去，若一去不回，便一去不回。</subtitle>
+    <logo>https://xiusin.github.io/images/avatar.png</logo>
+    <icon>https://xiusin.github.io/favicon.ico</icon>
+    <rights>All rights reserved 2019, Xiusin</rights>
+    <entry>
+        <title type="html"><![CDATA[slice的异常情况与解析]]></title>
+        <id>https://xiusin.github.io/post/slice-de-yi-chang-qing-kuang-yu-jie-xi</id>
+        <link href="https://xiusin.github.io/post/slice-de-yi-chang-qing-kuang-yu-jie-xi">
+        </link>
+        <updated>2019-10-16T04:02:31.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[leetcode - 去除数组重复项]]></title>
+        <id>https://xiusin.github.io/post/leetcode-qu-chu-shu-zu-chong-fu-xiang</id>
+        <link href="https://xiusin.github.io/post/leetcode-qu-chu-shu-zu-chong-fu-xiang">
+        </link>
+        <updated>2019-09-29T04:29:58.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[自旋锁的自旋是什么意思-底层原理又是什么]]></title>
+        <id>https://xiusin.github.io/post/zi-xuan-suo-de-zi-xuan-shi-shi-me-yi-si-di-ceng-yuan-li-you-shi-shi-me</id>
+        <link href="https://xiusin.github.io/post/zi-xuan-suo-de-zi-xuan-shi-shi-me-yi-si-di-ceng-yuan-li-you-shi-shi-me">
+        </link>
+        <updated>2019-09-24T12:26:09.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[面试题 - 实现一个负载均衡器]]></title>
+        <id>https://xiusin.github.io/post/mian-shi-ti-shi-xian-yi-ge-fu-zai-jun-heng-qi</id>
+        <link href="https://xiusin.github.io/post/mian-shi-ti-shi-xian-yi-ge-fu-zai-jun-heng-qi">
+        </link>
+        <updated>2019-09-23T08:57:18.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[ 双缓存数据库双写一致性问题]]></title>
+        <id>https://xiusin.github.io/post/shuang-huan-cun-shu-ju-ku-shuang-xie-yi-zhi-xing-wen-ti-jiu-ying-gai-zhe-me-jie-jue</id>
+        <link href="https://xiusin.github.io/post/shuang-huan-cun-shu-ju-ku-shuang-xie-yi-zhi-xing-wen-ti-jiu-ying-gai-zhe-me-jie-jue">
+        </link>
+        <updated>2019-09-20T06:39:08.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[一文搞懂MySQL的Join-聊一聊秒杀架构设计]]></title>
+        <id>https://xiusin.github.io/post/yi-wen-gao-dong-mysql-de-join-liao-yi-liao-miao-sha-jia-gou-she-ji</id>
+        <link href="https://xiusin.github.io/post/yi-wen-gao-dong-mysql-de-join-liao-yi-liao-miao-sha-jia-gou-she-ji">
+        </link>
+        <updated>2019-09-17T03:39:31.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[高并发场景下缓存的常见问题]]></title>
+        <id>https://xiusin.github.io/post/gao-bing-fa-chang-jing-xia-huan-cun-de-chang-jian-wen-ti</id>
+        <link href="https://xiusin.github.io/post/gao-bing-fa-chang-jing-xia-huan-cun-de-chang-jian-wen-ti">
+        </link>
+        <updated>2019-09-17T03:38:01.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[缓存雪崩、缓存穿透、缓存预热、缓存更新、缓存降级等问题]]></title>
+        <id>https://xiusin.github.io/post/huan-cun-xue-beng-huan-cun-chuan-tou-huan-cun-yu-re-huan-cun-geng-xin-huan-cun-jiang-ji-deng-wen-ti</id>
+        <link href="https://xiusin.github.io/post/huan-cun-xue-beng-huan-cun-chuan-tou-huan-cun-yu-re-huan-cun-geng-xin-huan-cun-jiang-ji-deng-wen-ti">
+        </link>
+        <updated>2019-09-17T03:36:51.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[深入理解mysql四种隔离级别及底层实现原理（MVCC和锁）]]></title>
+        <id>https://xiusin.github.io/post/shen-ru-li-jie-mysql-si-chong-ge-chi-ji-bie-ji-di-ceng-shi-xian-yuan-li-mvcc-he-suo</id>
+        <link href="https://xiusin.github.io/post/shen-ru-li-jie-mysql-si-chong-ge-chi-ji-bie-ji-di-ceng-shi-xian-yuan-li-mvcc-he-suo">
+        </link>
+        <updated>2019-09-17T03:35:54.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[数据库事务隔离级别-- 脏读、幻读、不可重复读（清晰解释）]]></title>
+        <id>https://xiusin.github.io/post/shu-ju-ku-shi-wu-ge-chi-ji-bie-zang-du-huan-du-bu-ke-chong-fu-du-qing-xi-jie-shi</id>
+        <link href="https://xiusin.github.io/post/shu-ju-ku-shi-wu-ge-chi-ji-bie-zang-du-huan-du-bu-ke-chong-fu-du-qing-xi-jie-shi">
+        </link>
+        <updated>2019-09-17T03:11:08.000Z</updated>
+    </entry>
+</feed>

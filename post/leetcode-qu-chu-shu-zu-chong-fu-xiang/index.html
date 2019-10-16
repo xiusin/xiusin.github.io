@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>leetcode - 去除数组重复项 | Xiusin</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571198822167">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1571198822167" class="site-logo">
+        <h1 class="site-title">Xiusin</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="/leecode" class="site-nav">
+            leecode
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">leetcode - 去除数组重复项</h2>
+            <div class="post-date">2019-09-29</div>
+            
+            <div class="post-content">
+              <h2 id="题目描述">题目描述</h2>
+<p>给定一个排序数组，你需要在原地删除重复出现的元素，使得每个元素只出现一次，返回移除后数组的新长度。</p>
+<p>不要使用额外的数组空间，你必须在原地修改输入数组并在使用 O(1) 额外空间的条件下完成。</p>
+<p>示例 1:</p>
+<p>给定数组 <code>nums = [1,1,2]</code>,</p>
+<p>函数应该返回新的长度 2, 并且原数组 nums 的前两个元素被修改为 1, 2。</p>
+<p>你不需要考虑数组中超出新长度后面的元素。<br>
+示例 2:</p>
+<p>给定 <code>nums = [0,0,1,1,1,2,2,3,3,4]</code>,</p>
+<p>函数应该返回新的长度 5, 并且原数组 nums 的前五个元素被修改为 0, 1, 2, 3, 4。</p>
+<p>你不需要考虑数组中超出新长度后面的元素。<br>
+说明:</p>
+<p>为什么返回数值是整数，但输出的答案是数组呢?</p>
+<p>请注意，输入数组是以“引用”方式传递的，这意味着在函数里修改输入数组对于调用者是可见的。</p>
+<p>你可以想象内部操作如下:</p>
+<p>nums 是以“引用”方式传递的。也就是说，不对实参做任何拷贝</p>
+<pre><code>int len = removeDuplicates(nums);
+</code></pre>
+<p>在函数里修改输入数组对于调用者是可见的。<br>
+根据你的函数返回的长度, 它会打印出数组中该长度范围内的所有元素。</p>
+<pre><code>for (int i = 0; i &lt; len; i++) {
+    print(nums[i]);
+}
+</code></pre>
+<blockquote>
+<p>官方: https://leetcode-cn.com/problems/remove-duplicates-from-sorted-array/solution/shan-chu-pai-xu-shu-zu-zhong-de-zhong-fu-xiang-by-/</p>
+</blockquote>
+<pre><code class="language-go">func removeDuplicates(nums []int) int {
+	i := 0 // 索引 or 计数  慢指针
+	if len(nums) &gt; 0 {
+		for j := 1; j &lt; len(nums); j++ {
+			if nums[j] != nums[i] {
+				// 后移指针覆盖数据
+				i++
+				// 使用j 覆盖 i
+				nums[i] = nums[j]
+			}
+		}
+		i = i + 1	// 最终索引位置+1 = 总数
+	}
+	return i
+}
+
+</code></pre>
+<blockquote>
+<p>陷入了思维循环, 记录一下官方的题解办法,并且分解成步骤:(同向指针, 快慢的区别)</p>
+</blockquote>
+<ol>
+<li>
+<p>测试用例: 1, 1, 1, 2, 3, 4, 4</p>
+</li>
+<li>
+<p>初始化i指针指向0的位置, 初始化j指针指向1的位置</p>
+</li>
+<li>
+<p>i指针不动, 移动j指针, 直到找到不相同的位置(<code>j跳过的值统统为重复的值, 可以直接覆盖掉</code>)</p>
+</li>
+<li>
+<p>后移i指针, 为什么一定能移动呢? (试想一下, 当指针i和j是相邻的位置并且值不同, i =1, j=2, 当i变成j 其实就相当与i = j 属于自身交换值, 没有改变)</p>
+</li>
+<li>
+<p>根据本例, 最终变成了 1, 2 (i指向的位置), 1,2(j指向的位置),3,4,4</p>
+</li>
+<li>
+<p>继续迭代 j向后移动, 指向了3的位置j=4 , 此时i指向的值和j的指向值不同, 则后移i覆盖数据: 1, 2 , 3(i指向的位置),2,3(j指向的位置),4,4</p>
+</li>
+<li>
+<p>继续迭代 j向后移动, 指向了4 , 此时i的值和j的值不同, 则后移i的位置覆盖数据: 1, 2 , 3,4,(i指向的位置),3,4(j指向的位置),4</p>
+</li>
+<li>
+<p>继续迭代 j向后移动, 指向了5 , 此时i的值和j的值相同</p>
+</li>
+<li>
+<p>结束, 此时i的值为最终的索引位置, 还需要计算为总数,即 i+1</p>
+</li>
+</ol>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://xiusin.github.io/tag/-v0BJUMeB" class="tag">
+                    双指针
+                  </a>
+                
+                  <a href="https://xiusin.github.io/tag/Gohy8MwVeg" class="tag">
+                    leetcode
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/zi-xuan-suo-de-zi-xuan-shi-shi-me-yi-si-di-ceng-yuan-li-you-shi-shi-me">
+                  <h3 class="post-title">
+                    自旋锁的自旋是什么意思-底层原理又是什么
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

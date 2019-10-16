@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>4种事务的隔离级别，InnoDB如何巧妙实现？ | Xiusin</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571198822167">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1571198822167" class="site-logo">
+        <h1 class="site-title">Xiusin</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="/leecode" class="site-nav">
+            leecode
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">4种事务的隔离级别，InnoDB如何巧妙实现？</h2>
+            <div class="post-date">2019-09-12</div>
+            
+            <div class="post-content">
+              <p>4种事务的隔离级别，InnoDB如何巧妙实现？</p>
+<p>事务ACID特性，其中I代表隔离性(Isolation)。</p>
+<p><strong>什么是事务的隔离性？</strong></p>
+<p>隔离性是指，多个用户的并发事务访问同一个数据库时，一个用户的事务不应该被其他用户的事务干扰，多个并发事务之间要相互隔离。</p>
+<p><strong>一个事务怎么会干扰其他事务呢？</strong></p>
+<p>咱们举例子来说明，假设有InnoDB表：</p>
+<pre><code>t(id PK, name);
+</code></pre>
+<p>表中有三条记录：</p>
+<pre><code>1, shenjian
+2, zhangsan
+3, lisi
+</code></pre>
+<p><strong>case 1</strong></p>
+<p>事务A，先执行，处于未提交的状态：</p>
+<pre><code class="language-sql">insert into t values(4, wangwu);
+</code></pre>
+<p>事务B，后执行，也未提交：</p>
+<pre><code class="language-sql">select * from t;
+</code></pre>
+<p>如果事务B能够读取到(4, wangwu)这条记录，事务A就对事务B产生了影响，这个影响叫做“<code>读脏</code>”，读到了未提交事务操作的记录。</p>
+<p><strong>case 2</strong></p>
+<p>事务A，先执行：</p>
+<pre><code class="language-sql">select * from t where id=1;
+</code></pre>
+<p>结果集为：</p>
+<pre><code>1, shenjian
+</code></pre>
+<p>事务B，后执行，并且提交：</p>
+<pre><code class="language-sql">update t set name=xxoo where id=1;
+commit;
+</code></pre>
+<p>事务A，再次执行相同的查询：</p>
+<pre><code class="language-sql">select * from t where id=1;
+</code></pre>
+<p>结果集为：</p>
+<pre><code>1, xxoo
+</code></pre>
+<p>这次是已提交事务B对事务A产生的影响，这个影响叫做“<code>不可重复读</code>”，一个事务内相同的查询，得到了不同的结果。</p>
+<p><strong>case 3</strong></p>
+<p>事务A，先执行：</p>
+<p>select * from t where id&gt;3;</p>
+<p>结果集为：</p>
+<p>NULL</p>
+<p>事务B，后执行，并且提交：</p>
+<pre><code class="language-sql">insert into t values(4, wangwu);
+commit;
+</code></pre>
+<p>事务A，首次查询了id&gt;3的结果为NULL，于是想插入一条为4的记录：</p>
+<pre><code class="language-sql">insert into t values(4, xxoo);
+</code></pre>
+<p>结果集为：</p>
+<pre><code>Error : duplicate key!
+</code></pre>
+<p>事务A的内心OS是：你TM在逗我，查了id&gt;3为空集，insert id=4告诉我PK冲突？</p>
+<p>这次是已提交事务B对事务A产生的影响，这个影响叫做“<code>幻读</code>”。</p>
+<p>可以看到，并发的事务可能导致其他事务：</p>
+<ul>
+<li>读脏</li>
+<li>不可重复读</li>
+<li>幻读</li>
+</ul>
+<p><strong>InnoDB实现了哪几种事务的隔离级别？</strong></p>
+<p>按照SQL92标准，InnoDB实现了四种不同事务的隔离级别：</p>
+<ul>
+<li>读未提交(Read Uncommitted)</li>
+<li>读提交(Read Committed, RC)</li>
+<li>可重复读(Repeated Read, RR)</li>
+<li>串行化(Serializable)</li>
+</ul>
+<p>不同事务的隔离级别，实际上是一致性与并发性的一个权衡与折衷。</p>
+<p><strong>InnoDB的四种事务的隔离级别，分别是怎么实现的？</strong></p>
+<p>InnoDB使用不同的锁策略(Locking Strategy)来实现不同的隔离级别。</p>
+<p><strong>一，读未提交(Read Uncommitted)</strong></p>
+<p>这种事务隔离级别下，select语句不加锁。</p>
+<p><em>画外音：官方的说法是</em></p>
+<p><em>SELECT statements are performed in a nonlocking fashion.</em></p>
+<p>此时，可能读取到不一致的数据，即“读脏”。这是并发最高，一致性最差的隔离级别。</p>
+<p><strong>二，串行化(Serializable)</strong></p>
+<p>这种事务的隔离级别下，所有select语句都会被隐式的转化为select ... in share mode.</p>
+<p>这可能导致，如果有未提交的事务正在修改某些行，所有读取这些行的select都会被阻塞住。</p>
+<p><em>画外音：官方的说法是</em></p>
+<p><em>To force a plain SELECT to block if other transactions have modified the selected rows.</em></p>
+<p>这是一致性最好的，但并发性最差的隔离级别。</p>
+<p>在互联网大数据量，高并发量的场景下，几乎<strong>不会使用</strong>上述两种隔离级别。</p>
+<p><strong>三，可重复读(Repeated Read, RR)</strong></p>
+<p>这是InnoDB默认的隔离级别，在RR下：</p>
+<p>(1)普通的select使用快照读(snapshot read)，这是一种不加锁的一致性读(Consistent Nonlocking Read)，底层使用MVCC来实现，具体的原理在《InnoDB并发如此高，原因竟然在这？》中有详细的描述；</p>
+<p>(2)加锁的select(select ... in share mode / select ... for update), update, delete等语句，它们的锁，依赖于它们是否在唯一索引(unique index)上使用了唯一的查询条件(unique search condition)，或者范围查询条件(range-type search condition)：</p>
+<ul>
+<li><strong>在唯一索引上使用唯一的查询条件</strong>，会使用记录锁(record lock)，而不会封锁记录之间的间隔，即不会使用间隙锁(gap lock)与临键锁(next-key lock)</li>
+<li><strong>范围查询条件</strong>，会使用间隙锁与临键锁，锁住索引记录之间的范围，避免范围间插入记录，以避免产生幻影行记录，以及避免不可重复的读</li>
+</ul>
+<p><em>画外音：这一段有点绕，多读几遍。</em></p>
+<p>关于<strong>记录锁，间隙锁，临键锁</strong>的更多说明，详见《InnoDB，select为啥会阻塞insert？》。</p>
+<p><strong>四，读提交(Read Committed, RC)</strong></p>
+<p>这是互联网最常用的隔离级别，在RC下：</p>
+<p>(1)普通读是快照读；</p>
+<p>(2)加锁的select, update, delete等语句，除了在外键约束检查(foreign-key constraint checking)以及重复键检查(duplicate-key checking)时会封锁区间，其他时刻都只使用记录锁；</p>
+<p>此时，其他事务的插入依然可以执行，就可能导致，读取到幻影记录。</p>
+<p><strong>总结</strong></p>
+<ul>
+<li>并发事务之间相互干扰，可能导致事务出现读脏，不可重复度，幻读等问题</li>
+<li>InnoDB实现了SQL92标准中的四种隔离级别</li>
+</ul>
+<p>(1)<strong>读未提交</strong>：select不加锁，可能出现读脏；</p>
+<p>(2)<strong>读提交(RC)</strong>：普通select快照读，锁select /update /delete 会使用记录锁，可能出现不可重复读；</p>
+<p>(3)<strong>可重复读(RR)</strong>：普通select快照读，锁select /update /delete 根据查询条件情况，会选择记录锁，或者间隙锁/临键锁，以防止读取到幻影记录；</p>
+<p>(4)<strong>串行化</strong>：select隐式转化为select ... in share mode，会被update与delete互斥；</p>
+<ul>
+<li>InnoDB默认的隔离级别是RR，用得最多的隔离级别是RC</li>
+</ul>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://xiusin.github.io/tag/3zMPF1M1G" class="tag">
+                    mysql
+                  </a>
+                
+                  <a href="https://xiusin.github.io/tag/BTEokj0CGN" class="tag">
+                    innodb
+                  </a>
+                
+              </div>
+            
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

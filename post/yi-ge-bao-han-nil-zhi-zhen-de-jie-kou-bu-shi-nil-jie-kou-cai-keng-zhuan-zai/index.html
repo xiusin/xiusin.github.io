@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>“一个包含nil指针的接口不是nil接口”踩坑 [转载] | Xiusin</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571198822167">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1571198822167" class="site-logo">
+        <h1 class="site-title">Xiusin</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="/leecode" class="site-nav">
+            leecode
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">“一个包含nil指针的接口不是nil接口”踩坑 [转载]</h2>
+            <div class="post-date">2019-09-16</div>
+            
+            <div class="post-content">
+              <p>最近在项目中踩了一个深坑——“Golang中一个包含nil指针的接口不是nil接口”，总结下分享出来，如果你不是很理解这句话，那推荐认真看下下面的示例代码，避免以后写代码时踩坑。</p>
+<p>先一起来看下这段代码，你感觉有没有问题呢？</p>
+<pre><code>type IPeople interface {
+	hello()
+}
+type People struct {
+}
+
+func (p *People) hello() {
+	fmt.Println(&quot;github.com/meetbetter&quot;)
+}
+
+func errFunc1(in int) *People {
+	if in == 0 {
+		fmt.Println(&quot;importantFunc返回了一个nil&quot;)
+		return nil
+	} else {
+		fmt.Println(&quot;importantFunc返回了一个非nil值&quot;)
+		return &amp;People{}
+	}
+
+}
+
+func main() {
+	var i IPeople
+
+	in := 0
+
+	i = errFunc1(in)
+
+	if i == nil {
+
+		fmt.Println(&quot;哈，外部接收到也是nil&quot;)
+	} else {
+
+		fmt.Println(&quot;咦，外部接收到不是nil哦&quot;)
+		fmt.Printf(&quot;%v, %T\n&quot;, i, i)
+	}
+
+}
+复制代码
+</code></pre>
+<p>这段代码的执行结果是:</p>
+<pre><code>importantFunc返回了一个nil
+咦，外部接收到不是nil哦
+&lt;nil&gt;, *main.People
+复制代码
+</code></pre>
+<p>可以看到在main函数中收到的返回值不是nil， 明明在errFunc1()函数中返回的是nil，到了main函数为什么收到的不是nil呢？ 这是因为：将nil赋值给<code>*People</code>后再将<code>*People</code>赋值给interface，<code>*People</code>本身是是个指向nil的指针，但是将其赋给接口时只是接口中的值为nil，但是接口中的类型信息为<code>*main.People</code>而不是nil，所以这个接口不是nil。 是的，Golang中的interface类型包含两部分信息——值信息和类型信息，只有interface的值合并类型都为nil时interface才为nil，interface底层实现可以在后面的源码分析看到。</p>
+<p>先来看看正确的处理接口返回值的方法，是直接将nil赋给interface：</p>
+<pre><code>
+func rightFunc(in int) IPeople {
+	if in == 0 {
+		fmt.Println(&quot;importantFunc返回了一个nil&quot;)
+		return nil
+	} else {
+		fmt.Println(&quot;importantFunc返回了一个非nil值&quot;)
+		return &amp;People{}
+	}
+
+}
+复制代码
+</code></pre>
+<p>下面的代码更清晰的证明了<code>一个包含nil指针的接口不是nil接口</code>的结论：</p>
+<pre><code>type IPeople interface {
+	hello()
+}
+type People struct {
+}
+
+func (p *People) hello() {
+	fmt.Println(&quot;github.com/meetbetter&quot;)
+}
+
+
+func errFunc() *People {
+	var p *People
+
+	return p
+}
+
+
+func rightFunc() IPeople {
+	var p *People
+
+	return p
+}
+func main() {
+
+	if errFunc() == nil {
+
+		fmt.Println(&quot;对了哦，外部接收到也是nil&quot;)
+	} else {
+
+		fmt.Println(&quot;错了咦，外部接收到不是nil哦&quot;)
+
+	}
+
+	if rightFunc() == nil {
+
+		fmt.Println(&quot;对了哦，外部接收到也是nil&quot;)
+	} else {
+
+		fmt.Println(&quot;错了咦，外部接收到不是nil哦&quot;)
+
+	}
+
+}
+复制代码
+</code></pre>
+<p>输出结果：</p>
+<pre><code>对了哦，外部接收到也是nil
+错了咦，外部接收到不是nil哦
+复制代码
+</code></pre>
+<p>下面的注释信息来自参考文章中，从interface底层实现可以看出iface比eface 中间多了一层itab结构， itab 存储_type信息和[]fun方法集，所以即使data指向了nil 并不代表interface 就是nil， 还要考虑_type信息。</p>
+<pre><code>type eface struct {      
+    _type *_type         
+    data  unsafe.Pointer 
+}
+type iface struct {      
+    tab  *itab           
+    data unsafe.Pointer  
+}
+type _type struct {
+    size       uintptr  
+    ptrdata    uintptr  
+    hash       uint32   
+    tflag      tflag
+    align      uint8    
+    fieldalign uint8    
+    kind       uint8    
+    alg        *typeAlg 
+    gcdata    *byte
+    str       nameOff
+    ptrToThis typeOff
+}
+type itab struct {
+    inter  *interfacetype  
+    _type  *_type          
+    link   *itab
+    bad    int32
+    inhash int32
+    fun    [1]uintptr      
+}
+复制代码
+</code></pre>
+<p>以上完整代码均整理在<a href="https://link.juejin.im/?target=https%3A%2F%2Fgithub.com%2Fmeetbetter%2Flearn-golang%2Ftree%2Fmaster%2F02_advance%2F11_nil-interface">Github-跟着示例代码学Golang项目</a>。</p>
+<p>参考文章： <a href="https://link.juejin.im/?target=https%3A%2F%2Fstudygolang.com%2Farticles%2F10635">Golang第一大坑</a></p>
+<p><a href="https://link.juejin.im/?target=https%3A%2F%2Fgocn.vip%2Fquestion%2F1011">&quot;一个包含nil指针的接口不是nil接口&quot;的讨论</a></p>
+<hr>
+<p>原网址: <a href="https://studygolang.com/articles/22482#reply0">访问</a></p>
+
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/gao-xing-neng-go-fu-wu-zhi-gao-xiao-nei-cun-fen-pei">
+                  <h3 class="post-title">
+                    高性能go服务之高效内存分配
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

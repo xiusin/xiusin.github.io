@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>通过例子理解For range | Xiusin</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571198822167">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1571198822167" class="site-logo">
+        <h1 class="site-title">Xiusin</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="/leecode" class="site-nav">
+            leecode
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">通过例子理解For range</h2>
+            <div class="post-date">2019-09-16</div>
+            
+            <div class="post-content">
+              <h3 id="下面的代码是死循环么">下面的代码是死循环么？</h3>
+<pre><code>func main() {
+ 		v := []int{1, 2, 3}
+		for i := range v {
+			v = append(v, i)
+		}
+}
+</code></pre>
+<p>上面的代码先初始化了一个内容为1、2、3的<code>slice</code>，然后遍历这个<code>slice</code>，然后给这个切片追加元素。随着遍历的进行，数组<code>v</code>也在逐渐增大，那么这个<code>for</code>循环是一个死循环么？</p>
+<p>答案是否。只会遍历三次，<code>v</code>的结果是<code>[0, 1, 2]</code>。并不是死循环，原因就在于<code>for range</code>实现的时候用到了语法糖。</p>
+<h3 id="语法糖">语法糖</h3>
+<blockquote>
+<p><em>语法糖（Syntactic sugar），也译为糖衣语法，是由英国计算机科学家彼得·蘭丁发明的一个术语，指计算机语言中添加的某种语法，这种语法对语言的功能没有影响，但是更方便程序员使用。 语法糖让程序更加简洁，有更高的可读性。</em></p>
+</blockquote>
+<p>对于切片的<code>for range</code>，它的底层代码就是：</p>
+<pre><code>//   for_temp := range
+//   len_temp := len(for_temp)
+//   for index_temp = 0; index_temp &lt; len_temp; index_temp++ {
+//           value_temp = for_temp[index_temp]
+//           index = index_temp
+//           value = value_temp
+//           original body
+//   }
+</code></pre>
+<p>可以看到，在遍历之前就获取的切片的长度<code>len_temp := len(for_temp)</code>，遍历的次数不会随着切片的变化而变化，上面的代码自然不会是死循环了。</p>
+<h3 id="下面的代码有什么问题么">下面的代码有什么问题么？</h3>
+<pre><code class="language-go">slice := []int{0, 1, 2, 3}
+myMap := make(map[int]*int)
+
+for index, value := range slice {
+	myMap[index] = &amp;value
+}
+fmt.Println(&quot;=====new map=====&quot;)
+for k, v := range myMap {
+	fmt.Printf(&quot;%d =&gt; %d\n&quot;, k, *v)
+}
+</code></pre>
+<p>这也是实际编码中有可能会遇到的问题，循环切片，把切片值的地址保存到<code>myMap</code>中，这样的操作结果是：</p>
+<pre><code>=====new map=====
+0 =&gt; 3
+1 =&gt; 3
+2 =&gt; 3
+</code></pre>
+<p>结果完全一样，都是最后一次遍历的值。通过上面的底层代码看下，遍历后的值赋给了<code>value</code>，而在我们的例子中，会把<code>value</code>的地址保存到<code>myMap</code>的值中。这里的<code>value</code>是个「全局变量」，所以赋完值之后<code>myMap</code>里面所有的值都是<code>value</code>，所以结构都是一样的而且是最后一个值。</p>
+<p>注意，这里必须是保存指针才会有问题，如果直接保存的是<code>value</code>，因为 Golang 是值拷贝，所以值会重新复制再保存，这种情况下结果就会是正确的了。</p>
+<h3 id="切片for-range原理">切片For Range原理</h3>
+<p>总结一下，通过For Range遍历切片，<strong><em><strong>首先，计算遍历次数（切片长度）；每次遍历，都会把当前遍历到的值存放到一个全局变量</strong><code>index</code><strong>中。</strong></em></strong></p>
+<h3 id="其它语法糖">其它语法糖</h3>
+<p>另外，For Range 不光支持切片。其它的语法糖底层代码</p>
+<h4 id="map">map</h4>
+<pre><code class="language-go">// Lower a for range over a map.
+// The loop we generate:
+//   var hiter map_iteration_struct
+//   for mapiterinit(type, range, &amp;hiter); hiter.key != nil; mapiternext(&amp;hiter) {
+//           index_temp = *hiter.key
+//           value_temp = *hiter.val
+//           index = index_temp
+//           value = value_temp
+//           original body
+//   }
+</code></pre>
+<h3 id="channel">channel</h3>
+<pre><code class="language-go">// Lower a for range over a channel.
+// The loop we generate:
+//   for {
+//           index_temp, ok_temp = &lt;-range
+//           if !ok_temp {
+//                   break
+//           }
+//           index = index_temp
+//           original body
+//   }
+</code></pre>
+<h3 id="数组">数组</h3>
+<pre><code class="language-go">// Lower a for range over an array.
+// The loop we generate:
+//   len_temp := len(range)
+//   range_temp := range
+//   for index_temp = 0; index_temp &lt; len_temp; index_temp++ {
+//           value_temp = range_temp[index_temp]
+//           index = index_temp
+//           value = value_temp
+//           original body
+
+</code></pre>
+<h4 id="字符串">字符串</h4>
+<pre><code class="language-go">// Lower a for range over a string.
+// The loop we generate:
+//   len_temp := len(range)
+//   var next_index_temp int
+//   for index_temp = 0; index_temp &lt; len_temp; index_temp = next_index_temp {
+//           value_temp = rune(range[index_temp])
+//           if value_temp &lt; utf8.RuneSelf {
+//                   next_index_temp = index_temp + 1
+//           } else {
+//                   value_temp, next_index_temp = decoderune(range, index_temp)
+//           }
+//           index = index_temp
+//           value = value_temp
+//           // original body
+//   }
+</code></pre>
+<p><a href="https://github.com/golang/gofrontend/blob/e387439bfd24d5e142874b8e68e7039f74c744d7/go/statements.cc#L5384">完整底层代码。</a></p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://xiusin.github.io/tag/8QTdjVvR4" class="tag">
+                    golang
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/tu-jie-go-de-channel-di-ceng-yuan-li">
+                  <h3 class="post-title">
+                    图解Go的channel底层原理
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

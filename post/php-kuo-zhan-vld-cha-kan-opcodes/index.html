@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>PHP扩展vld查看opcodes | Xiusin</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571198822167">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1571198822167" class="site-logo">
+        <h1 class="site-title">Xiusin</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="/leecode" class="site-nav">
+            leecode
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">PHP扩展vld查看opcodes</h2>
+            <div class="post-date">2019-09-17</div>
+            
+            <div class="post-content">
+              <h1 id="1-下载与安装vld">1. 下载与安装VLD</h1>
+<blockquote>
+<p>http://pecl.php.net/package/vld</p>
+</blockquote>
+<pre><code class="language-bash">git clone https://github.com/derickr/vld.git vld
+cd ./vld
+/usr/bin/phpize phpize,(phpize - prepare a PHP extension for compiline)
+./configure --with-php-config=php-config --enable-vld
+make &amp;&amp; make install
+
+
+-------------pecl安装方式----------------------
+
+
+
+
+</code></pre>
+<h1 id="2-编辑phpini文件激活vld扩展">2. 编辑php.ini文件激活vld扩展：</h1>
+<pre><code class="language-bash">$ sudo find / -name php.ini
+/etc/php.ini
+$ sudo find / -name vld.so
+/usr/lib64/php/modules/vld.so
+/tmp/vld-0.14.0/.libs/vld.so
+/tmp/vld-0.14.0/modules/vld.so
+extension=/usr/lib64/php/modules/vld.so
+</code></pre>
+<h1 id="3-重启nginxphp-fpm">3. 重启nginx，php-fpm</h1>
+<pre><code>sudo service nginx restart
+sudo service php-fpm restart
+</code></pre>
+<h1 id="4-使用phpinfo查看是否安装成功">4. 使用phpinfo()查看是否安装成功</h1>
+<h1 id="5-demo测试">5. demo测试</h1>
+<p>编写php测试文件test.php</p>
+<pre><code class="language-php">&lt;?php
+function test(){
+    echo &quot;Hello World&quot;;
+    $a = 1 + 1;
+    echo &quot;, value of a is &quot;.$a;
+}
+test();
+?&gt;;
+</code></pre>
+<h1 id="结果分析">结果分析：</h1>
+<pre><code>$ php -dvld.active=1 -dvld.format='' test.php
+
+-------------------------------------------------
+
+Finding entry points
+Branch analysis from position: 0 #这条信息多在分析数组时使用
+Jump found. (Code = 62) Position 1 = -2
+filename: /tmp/test.php #分析的文件名
+function name: (null) #函数名，针对每个函数VLD都会生成一段如上的独立的信息，这里显示当前函数的名称
+number of ops: 3 #生成的操作数
+compiled vars: none #编译期间的变量，这些变量是在PHP5后添加的，它是一个缓存优化。这样的变量在PHP源码中以IS_CV标记。
+op list 生成的中间代码的变量列表
+line #* E I O op fetch ext return operands
+-------------------------------------------------------------------------------------
+5 0 E &gt; NOP
+11 1 DO_FCALL 0 'test'
+13 2 &gt; RETURN 1
+branch: # 0; line: 5- 13; sop: 0; eop: 2; out1: -2
+path #1: 0,
+Function test:
+Finding entry points
+Branch analysis from position: 0
+Jump found. (Code = 62) Position 1 = -2
+filename: /tmp/test.php
+function name: test
+number of ops: 6
+compiled vars: !0 = $a
+line #* E I O op fetch ext return operands
+-------------------------------------------------------------------------------------
+6 0 E &gt; ECHO 'Hello+World'
+7 1 ADD ~0 1, 1
+2 ASSIGN !0, ~0
+8 3 CONCAT ~2 '%2C+value+of+a+is+', !0
+4 ECHO ~2
+9 5 &gt; RETURN null
+branch: # 0; line: 6- 9; sop: 0; eop: 5; out1: -2
+path #1: 0,
+End of function test
+Hello World, value of a is 2
+</code></pre>
+<h1 id="更详细内容可以使用以下命令查看">更详细内容可以使用以下命令查看：</h1>
+<pre><code>php -dvld.active=1 -dvld.format='' -dvld.verbosity=3 test.php
+</code></pre>
+<h1 id="6-vld参数列表vldvulcan-logic-dumper扩展的参数列表">6. vld参数列表：(VLD(Vulcan Logic Dumper)扩展的参数列表：)</h1>
+<ol>
+<li>-dvld.active 是否在执行PHP时激活VLD挂钩，默认为0，表示禁用。可以使用-dvld.active=1启用。</li>
+<li>-dvld.skip_prepend 是否跳过php.ini配置文件中auto_prepend_file指定的文件， 默认为0，即不跳过包含的文件，显示这些包含的文件中的代码所生成的中间代码。此参数生效有一个前提条件：-dvld.execute=0</li>
+<li>-dvld.skip_append 是否跳过php.ini配置文件中auto_append_file指定的文件， 默认为0，即不跳过包含的文件，显示这些包含的文件中的代码所生成的中间代码。此参数生效有一个前提条件：-dvld.execute=0</li>
+<li>-dvld.execute 是否执行这段PHP脚本，默认值为1，表示执行。可以使用-dvld.execute=0，表示只显示中间代码，不执行生成的中间代码。</li>
+<li>-dvld.format 是否以自定义的格式显示，默认为0，表示否。可以使用-dvld.format=1，表示以自己定义的格式显示。这里自定义的格式输出是以-dvld.col_sep指定的参数间隔</li>
+<li>-dvld.col_sep 在-dvld.format参数启用时此函数才会有效，默认为 “	”。</li>
+<li>-dvld.verbosity 是否显示更详细的信息，默认为1，其值可以为0,1,2,3 其实比0小的也可以，只是效果和0一样，比如0.1之类，但是负数除外，负数和效果和3的效果一样 比3大的值也是可以的，只是效果和3一样。</li>
+<li>-dvld.save_dir 指定文件输出的路径，默认路径为/tmp。</li>
+<li>-dvld.save_paths 控制是否输出文件，默认为0，表示不输出文件</li>
+<li>-dvld.dump_paths 控制输出的内容，现在只有0和1两种情况，默认为1,输出内容</li>
+</ol>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://xiusin.github.io/tag/3DnFO4FwD" class="tag">
+                    PHP扩展
+                  </a>
+                
+                  <a href="https://xiusin.github.io/tag/RaBOEiWy-D" class="tag">
+                    PHP
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/php-sync-hu-chi-suo-kuo-zhan">
+                  <h3 class="post-title">
+                    php-sync互斥锁扩展
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>php-sync互斥锁扩展 | Xiusin</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571198822167">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1571198822167" class="site-logo">
+        <h1 class="site-title">Xiusin</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="/leecode" class="site-nav">
+            leecode
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">php-sync互斥锁扩展</h2>
+            <div class="post-date">2019-09-17</div>
+            
+            <div class="post-content">
+              <blockquote>
+<p>扩展下载链接 :http://php.net/manual/zh/intro.sync.php</p>
+</blockquote>
+<h1 id="简介-纯谷歌翻译">简介 [纯谷歌翻译]</h1>
+<p>“同步”扩展在php中引入了跨平台同步对象。命名和未命名的互斥体，信号量，事件，读写器和命名共享内存对象在posix（例如linux）和Windows平台上提供os级同步。<br>
+在扩展拆解过程中会自动清除已获取的同步对象。这意味着如果php过早终止一个脚本（例如脚本执行时间被超过），对象将不会处于未知状态。<br>
+唯一的例外是如果php本身崩溃（例如内部缓冲区溢出）。未命名的同步对象在多线程场景之外没有太多的用处。未命名的对象与pthreads pecl扩展一起更有用。</p>
+<blockquote>
+<p>脚本结束的时候自动释放引用</p>
+</blockquote>
+<h1 id="互斥锁">互斥锁</h1>
+<pre><code>SyncMutex — 互斥锁类定义
+    SyncMutex::__construct ([ string $name ] ) — 构造一个新的互斥锁对象
+    SyncMutex::lock — 等待获取互斥锁
+    SyncMutex::unlock — 解除互斥锁
+</code></pre>
+<h2 id="互斥锁的实例">互斥锁的实例</h2>
+<pre><code class="language-php">&lt;?php
+// php互斥锁功能使用
+$syncMutex = new SyncMutex(&quot;定义锁名称为空是默认锁&quot;);
+//获取锁,如果没有获取到锁则处于等待状态,超时返回false
+//默认加锁 和等待锁, 默认为无限等待 单位毫秒
+if(!$syncMutex-&gt; lock(3000)) {  // 3秒
+  die(&quot;wait lock time out&quot;);
+}
+echo &quot;do somthing ...&quot; . PHP_EOL;
+sleep(10);  //睡眠10秒
+echo &quot;end &quot;. PHP_EOL;
+die(); //这里会自动释放引用
+//解互斥锁
+$syncMutex-&gt;unlock();
+</code></pre>
+<h1 id="同步信号">同步信号</h1>
+<p>信号量(Semaphore)，有时被称为信号灯，是在多线程环境下使用的一种设施，是可以用来保证两个或多个关键代码段不被并发调用。在进入一个关键代码段之前，线程必须获取一个信号量；一旦该关键代码段完成了，那么该线程必须释放信号量。其它想进入该关键代码段的线程必须等待直到第一个线程释放信号量。为了完成这个过程，需要创建一个信号量VI，然后将Acquire Semaphore VI以及Release Semaphore VI分别放置在每个关键代码段的首末端。确认这些信号量VI引用的是初始创建的信号量。</p>
+<p>以一个停车场的运作为例。简单起见，假设停车场只有三个车位，一开始三个车位都是空的。这时如果同时来了五辆车，看门人允许其中三辆直接进入，然后放下车拦，剩下的车则必须在入口等待，此后来的车也都不得不在入口处等待。这时，有一辆车离开停车场，看门人得知后，打开车拦，放入外面的一辆进去，如果又离开两辆，则又可以放入两辆，如此往复。<br>
+在这个停车场系统中，车位是公共资源，每辆车好比一个线程，看门人起的就是信号量的作用。</p>
+<blockquote>
+<p>warning: 如果对象是一个autounlock为false的已命名信号量，则该对象被锁定，并且php脚本在对象被解锁之前结束，那么底层的信号量将以不一致的状态结束。</p>
+</blockquote>
+<blockquote>
+<p>当信号量为1的时候就算是实现了互斥操作</p>
+</blockquote>
+<pre><code class="language-php">&lt;?php
+SyncSemaphore — 同步信号类定义
+    public SyncSemaphore::__construct ([ string $name /*信号名称*/ [, integer $initialval = 1 /*信号量的初始值。这是可以获得的锁的数量。*/[, bool $autounlock = true /*指定是否在PHP脚本结束时自动解锁信号量。*/]]] ) 构造一个同步信号的对象
+    SyncSemaphore::lock — 减少信号量或等待的次数
+    SyncSemaphore::unlock — 增加了信号量的计数
+</code></pre>
+<h2 id="实例1">实例1</h2>
+<pre><code class="language-php">&lt;?php
+$semaphore = new SyncSemaphore(&quot;LimitedResource_2clients&quot;, 2);
+//同时启动多个终端运行
+if (!$semaphore-&gt;lock())
+{
+    echo &quot;无法获取信号量.&quot; . PHP_EOL;
+    exit();
+}
+
+echo  &quot;do somthing...&quot; . PHP_EOL;
+sleep(10);
+echo &quot;end&quot; . PHP_EOL;
+/* ... */
+//die();  测试期间如果将自动释放锁设置为false,当资源被用完的时候永远处于锁定状态,不知道是不是这么回事
+$semaphore-&gt;unlock();
+</code></pre>
+<h2 id="实例2">实例2</h2>
+<pre><code class="language-php">&lt;?php
+$lock = new SyncSemaphore(&quot;UniqueName&quot;, 2);
+
+for($i=0; $i&lt;2; $i++){
+  $pid = pcntl_fork();
+  if($pid &lt;0){
+    die(&quot;fork failed&quot;);
+  }elseif ($pid&gt;0){
+    echo &quot;parent process \n&quot;;
+  }else{
+    echo &quot;child process {$i} is born. \n&quot;;
+    obtainLock($lock, $i);
+  }
+}
+
+while (pcntl_waitpid(0, $status) != -1) {
+  $status = pcntl_wexitstatus($status);
+  echo &quot;Child $status completed\n&quot;;
+}
+
+function obtainLock ($lock, $i){
+  echo &quot;process {$i} is getting the lock \n&quot;;
+  $res = $lock-&gt;lock(200);
+  sleep(1);
+  if (!$res){
+    echo &quot;process {$i} unable to lock lock. \n&quot;;
+  }else{
+    echo &quot;process {$i} successfully got the lock \n&quot;;
+    $lock-&gt;unlock();
+  }
+  exit();
+}
+
+</code></pre>
+<blockquote>
+<p>这时候两个进程都能得到锁。</p>
+</blockquote>
+<h1 id="互斥读写锁">互斥读写锁</h1>
+<p>一个跨平台的本地实现的命名和未命名的读写器对象。<br>
+读写器对象允许许多读者或作者访问资源。<br>
+这是一个高效的资源管理解决方案，其中访问主要是只读的，但偶尔需要独占写入访问。</p>
+<blockquote>
+<p>如果实例对象没有正确解锁,系统将处于锁死状态 <code>$autounlock = false</code></p>
+</blockquote>
+<pre><code class="language-php">&lt;?php
+SyncReaderWriter {
+/* 方法 */
+    public __construct ([ string $name [, bool $autounlock = true ]] )
+    public bool readlock ([ integer $wait = -1 ] ) # 读加锁
+    public bool readunlock ( void ) # 释放锁
+    public bool writelock ([ integer $wait = -1 ] ) # 写加锁
+    public bool writeunlock ( void ) # 释放锁
+}
+
+</code></pre>
+<h2 id="实例">实例</h2>
+<pre><code class="language-php">&lt;?php
+$readwrite = new SyncReaderWriter(&quot;FileCacheLock&quot;,false /*不自动释放锁,不要随意设置,你并不能控制什么时候会出异常*/);
+$readwrite-&gt;readlock();
+/* ... */
+// $readwrite-&gt;readunlock(); 注释会永久锁死
+
+$readwrite-&gt;writelock();
+/* ... */
+//$readwrite-&gt;writeunlock(); 注释会永久锁死
+</code></pre>
+<h1 id="syncevent-同步事件">SyncEvent 同步事件</h1>
+<p>一个跨平台的本地实现的命名和未命名的事件对象。支持自动和手动事件对象。<br>
+一个事件对象不用轮询就等待该对象被触发/设置。<br>
+一个实例等待事件对象，而另一个实例触发/设置事件。<br>
+事件对象在长时间运行的进程将以其他方式轮询资源（例如检查是否需要处理上载的数据）的情况下是有用的。</p>
+<pre><code class="language-php">&lt;?php
+SyncEvent {
+  /* 方法 */
+  public __construct ([ string $name /*事件名称*/ [, bool $manual = false /*指定是否必须手动重置对象*/ [, bool $prefire = false  /*是否预先发出信号对象 只有在调用进程/线程是第一个创建对象时才会有影响。*/]]] )
+  public bool fire ( void )
+  public bool reset ( void )
+  public bool wait ([ integer $wait = -1 ] )
+}
+
+</code></pre>
+<blockquote>
+<p>感觉和golang中的Cond比较像，wait()阻塞，fire()唤醒Event阻塞的一个进程。有一篇好文介绍了Cond, 可以看出Cond就是锁的一种固定用法。SyncEvent也一样。</p>
+</blockquote>
+<h2 id="案例1">案例1</h2>
+<pre><code class="language-php"># wait.php  等待触发事件的进程文件
+&lt;?php
+while (true) {
+  $event = new SyncEvent(&quot;GetAppReport&quot;);
+  echo &quot;waiting ...&quot; . PHP_EOL;
+  $event-&gt;wait();// 设置事件等待: 等待事件被触发或重置 , 如果时间没有触发 则处于阻塞状态
+  echo &quot;waited ...&quot; . PHP_EOL;
+}
+
+# fire.php 触发事件文件
+$event = new SyncEvent(&quot;GetAppReport&quot; );
+if($event-&gt;fire()){
+  echo &quot;fired&quot; . PHP_EOL;
+}
+
+</code></pre>
+<h2 id="案例二">案例二</h2>
+<pre><code class="language-php">&lt;?php
+for($i=0; $i&lt;3; $i++){
+  $pid = pcntl_fork();
+  if($pid &lt;0){
+    die(&quot;fork failed&quot;);
+  }elseif ($pid&gt;0){
+    //echo &quot;parent process \n&quot;;
+  }else{
+    echo &quot;child process {$i} is born. \n&quot;;
+    switch ($i) {
+    case 0:
+      wait();
+      break;
+    case 1:
+      wait();
+      break;
+    case 2:
+      sleep(1);
+      fire();
+      break;
+    }
+  }
+}
+
+while (pcntl_waitpid(0, $status) != -1) {
+  $status = pcntl_wexitstatus($status);
+  echo &quot;Child $status completed\n&quot;;
+}
+
+function wait(){
+  $event = new SyncEvent(&quot;UniqueName&quot;);
+  echo &quot;before waiting. \n&quot;;
+  $event-&gt;wait();
+  echo &quot;after waiting. \n&quot;;
+  exit();
+}
+
+function fire(){
+  $event = new SyncEvent(&quot;UniqueName&quot;);
+  $event-&gt;fire();
+  exit();
+}
+
+</code></pre>
+<blockquote>
+<p>这里故意少写一个fire(), 所以程序会阻塞，证明了 fire() 一次只唤醒一个进程。</p>
+</blockquote>
+<h1 id="同步共享内存">同步共享内存</h1>
+<pre><code class="language-php">&lt;?php
+SyncSharedMemory {
+    /* 方法 */
+    public __construct ( string $name , integer $size ) 创建一个共享内存对象
+    public bool first ( void ) 检查该对象是否是命名共享内存的系统范围的第一个实例
+    public read ([ integer $start = 0 [, integer $length ]] ) # 从命名内存中赋值数据
+    public bool size ( void ) # 返回命名内存的大小
+    public write ([ string $string [, integer $start = 0 ]] ) # 向共享内存中写入数据
+}
+
+</code></pre>
+<h2 id="实例-2">实例</h2>
+<pre><code class="language-php">&lt;?php
+//可能需要与其他同步对象保护共享内存。当最后一个引用消失时，共享内存就消失了。
+$mem = new SyncSharedMemory(&quot;UnqName&quot;, 1024);
+echo 'is first:' . var_export($mem-&gt;first(), true) . PHP_EOL;
+$curlen = 0;
+if ($mem-&gt;first()){
+    while (true) {
+      sleep(5);
+      $curlen += $mem-&gt;write(json_encode(array(&quot;name&quot; =&gt; &quot;my_report.txt&quot;)) , $curlen);
+      echo &quot;写入数据成功&quot; . var_export($result,true). &quot; SIZE:&quot; . $mem-&gt;size() .&quot; WRITED SITE: $curlen&quot;. PHP_EOL;
+    }
+} else {
+    echo  &quot;读取数据: &quot; . $mem-&gt;read(). PHP_EOL;
+}
+// 测试体现: 必须将开辟内存阻塞在进程内,才能在其他进程访问
+</code></pre>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://xiusin.github.io/tag/3DnFO4FwD" class="tag">
+                    PHP扩展
+                  </a>
+                
+                  <a href="https://xiusin.github.io/tag/RaBOEiWy-D" class="tag">
+                    PHP
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/phpbrew-php-de-ban-ben-guan-li-gong-ju">
+                  <h3 class="post-title">
+                    Phpbrew Php的版本管理工具
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

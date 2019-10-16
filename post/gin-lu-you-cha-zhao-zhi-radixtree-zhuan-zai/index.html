@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>gin路由查找之RadixTree [转载] | Xiusin</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571198822167">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1571198822167" class="site-logo">
+        <h1 class="site-title">Xiusin</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="/leecode" class="site-nav">
+            leecode
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">gin路由查找之RadixTree [转载]</h2>
+            <div class="post-date">2019-09-16</div>
+            
+            <div class="post-content">
+              <h1 id="什么是radix-tree">什么是Radix Tree</h1>
+<blockquote>
+<p>在计算机科学中，基数树，或称Patricia trie/tree，或crit bit tree，压缩前缀树，是一种更节省空间的Trie（前缀树）。对于基数树的每个节点，如果该节点是唯一的子树的话，就和父节点合并。</p>
+</blockquote>
+<figure data-type="image" tabindex="1"><img src="https://xiusin.github.io/post-images/1568618635301.png" alt=""></figure>
+<p>golang的web框架<a href="https://github.com/labstack/echo">echo</a>和<a href="https://github.com/gin-gonic/gin">gin</a>都使用了<code>radix tree</code>作为路由查找的算法，我们以gin的实现来分析一下。</p>
+<p>在gin的路由中，每一个<code>Http Method</code>(GET, PUT, POST…)都对应了一棵 <code>radix tree</code></p>
+<pre><code class="language-go">func (engine *Engine) addRoute(method, path string, handlers HandlersChain) {
+    // ...
+    
+    // 获取method对应的树，如果没有就创建
+    root := engine.trees.get(method)
+    if root == nil {
+        // 创建radix tree，只有根节点
+        root = new(node)
+        engine.trees = append(engine.trees, methodTree{method: method, root: root})
+    }
+    root.addRoute(path, handlers)
+}
+</code></pre>
+<p><code>radix tree</code>可以被认为是一棵简洁版的前缀树。拥有共同前缀的节点也共享同一个父节点。下面是一个<code>GET</code>方法对应的路由树的结构：</p>
+<pre><code class="language-go">Priority   Path             Handle
+9          \                *&lt;1&gt;
+3          ├s               nil
+2          |├earch\         *&lt;2&gt;
+1          |└upport\        *&lt;3&gt;
+2          ├blog\           *&lt;4&gt;
+1          |    └:post      nil
+1          |         └\     *&lt;5&gt;
+2          ├about-us\       *&lt;6&gt;
+1          |        └team\  *&lt;7&gt;
+1          └contact\        *&lt;8&gt;
+</code></pre>
+<p><code>*&lt;num&gt;</code>是方法（handler）对应的指针，从根节点遍历到叶子节点我们就能得到完整的路由表，图中的示例实现了以下路由：</p>
+<pre><code class="language-go">GET(&quot;/&quot;, func1)
+GET(&quot;/search/&quot;, func2)
+GET(&quot;/support/&quot;, func3)
+GET(&quot;/blog/&quot;, func4)
+GET(&quot;/blog/:post/&quot;, func5)
+GET(&quot;/about-us/&quot;, func6)
+GET(&quot;/about-us/team/&quot;, func7)
+GET(&quot;/contact/&quot;, func8)
+</code></pre>
+<p><code>:post</code>是真实的<code>post name</code>的一个占位符（就是一个参数）。这里体现了radix tree相较于hash-map的一个优点，树结构允许我们的路径中存在动态的部分（参数）,因为我们匹配的是路由的模式而不是hash值</p>
+<p>为了更具扩展性，每一层的节点按照priority排序，priority是节点的子节点（儿子节点，孙子节点等）注册的handler的数量，这样做有两个好处：</p>
+<ol>
+<li>被最多路径包含的节点会被最先评估。这样可以让尽量多的路由快速被定位。</li>
+<li>有点像成本补偿。最长的路径可以被最先评估，补偿体现在最长的路径需要花费更长的时间来定位，如果最长路径的节点能被优先评估（即每次拿子节点都命中），那么所花时间不一定比短路径的路由长。下面展示了节点（每个<code>-</code>可以看做一个节点）评估的路径：从左到右，从上到下</li>
+</ol>
+<pre><code class="language-go">├------------
+├---------
+├-----
+├----
+├--
+├--
+└-
+</code></pre>
+<h2 id="节点数据结构">节点数据结构</h2>
+<p>节点的数据结构如下：</p>
+<pre><code class="language-go">type node struct {
+    // 节点路径，比如上面的s，earch，和upport
+    path      string
+    // 节点是否是参数节点，比如上面的:post
+    wildChild bool
+    // 节点类型，包括static, root, param, catchAll
+    // static: 静态节点，比如上面的s，earch等节点
+    // root: 树的根节点
+    // catchAll: 有*匹配的节点
+    // param: 参数节点
+    nType     nodeType
+    // 路径上最大参数个数
+    maxParams uint8
+    // 和children字段对应, 保存的是分裂的分支的第一个字符
+    // 例如search和support, 那么s节点的indices对应的&quot;eu&quot;
+    // 代表有两个分支, 分支的首字母分别是e和u
+    indices   string
+    // 儿子节点
+    children  []*node
+    // 处理函数
+    handlers  HandlersChain
+    // 优先级，子节点注册的handler数量
+    priority  uint32
+}
+</code></pre>
+<h2 id="添加路由">添加路由</h2>
+<pre><code class="language-go">func (n *node) addRoute(path string, handlers HandlersChain) {
+    fullPath := path
+    n.priority++
+    numParams := countParams(path)
+
+    // non-empty tree
+    if len(n.path) &gt; 0 || len(n.children) &gt; 0 {
+    walk:
+        for {
+            // Update maxParams of the current node
+            if numParams &gt; n.maxParams {
+                n.maxParams = numParams
+            }
+
+            // Find the longest common prefix.
+            // This also implies that the common prefix contains no ':' or '*'
+            // since the existing key can't contain those chars.
+            i := 0
+            max := min(len(path), len(n.path))
+            for i &lt; max &amp;&amp; path[i] == n.path[i] {
+                i++
+            }
+
+            // Split edge
+            // 开始分裂，比如一开始path是search，新来了support，s是他们匹配的部分，
+            // 那么会将s拿出来作为parent节点，增加earch和upport作为child节点
+            if i &lt; len(n.path) {
+                child := node{
+                    path:      n.path[i:],  // 不匹配的部分作为child节点
+                    wildChild: n.wildChild,
+                    indices:   n.indices,
+                    children:  n.children,
+                    handlers:  n.handlers,
+                    priority:  n.priority - 1,  // 降级成子节点，priority减1
+                }
+
+                // Update maxParams (max of all children)
+                for i := range child.children {
+                    if child.children[i].maxParams &gt; child.maxParams {
+                        child.maxParams = child.children[i].maxParams
+                    }
+                }
+                
+                // 当前节点的子节点变成刚刚分裂的出来的节点
+                n.children = []*node{&amp;child}
+                // []byte for proper unicode char conversion, see #65
+                n.indices = string([]byte{n.path[i]})
+                n.path = path[:i]
+                n.handlers = nil
+                n.wildChild = false
+            }
+
+            // Make new node a child of this node
+            // 将新来的节点插入新的parent节点作为子节点
+            if i &lt; len(path) {
+                path = path[i:]
+
+					// 如果是参数节点（包含:或*）
+                if n.wildChild {
+                    n = n.children[0]
+                    n.priority++
+
+                    // Update maxParams of the child node
+                    if numParams &gt; n.maxParams {
+                        n.maxParams = numParams
+                    }
+                    numParams--
+
+                    // Check if the wildcard matches
+                    // 例如：/blog/:pp 和 /blog/:ppp，需要检查更长的通配符
+                    if len(path) &gt;= len(n.path) &amp;&amp; n.path == path[:len(n.path)] {
+                        // check for longer wildcard, e.g. :name and :names
+                        if len(n.path) &gt;= len(path) || path[len(n.path)] == '/' {
+                            continue walk
+                        }
+                    }
+
+                    panic(&quot;path segment '&quot; + path +
+                        &quot;' conflicts with existing wildcard '&quot; + n.path +
+                        &quot;' in path '&quot; + fullPath + &quot;'&quot;)
+                }
+
+					// 首字母，用来与indices做比较
+                c := path[0]
+
+                // slash after param
+                if n.nType == param &amp;&amp; c == '/' &amp;&amp; len(n.children) == 1 {
+                    n = n.children[0]
+                    n.priority++
+                    continue walk
+                }
+
+                // Check if a child with the next path byte exists
+                // 判断子节点中是否有和当前path有匹配的，只需要查看子节点path的第一个字母即可，即indices
+                // 比如s的子节点现在是earch和upport，indices为eu
+                // 如果新来的路由为super，那么就是和upport有匹配的部分u，将继续分类现在的upport节点
+                for i := 0; i &lt; len(n.indices); i++ {
+                    if c == n.indices[i] {
+                        i = n.incrementChildPrio(i)
+                        n = n.children[i]
+                        continue walk
+                    }
+                }
+
+                // Otherwise insert it
+                if c != ':' &amp;&amp; c != '*' {
+                    // []byte for proper unicode char conversion, see #65
+                    // 记录第一个字符，放在indices中
+                    n.indices += string([]byte{c})
+                    child := &amp;node{
+                        maxParams: numParams,
+                    }
+                    // 增加子节点
+                    n.children = append(n.children, child)
+                    n.incrementChildPrio(len(n.indices) - 1)
+                    n = child
+                }
+                n.insertChild(numParams, path, fullPath, handlers)
+                return
+
+            } else if i == len(path) { // Make node a (in-path) leaf
+                // 路径相同，如果已有handler就报错，没有就赋值
+                if n.handlers != nil {
+                    panic(&quot;handlers are already registered for path ''&quot; + fullPath + &quot;'&quot;)
+                }
+                n.handlers = handlers
+            }
+            return
+        }
+    } else { // Empty tree，空树，插入节点，节点种类是root
+        n.insertChild(numParams, path, fullPath, handlers)
+        n.nType = root
+    }
+}
+</code></pre>
+<p>此函数的主要目的是找到插入节点的位置，如果和现有节点存在相同的前缀，那么要将现有节点进行分裂，然后再插入，下面是<code>insertChild</code>函数</p>
+<h2 id="插入子节点">插入子节点</h2>
+<pre><code class="language-go">// @1: 参数个数
+// @2: 路径
+// @3: 完整路径
+// @4: 处理函数
+func (n *node) insertChild(numParams uint8, path string, fullPath string, handlers HandlersChain) {
+    var offset int // already handled bytes of the path
+    // find prefix until first wildcard (beginning with ':'' or '*'')
+    // 找到前缀，只要匹配到wildcard
+    for i, max := 0, len(path); numParams &gt; 0; i++ {
+        c := path[i]
+        if c != ':' &amp;&amp; c != '*' {
+            continue
+        }
+        // find wildcard end (either '/' or path end)
+        end := i + 1
+        for end &lt; max &amp;&amp; path[end] != '/' {
+            switch path[end] {
+            // the wildcard name must not contain ':' and '*'
+            case ':', '*':
+                panic(&quot;only one wildcard per path segment is allowed, has: '&quot; +
+                    path[i:] + &quot;' in path '&quot; + fullPath + &quot;'&quot;)
+            default:
+                end++
+            }
+        }
+        // check if this Node existing children which would be
+        // unreachable if we insert the wildcard here
+        if len(n.children) &gt; 0 {
+            panic(&quot;wildcard route '&quot; + path[i:end] +
+                &quot;' conflicts with existing children in path '&quot; + fullPath + &quot;'&quot;)
+        }
+        // check if the wildcard has a name
+        if end-i &lt; 2 {
+            panic(&quot;wildcards must be named with a non-empty name in path '&quot; + fullPath + &quot;'&quot;)
+        }
+        if c == ':' { // param
+            // split path at the beginning of the wildcard
+            if i &gt; 0 {
+                n.path = path[offset:i]
+                offset = i
+            }
+            child := &amp;node{
+                nType:     param,
+                maxParams: numParams,
+            }
+            n.children = []*node{child}
+            n.wildChild = true
+            n = child
+            n.priority++
+            numParams--
+            // if the path doesn't end with the wildcard, then there
+            // will be another non-wildcard subpath starting with '/'
+            if end &lt; max {
+                n.path = path[offset:end]
+                offset = end
+                
+                child := &amp;node{
+                    maxParams: numParams,
+                    priority:  1,
+                }
+                n.children = []*node{child}
+                // 下次循环这个新的child节点
+                n = child
+            }
+        } else { // catchAll
+            if end != max || numParams &gt; 1 {
+                panic(&quot;catch-all routes are only allowed at the end of the path in path '&quot; + fullPath + &quot;'&quot;)
+            }
+            if len(n.path) &gt; 0 &amp;&amp; n.path[len(n.path)-1] == '/' {
+                panic(&quot;catch-all conflicts with existing handle for the path segment root in path '&quot; + fullPath + &quot;'&quot;)
+            }
+            // currently fixed width 1 for '/'
+            i--
+            if path[i] != '/' {
+                panic(&quot;no / before catch-all in path '&quot; + fullPath + &quot;'&quot;)
+            }
+            n.path = path[offset:i]
+            // first node: catchAll node with empty path
+            child := &amp;node{
+                wildChild: true,
+                nType:     catchAll,
+                maxParams: 1,
+            }
+            n.children = []*node{child}
+            n.indices = string(path[i])
+            n = child
+            n.priority++
+            // second node: node holding the variable
+            child = &amp;node{
+                path:      path[i:],
+                nType:     catchAll,
+                maxParams: 1,
+                handlers:  handlers,
+                priority:  1,
+            }
+            n.children = []*node{child}
+            return
+        }
+    }
+    // insert remaining path part and handle to the leaf
+    n.path = path[offset:]
+    n.handlers = handlers
+}
+</code></pre>
+<h2 id="路径查找">路径查找</h2>
+<p>匹配每个children的path，最长匹配</p>
+<pre><code class="language-go">// Returns the handle registered with the given path (key). The values of
+// wildcards are saved to a map.
+// If no handle can be found, a TSR (trailing slash redirect) recommendation is
+// made if a handle exists with an extra (without the) trailing slash for the
+// given path.
+func (n *node) getValue(path string, po Params, unescape bool) (handlers HandlersChain, p Params, tsr bool) {
+    p = po
+walk: // Outer loop for walking the tree
+    for {
+        // 尚未到达path的终点
+        if len(path) &gt; len(n.path) {
+            // 前面一段需要一致
+            if path[:len(n.path)] == n.path {
+                path = path[len(n.path):]
+                // If this node does not have a wildcard (param or catchAll)
+                // child,  we can just look up the next child node and continue
+                // to walk down the tree
+                if !n.wildChild {
+                    c := path[0]
+                    for i := 0; i &lt; len(n.indices); i++ {
+                        if c == n.indices[i] {
+                            n = n.children[i]
+                            continue walk
+                        }
+                    }
+
+                    // Nothing found.
+                    // We can recommend to redirect to the same URL without a
+                    // trailing slash if a leaf exists for that path.
+                    tsr = (path == &quot;/&quot; &amp;&amp; n.handlers != nil)
+                    return
+                }
+
+                // handle wildcard child
+                n = n.children[0]
+                switch n.nType {
+                case param:
+                    // find param end (either '/' or path end)
+                    end := 0
+                    for end &lt; len(path) &amp;&amp; path[end] != '/' {
+                        end++
+                    }
+
+                    // save param value
+                    if cap(p) &lt; int(n.maxParams) {
+                        p = make(Params, 0, n.maxParams)
+                    }
+                    i := len(p)
+                    p = p[:i+1] // expand slice within preallocated capacity
+                    p[i].Key = n.path[1:]
+                    val := path[:end]
+                    if unescape {
+                        var err error
+                        if p[i].Value, err = url.QueryUnescape(val); err != nil {
+                            p[i].Value = val // fallback, in case of error
+                        }
+                    } else {
+                        p[i].Value = val
+                    }
+
+                    // we need to go deeper!
+                                        if end &lt; len(path) {
+                        if len(n.children) &gt; 0 {
+                            path = path[end:]
+                            n = n.children[0]
+                            continue walk
+                        }
+
+                        // ... but we can't
+                        tsr = (len(path) == end+1)
+                        return
+                    }
+
+                    if handlers = n.handlers; handlers != nil {
+                        return
+                    }
+                    if len(n.children) == 1 {
+                        // No handle found. Check if a handle for this path + a
+                        // trailing slash exists for TSR recommendation
+                        n = n.children[0]
+                        tsr = (n.path == &quot;/&quot; &amp;&amp; n.handlers != nil)
+                    }
+
+                    return
+
+                case catchAll:
+                    // save param value
+                    if cap(p) &lt; int(n.maxParams) {
+                        p = make(Params, 0, n.maxParams)
+                    }
+                    i := len(p)
+                    p = p[:i+1] // expand slice within preallocated capacity
+                    p[i].Key = n.path[2:]
+                    if unescape {
+                        var err error
+                        if p[i].Value, err = url.QueryUnescape(path); err != nil {
+                            p[i].Value = path // fallback, in case of error
+                        }
+                    } else {
+                        p[i].Value = path
+                    }
+
+                    handlers = n.handlers
+                    return
+
+                default:
+                    panic(&quot;invalid node type&quot;)
+                }
+            }
+        } else if path == n.path {
+            // We should have reached the node containing the handle.
+            // Check if this node has a handle registered.
+            if handlers = n.handlers; handlers != nil {
+                return
+            }
+
+            if path == &quot;/&quot; &amp;&amp; n.wildChild &amp;&amp; n.nType != root {
+                tsr = true
+                return
+            }
+            // No handle found. Check if a handle for this path + a
+            // trailing slash exists for trailing slash recommendation
+            for i := 0; i &lt; len(n.indices); i++ {
+                if n.indices[i] == '/' {
+                    n = n.children[i]
+                    tsr = (len(n.path) == 1 &amp;&amp; n.handlers != nil) ||
+                        (n.nType == catchAll &amp;&amp; n.children[0].handlers != nil)
+                    return
+                }
+            }
+
+            return
+        }
+
+        // Nothing found. We can recommend to redirect to the same URL with an
+        // extra trailing slash if a leaf exists for that path
+        tsr = (path == &quot;/&quot;) ||
+            (len(n.path) == len(path)+1 &amp;&amp; n.path[len(path)] == '/' &amp;&amp;
+                path == n.path[:len(n.path)-1] &amp;&amp; n.handlers != nil)
+        return
+    }
+}
+</code></pre>
+<p>之前总听大家说数据结构与算法有什么用，工作中又用不到，上面就是一个很好的示例。我们平时还是要多关注底层原理，做后端的同学多看看框架的代码，一定受益匪浅~</p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://xiusin.github.io/tag/A289AgctC" class="tag">
+                    路由
+                  </a>
+                
+                  <a href="https://xiusin.github.io/tag/pB__D5-TQL" class="tag">
+                    RadixTree
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/go-zhong-shi-yong-commandcontext-de-jin-cheng-qu-xiao-bu-diao">
+                  <h3 class="post-title">
+                    go中使用CommandContext的进程取消不掉
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+hljs.initHighlightingOnLoad()
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>
