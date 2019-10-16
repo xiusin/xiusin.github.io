@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>uber Go风格指南 | Xiusin</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571224006391">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1571224006391" class="site-logo">
+        <h1 class="site-title">Xiusin</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="/leecode" class="site-nav">
+            leecode
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">uber Go风格指南</h2>
+            <div class="post-date">2019-10-16</div>
+            
+            <div class="post-content">
+              <!--
+
+Editing this document:
+
+- Discuss all changes in GitHub issues first.
+- Update the table of contents as new sections are added or removed.
+- Use tables for side-by-side code samples. See below.
+
+Code Samples:
+
+Use 2 spaces to indent. Horizontal real estate is important in side-by-side
+samples.
+
+For side-by-side code samples, use the following snippet.
+
+~~~
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+
+```go
+BAD CODE GOES HERE
+```
+
+</td><td>
+
+```go
+GOOD CODE GOES HERE
+```
+
+</td></tr>
+</tbody></table>
+~~~
+
+(You need the empty lines between the <td> and code samples for it to be
+treated as Markdown.)
+
+If you need to add labels or descriptions below the code samples, add another
+row before the </tbody></table> line.
+
+~~~
+<tr>
+<td>DESCRIBE BAD CODE</td>
+<td>DESCRIBE GOOD CODE</td>
+</tr>
+~~~
+
+-->
+<h1 id="uber-goguide"><a href="https://github.com/uber-go/guide">uber-go/guide</a> 的中文翻译</h1>
+<h1 id="english"><a href="https://github.com/uber-go/guide/blob/master/style.md">English</a></h1>
+<h1 id="uber-go-语言编码规范">Uber Go 语言编码规范</h1>
+<p><a href="https://www.uber.com/">Uber</a> 是一家美国硅谷的科技公司，也是 Go 语言的早期 adopter. 其开源了很多 golang 项目，诸如被 Gopher 圈熟知的 <a href="https://github.com/uber-go/zap">zap</a>、<a href="https://github.com/jaegertracing/jaeger">jaeger</a> 等。2018 年年末 Uber 将内部的 <a href="https://github.com/uber-go/guide">Go 风格规范</a> 开源到 github，经过一年的积累和更新，该规范已经初具规模，并受到广大 Gopher 的关注。本文是该规范的中文版本。本版本会根据原版实时更新。当前更新版本 (2019-10-15)(commit:d0f4f97ced3f0fbc67e6b64bb10a19530ea3bf2b)</p>
+<h2 id="目录">目录</h2>
+<ul>
+<li><a href="#%E4%BB%8B%E7%BB%8D">介绍</a></li>
+<li><a href="#%E6%8C%87%E5%AF%BC%E5%8E%9F%E5%88%99">指导原则</a>
+<ul>
+<li><a href="#%E6%8C%87%E5%90%91-interface-%E7%9A%84%E6%8C%87%E9%92%88">指向 interface 的指针</a></li>
+<li><a href="#%E6%8E%A5%E6%94%B6%E5%99%A8-receiver-%E4%B8%8E%E6%8E%A5%E5%8F%A3">接收器 (receiver) 与接口</a></li>
+<li><a href="#%E9%9B%B6%E5%80%BC-Mutex-%E6%98%AF%E6%9C%89%E6%95%88%E7%9A%84">零值 Mutex 是有效的</a></li>
+<li><a href="#%E5%9C%A8%E8%BE%B9%E7%95%8C%E5%A4%84%E6%8B%B7%E8%B4%9D-Slices-%E5%92%8C-Maps">在边界处拷贝 Slices 和 Maps</a></li>
+<li><a href="#%E4%BD%BF%E7%94%A8-defer-%E5%81%9A%E6%B8%85%E7%90%86">使用 defer 做清理</a></li>
+<li><a href="#Channel-%E7%9A%84-size-%E8%A6%81%E4%B9%88%E6%98%AF-1%E8%A6%81%E4%B9%88%E6%98%AF%E6%97%A0%E7%BC%93%E5%86%B2%E7%9A%84">Channel 的 size 要么是 1，要么是无缓冲的</a></li>
+<li><a href="#%E6%9E%9A%E4%B8%BE%E4%BB%8E-1-%E5%BC%80%E5%A7%8B">枚举从 1 开始</a></li>
+<li><a href="#%E9%94%99%E8%AF%AF%E7%B1%BB%E5%9E%8B">错误类型</a></li>
+<li><a href="#%E9%94%99%E8%AF%AF%E5%8C%85%E8%A3%85-(Error-Wrapping)">错误包装 (Error Wrapping)</a></li>
+<li><a href="#%E5%A4%84%E7%90%86%E7%B1%BB%E5%9E%8B%E6%96%AD%E8%A8%80%E5%A4%B1%E8%B4%A5">处理类型断言失败</a></li>
+<li><a href="#%E4%B8%8D%E8%A6%81-panic">不要 panic</a></li>
+<li><a href="#%E4%BD%BF%E7%94%A8-gouberorgatomic">使用 go.uber.org/atomic</a></li>
+</ul>
+</li>
+<li><a href="#%E6%80%A7%E8%83%BD">性能</a>
+<ul>
+<li><a href="#%E4%BC%98%E5%85%88%E4%BD%BF%E7%94%A8-strconv-%E8%80%8C%E4%B8%8D%E6%98%AF-fmt">优先使用 strconv 而不是 fmt</a></li>
+<li><a href="#%E9%81%BF%E5%85%8D%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%88%B0%E5%AD%97%E8%8A%82%E7%9A%84%E8%BD%AC%E6%8D%A2">避免字符串到字节的转换</a></li>
+</ul>
+</li>
+<li><a href="#%E8%A7%84%E8%8C%83">规范</a>
+<ul>
+<li><a href="#%E7%9B%B8%E4%BC%BC%E7%9A%84%E5%A3%B0%E6%98%8E%E6%94%BE%E5%9C%A8%E4%B8%80%E7%BB%84">相似的声明放在一组</a></li>
+<li><a href="#import-%E7%BB%84%E5%86%85%E7%9A%84%E5%8C%85%E5%AF%BC%E5%85%A5%E9%A1%BA%E5%BA%8F">import 组内的包导入顺序</a></li>
+<li><a href="#%E5%8C%85%E5%90%8D">包名</a></li>
+<li><a href="#%E5%87%BD%E6%95%B0%E5%90%8D">函数名</a></li>
+<li><a href="#%E5%AF%BC%E5%85%A5%E5%88%AB%E5%90%8D">导入别名</a></li>
+<li><a href="#%E5%87%BD%E6%95%B0%E5%88%86%E7%BB%84%E4%B8%8E%E9%A1%BA%E5%BA%8F">函数分组与顺序</a></li>
+<li><a href="#%E5%87%8F%E5%B0%91%E5%B5%8C%E5%A5%97">减少嵌套</a></li>
+<li><a href="#%E4%B8%8D%E5%BF%85%E8%A6%81%E7%9A%84-else">不必要的 else</a></li>
+<li><a href="#%E9%A1%B6%E5%B1%82%E5%8F%98%E9%87%8F%E5%A3%B0%E6%98%8E">顶层变量声明</a></li>
+<li><a href="#%E5%AF%B9%E4%BA%8E%E6%9C%AA%E5%AF%BC%E5%87%BA%E7%9A%84%E9%A1%B6%E5%B1%82%E5%B8%B8%E9%87%8F%E5%92%8C%E5%8F%98%E9%87%8F%E4%BD%BF%E7%94%A8_%E4%BD%9C%E4%B8%BA%E5%89%8D%E7%BC%80">对于未导出的顶层常量和变量,使用_作为前缀</a></li>
+<li><a href="#%E7%BB%93%E6%9E%84%E4%BD%93%E4%B8%AD%E7%9A%84%E5%B5%8C%E5%85%A5">结构体中的嵌入</a></li>
+<li><a href="#%E4%BD%BF%E7%94%A8%E5%AD%97%E6%AE%B5%E5%90%8D%E5%88%9D%E5%A7%8B%E5%8C%96%E7%BB%93%E6%9E%84%E4%BD%93">使用字段名初始化结构体</a></li>
+<li><a href="#%E6%9C%AC%E5%9C%B0%E5%8F%98%E9%87%8F%E5%A3%B0%E6%98%8E">本地变量声明</a></li>
+<li><a href="#nil-%E6%98%AF%E4%B8%80%E4%B8%AA%E6%9C%89%E6%95%88%E7%9A%84-slice">nil 是一个有效的 slice</a></li>
+<li><a href="#%E5%B0%8F%E5%8F%98%E9%87%8F%E4%BD%9C%E7%94%A8%E5%9F%9F">小变量作用域</a></li>
+<li><a href="#%E9%81%BF%E5%85%8D%E5%8F%82%E6%95%B0%E8%AF%AD%E4%B9%89%E4%B8%8D%E6%98%8E%E7%A1%AEAvoid-Naked-Parameters">避免参数语义不明确（Avoid Naked Parameters）</a></li>
+<li><a href="#%E4%BD%BF%E7%94%A8%E5%8E%9F%E5%A7%8B%E5%AD%97%E7%AC%A6%E4%B8%B2%E5%AD%97%E9%9D%A2%E5%80%BC%E9%81%BF%E5%85%8D%E8%BD%AC%E4%B9%89">使用原始字符串字面值,避免转义</a></li>
+<li><a href="#%E5%88%9D%E5%A7%8B%E5%8C%96-Struct-%E5%BC%95%E7%94%A8">初始化 Struct 引用</a></li>
+<li><a href="#%E5%AD%97%E7%AC%A6%E4%B8%B2-string-format">字符串 string format </a></li>
+<li><a href="#%E5%91%BD%E5%90%8D-Printf-%E6%A0%B7%E5%BC%8F%E7%9A%84%E5%87%BD%E6%95%B0">命名 Printf 样式的函数</a></li>
+</ul>
+</li>
+<li><a href="#%E7%BC%96%E7%A8%8B%E6%A8%A1%E5%BC%8F">编程模式</a>
+<ul>
+<li><a href="#%E8%A1%A8%E9%A9%B1%E5%8A%A8%E6%B5%8B%E8%AF%95">表驱动测试</a></li>
+<li><a href="#%E5%8A%9F%E8%83%BD%E9%80%89%E9%A1%B9">功能选项</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="介绍">介绍</h2>
+<p>样式 (style) 是支配我们代码的惯例。术语<code>样式</code>有点用词不当，因为这些约定涵盖的范围不限于由 gofmt 替我们处理的源文件格式。</p>
+<p>本指南的目的是通过详细描述在 Uber 编写 Go 代码的注意事项来管理这种复杂性。这些规则的存在是为了使代码库易于管理，同时仍然允许工程师更有效地使用 Go 语言功能。</p>
+<p>该指南最初由 <a href="https://github.com/prashantv">Prashant Varanasi</a> 和 <a href="https://github.com/nomis52">Simon Newton</a> 编写，目的是使一些同事能快速使用 Go。多年来，该指南已根据其他人的反馈进行了修改。</p>
+<p>本文档记录了我们在 Uber 遵循的 Go 代码中的惯用约定。其中许多是 Go 的通用准则，而其他扩展准则依赖于下面外部的指南：</p>
+<ol>
+<li><a href="https://golang.org/doc/effective_go.html">Effective Go</a></li>
+<li><a href="https://github.com/golang/go/wiki/CodeReviewComments">The Go common mistakes guide</a></li>
+</ol>
+<p>所有代码都应该通过<code>golint</code>和<code>go vet</code>的检查并无错误。我们建议您将编辑器设置为：</p>
+<ul>
+<li>保存时运行 <code>goimports</code></li>
+<li>运行 <code>golint</code> 和 <code>go vet</code> 检查错误</li>
+</ul>
+<p>您可以在以下 Go 编辑器工具支持页面中找到更为详细的信息：<br>
+<a href="https://github.com/golang/go/wiki/IDEsAndTextEditorPlugins">https://github.com/golang/go/wiki/IDEsAndTextEditorPlugins</a></p>
+<h2 id="指导原则">指导原则</h2>
+<h3 id="指向-interface-的指针">指向 interface 的指针</h3>
+<p>您几乎不需要指向接口类型的指针。您应该将接口作为值进行传递，在这样的传递过程中，实质上传递的底层数据仍然可以是指针。</p>
+<p>接口实质上在底层用两个字段表示：</p>
+<ol>
+<li>一个指向某些特定类型信息的指针。您可以将其视为&quot;type.&quot;</li>
+<li>数据指针。如果存储的数据是指针，则直接存储。如果存储的数据是一个值，则存储指向该值的指针。</li>
+</ol>
+<p>如果希望接口方法修改基础数据，则必须使用指针传递。</p>
+<h3 id="接收器-receiver-与接口">接收器 (receiver) 与接口</h3>
+<p>使用值接收器的方法既可以通过值调用，也可以通过指针调用。</p>
+<p>例如，</p>
+<pre><code class="language-go">type S struct {
+  data string
+}
+
+func (s S) Read() string {
+  return s.data
+}
+
+func (s *S) Write(str string) {
+  s.data = str
+}
+
+sVals := map[int]S{1: {&quot;A&quot;}}
+
+// 你只能通过值调用 Read
+sVals[1].Read()
+
+// 这不能编译通过：
+//  sVals[1].Write(&quot;test&quot;)
+
+sPtrs := map[int]*S{1: {&quot;A&quot;}}
+
+// 通过指针既可以调用 Read，也可以调用 Write 方法
+sPtrs[1].Read()
+sPtrs[1].Write(&quot;test&quot;)
+</code></pre>
+<p>同样，即使该方法具有值接收器，也可以通过指针来满足接口。</p>
+<pre><code class="language-go">type F interface {
+  f()
+}
+
+type S1 struct{}
+
+func (s S1) f() {}
+
+type S2 struct{}
+
+func (s *S2) f() {}
+
+s1Val := S1{}
+s1Ptr := &amp;S1{}
+s2Val := S2{}
+s2Ptr := &amp;S2{}
+
+var i F
+i = s1Val
+i = s1Ptr
+i = s2Ptr
+
+//  下面代码无法通过编译。因为 s2Val 是一个值，而 S2 的 f 方法中没有使用值接收器
+//   i = s2Val
+</code></pre>
+<p><a href="https://golang.org/doc/effective_go.html">Effective Go</a> 中有一段关于 <a href="https://golang.org/doc/effective_go.html#pointers_vs_values">pointers vs. values</a> 的精彩讲解。</p>
+<h3 id="零值-mutex-是有效的">零值 Mutex 是有效的</h3>
+<p>sync.Mutex 和 sync.RWMutex 是有效的。因此你几乎不需要一个指向 mutex 的指针。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">mu := new(sync.Mutex)
+mu.Lock()
+</code></pre>
+</td><td>
+<pre><code class="language-go">var mu sync.Mutex
+mu.Lock()
+</code></pre>
+</td></tr>
+</tbody></table>
+<p>如果你使用结构体指针，mutex 可以非指针形式作为结构体的组成字段，或者更好的方式是直接嵌入到结构体中。<br>
+如果是私有结构体类型或是要实现 Mutex 接口的类型，我们可以使用嵌入 mutex 的方法：</p>
+<table>
+<tbody>
+<tr><td>
+<pre><code class="language-go">type smap struct {
+  sync.Mutex // only for unexported types（仅适用于非导出类型）
+
+  data map[string]string
+}
+
+func newSMap() *smap {
+  return &amp;smap{
+    data: make(map[string]string),
+  }
+}
+
+func (m *smap) Get(k string) string {
+  m.Lock()
+  defer m.Unlock()
+
+  return m.data[k]
+}
+</code></pre>
+</td><td>
+<pre><code class="language-go">type SMap struct {
+  mu sync.Mutex // 对于导出类型，请使用私有锁
+
+  data map[string]string
+}
+
+func NewSMap() *SMap {
+  return &amp;SMap{
+    data: make(map[string]string),
+  }
+}
+
+func (m *SMap) Get(k string) string {
+  m.mu.Lock()
+  defer m.mu.Unlock()
+
+  return m.data[k]
+}
+</code></pre>
+</td></tr>
+</tr>
+<tr>
+<td>为私有类型或需要实现互斥接口的类型嵌入。</td>
+<td>对于导出的类型，请使用专用字段。</td>
+</tr>
+</tbody></table>
+<h3 id="在边界处拷贝-slices-和-maps">在边界处拷贝 Slices 和 Maps</h3>
+<p>slices 和 maps 包含了指向底层数据的指针，因此在需要复制它们时要特别注意。</p>
+<h4 id="接收-slices-和-maps">接收 Slices 和 Maps</h4>
+<p>请记住，当 map 或 slice 作为函数参数传入时，如果您存储了对它们的引用，则用户可以对其进行修改。</p>
+<table>
+<thead><tr><th>Bad</th> <th>Good</th></tr></thead>
+<tbody>
+<tr>
+<td>
+<pre><code class="language-go">func (d *Driver) SetTrips(trips []Trip) {
+  d.trips = trips
+}
+
+trips := ...
+d1.SetTrips(trips)
+
+// 你是要修改 d1.trips 吗？
+trips[0] = ...
+</code></pre>
+</td>
+<td>
+<pre><code class="language-go">func (d *Driver) SetTrips(trips []Trip) {
+  d.trips = make([]Trip, len(trips))
+  copy(d.trips, trips)
+}
+
+trips := ...
+d1.SetTrips(trips)
+
+// 这里我们修改 trips[0]，但不会影响到 d1.trips
+trips[0] = ...
+</code></pre>
+</td>
+</tr>
+</tbody>
+</table>
+<h4 id="返回-slices-或-maps">返回 slices 或 maps</h4>
+<p>同样，请注意用户对暴露内部状态的 map 或 slice 的修改。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">type Stats struct {
+  sync.Mutex
+
+  counters map[string]int
+}
+
+// Snapshot 返回当前状态。
+func (s *Stats) Snapshot() map[string]int {
+  s.Lock()
+  defer s.Unlock()
+
+  return s.counters
+}
+
+// snapshot 不再受到锁的保护
+snapshot := stats.Snapshot()
+</code></pre>
+</td><td>
+<pre><code class="language-go">type Stats struct {
+  sync.Mutex
+
+  counters map[string]int
+}
+
+func (s *Stats) Snapshot() map[string]int {
+  s.Lock()
+  defer s.Unlock()
+
+  result := make(map[string]int, len(s.counters))
+  for k, v := range s.counters {
+    result[k] = v
+  }
+  return result
+}
+
+// snapshot 现在是一个拷贝
+snapshot := stats.Snapshot()
+</code></pre>
+</td></tr>
+</tbody></table>
+<h3 id="使用-defer-做清理">使用 defer 做清理</h3>
+<p>使用 defer 清理资源，诸如文件和锁。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">p.Lock()
+if p.count &lt; 10 {
+  p.Unlock()
+  return p.count
+}
+
+p.count++
+newCount := p.count
+p.Unlock()
+
+return newCount
+
+// 当有多个 return 分支时，很容易遗忘 unlock
+</code></pre>
+</td><td>
+<pre><code class="language-go">p.Lock()
+defer p.Unlock()
+
+if p.count &lt; 10 {
+  return p.count
+}
+
+p.count++
+return p.count
+
+// 更可读
+</code></pre>
+</td></tr>
+</tbody></table>
+<p>Defer 的开销非常小，只有在您可以证明函数执行时间处于纳秒级的程度时，才应避免这样做。使用 defer 提升可读性是值得的，因为使用它们的成本微不足道。尤其适用于那些不仅仅是简单内存访问的较大的方法，在这些方法中其他计算的资源消耗远超过 <code>defer</code>。</p>
+<h3 id="channel-的-size-要么是-1要么是无缓冲的">Channel 的 size 要么是 1,要么是无缓冲的</h3>
+<p>channel 通常 size 应为 1 或是无缓冲的。默认情况下，channel 是无缓冲的，其 size 为零。任何其他尺寸都必须经过严格的审查。考虑如何确定大小，是什么阻止了 channel 在负载下被填满并阻止写入，以及发生这种情况时发生了什么。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">// 应该足以满足任何情况！
+c := make(chan int, 64)
+</code></pre>
+</td><td>
+<pre><code class="language-go">// 大小：1
+c := make(chan int, 1) // 或者
+// 无缓冲 channel，大小为 0
+c := make(chan int)
+</code></pre>
+</td></tr>
+</tbody></table>
+<h3 id="枚举从-1-开始">枚举从 1 开始</h3>
+<p>在 Go 中引入枚举的标准方法是声明一个自定义类型和一个使用了 iota 的 const 组。由于变量的默认值为 0，因此通常应以非零值开头枚举。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">type Operation int
+
+const (
+  Add Operation = iota
+  Subtract
+  Multiply
+)
+
+// Add=0, Subtract=1, Multiply=2
+</code></pre>
+</td><td>
+<pre><code class="language-go">type Operation int
+
+const (
+  Add Operation = iota + 1
+  Subtract
+  Multiply
+)
+
+// Add=1, Subtract=2, Multiply=3
+</code></pre>
+</td></tr>
+</tbody></table>
+<p>在某些情况下，使用零值是有意义的（枚举从零开始），例如，当零值是理想的默认行为时。</p>
+<pre><code class="language-go">type LogOutput int
+
+const (
+  LogToStdout LogOutput = iota
+  LogToFile
+  LogToRemote
+)
+
+// LogToStdout=0, LogToFile=1, LogToRemote=2
+</code></pre>
+<!-- TODO: section on String methods for enums -->
+<h3 id="错误类型">错误类型</h3>
+<p>Go 中有多种声明错误（Error) 的选项：</p>
+<ul>
+<li><a href="https://golang.org/pkg/errors/#New"><code>errors.New</code></a> 对于简单静态字符串的错误</li>
+<li><a href="https://golang.org/pkg/fmt/#Errorf"><code>fmt.Errorf</code></a> 用于格式化的错误字符串</li>
+<li>实现 <code>Error()</code> 方法的自定义类型</li>
+<li>用 <a href="https://godoc.org/github.com/pkg/errors#Wrap"><code>&quot;pkg/errors&quot;.Wrap</code></a> 的 Wrapped errors</li>
+</ul>
+<p>返回错误时，请考虑以下因素以确定最佳选择：</p>
+<ul>
+<li>
+<p>这是一个不需要额外信息的简单错误吗？如果是这样，<a href="https://golang.org/pkg/errors/#New"><code>errors.New</code></a> 足够了。</p>
+</li>
+<li>
+<p>客户需要检测并处理此错误吗？如果是这样，则应使用自定义类型并实现该 <code>Error()</code> 方法。</p>
+</li>
+<li>
+<p>您是否正在传播下游函数返回的错误？如果是这样，请查看本文后面有关错误包装 <a href="#%E9%94%99%E8%AF%AF%E5%8C%85%E8%A3%85" title="Error-Wrapping">section on error wrapping</a> 部分的内容。</p>
+</li>
+<li>
+<p>否则 <a href="https://golang.org/pkg/fmt/#Errorf"><code>fmt.Errorf</code></a> 就可以了。</p>
+</li>
+</ul>
+<p>如果客户端需要检测错误，并且您已使用创建了一个简单的错误 <a href="https://golang.org/pkg/errors/#New"><code>errors.New</code></a>，请使用一个错误变量。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">// package foo
+
+func Open() error {
+  return errors.New(&quot;could not open&quot;)
+}
+
+// package bar
+
+func use() {
+  if err := foo.Open(); err != nil {
+    if err.Error() == &quot;could not open&quot; {
+      // handle
+    } else {
+      panic(&quot;unknown error&quot;)
+    }
+  }
+}
+</code></pre>
+</td><td>
+<pre><code class="language-go">// package foo
+
+var ErrCouldNotOpen = errors.New(&quot;could not open&quot;)
+
+func Open() error {
+  return ErrCouldNotOpen
+}
+
+// package bar
+
+if err := foo.Open(); err != nil {
+  if err == foo.ErrCouldNotOpen {
+    // handle
+  } else {
+    panic(&quot;unknown error&quot;)
+  }
+}
+</code></pre>
+</td></tr>
+</tbody></table>
+<p>如果您有可能需要客户端检测的错误，并且想向其中添加更多信息（例如，它不是静态字符串），则应使用自定义类型。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">func open(file string) error {
+  return fmt.Errorf(&quot;file %q not found&quot;, file)
+}
+
+func use() {
+  if err := open(); err != nil {
+    if strings.Contains(err.Error(), &quot;not found&quot;) {
+      // handle
+    } else {
+      panic(&quot;unknown error&quot;)
+    }
+  }
+}
+</code></pre>
+</td><td>
+<pre><code class="language-go">type errNotFound struct {
+  file string
+}
+
+func (e errNotFound) Error() string {
+  return fmt.Sprintf(&quot;file %q not found&quot;, e.file)
+}
+
+func open(file string) error {
+  return errNotFound{file: file}
+}
+
+func use() {
+  if err := open(); err != nil {
+    if _, ok := err.(errNotFound); ok {
+      // handle
+    } else {
+      panic(&quot;unknown error&quot;)
+    }
+  }
+}
+</code></pre>
+</td></tr>
+</tbody></table>
+<p>直接导出自定义错误类型时要小心，因为它们已成为程序包公共 API 的一部分。最好公开匹配器功能以检查错误。</p>
+<pre><code class="language-go">// package foo
+
+type errNotFound struct {
+  file string
+}
+
+func (e errNotFound) Error() string {
+  return fmt.Sprintf(&quot;file %q not found&quot;, e.file)
+}
+
+func IsNotFoundError(err error) bool {
+  _, ok := err.(errNotFound)
+  return ok
+}
+
+func Open(file string) error {
+  return errNotFound{file: file}
+}
+
+// package bar
+
+if err := foo.Open(&quot;foo&quot;); err != nil {
+  if foo.IsNotFoundError(err) {
+    // handle
+  } else {
+    panic(&quot;unknown error&quot;)
+  }
+}
+</code></pre>
+<!-- TODO: Exposing the information to callers with accessor functions. -->
+<h3 id="错误包装-error-wrapping">错误包装 (Error Wrapping)</h3>
+<p>一个（函数/方法）调用失败时，有三种主要的错误传播方式：</p>
+<ul>
+<li>如果没有要添加的其他上下文，并且您想要维护原始错误类型，则返回原始错误。</li>
+<li>添加上下文，使用 <a href="https://godoc.org/github.com/pkg/errors#Wrap"><code>&quot;pkg/errors&quot;.Wrap</code></a> 以便错误消息提供更多上下文 ,<a href="https://godoc.org/github.com/pkg/errors#Cause"><code>&quot;pkg/errors&quot;.Cause</code></a> 可用于提取原始错误。</li>
+<li>使用 <a href="https://golang.org/pkg/fmt/#Errorf"><code>fmt.Errorf</code></a> ，如果调用者不需要检测或处理的特定错误情况。  specific error case.</li>
+</ul>
+<p>建议在可能的地方添加上下文，以使您获得诸如“调用服务 foo：连接被拒绝”之类的更有用的错误，而不是诸如“连接被拒绝”之类的模糊错误。</p>
+<p>在将上下文添加到返回的错误时，请避免使用“failed to”之类的短语来保持上下文简洁，这些短语会陈述明显的内容，并随着错误在堆栈中的渗透而逐渐堆积：</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">s, err := store.New()
+if err != nil {
+    return fmt.Errorf(
+        &quot;failed to create new store: %s&quot;, err)
+}
+</code></pre>
+</td><td>
+<pre><code class="language-go">s, err := store.New()
+if err != nil {
+    return fmt.Errorf(
+        &quot;new store: %s&quot;, err)
+}
+</code></pre>
+<tr><td>
+<pre><code>failed to x: failed to y: failed to create new store: the error
+</code></pre>
+</td><td>
+<pre><code>x: y: new store: the error
+</code></pre>
+</td></tr>
+</tbody></table>
+<p>但是，一旦将错误发送到另一个系统，就应该明确消息是错误消息（例如使用<code>err</code>标记，或在日志中以”Failed”为前缀）。</p>
+<p>另请参见 <a href="https://dave.cheney.net/2016/04/27/dont-just-check-errors-handle-them-gracefully">Don't just check errors, handle them gracefully</a>. 不要只是检查错误，要优雅地处理错误</p>
+<h3 id="处理类型断言失败">处理类型断言失败</h3>
+<p><a href="https://golang.org/ref/spec#Type_assertions">type assertion</a> 的单个返回值形式针对不正确的类型将产生 panic。因此，请始终使用“comma ok”的惯用法。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">t := i.(string)
+</code></pre>
+</td><td>
+<pre><code class="language-go">t, ok := i.(string)
+if !ok {
+  // 优雅地处理错误
+}
+</code></pre>
+</td></tr>
+</tbody></table>
+<!-- TODO: There are a few situations where the single assignment form is
+fine. -->
+<h3 id="不要-panic">不要 panic</h3>
+<p>在生产环境中运行的代码必须避免出现 panic。panic 是 <a href="https://en.wikipedia.org/wiki/Cascading_failure">cascading failures</a> 级联失败的主要根源 。如果发生错误，该函数必须返回错误，并允许调用方决定如何处理它。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">func foo(bar string) {
+  if len(bar) == 0 {
+    panic(&quot;bar must not be empty&quot;)
+  }
+  // ...
+}
+
+func main() {
+  if len(os.Args) != 2 {
+    fmt.Println(&quot;USAGE: foo &lt;bar&gt;&quot;)
+    os.Exit(1)
+  }
+  foo(os.Args[1])
+}
+</code></pre>
+</td><td>
+<pre><code class="language-go">func foo(bar string) error {
+  if len(bar) == 0 {
+    return errors.New(&quot;bar must not be empty&quot;)
+  }
+  // ...
+  return nil
+}
+
+func main() {
+  if len(os.Args) != 2 {
+    fmt.Println(&quot;USAGE: foo &lt;bar&gt;&quot;)
+    os.Exit(1)
+  }
+  if err := foo(os.Args[1]); err != nil {
+    panic(err)
+  }
+}
+</code></pre>
+</td></tr>
+</tbody></table>
+<p>panic/recover 不是错误处理策略。仅当发生不可恢复的事情（例如：nil 引用）时，程序才必须 panic。程序初始化是一个例外：程序启动时应使程序中止的不良情况可能会引起 panic。</p>
+<pre><code class="language-go">var _statusTemplate = template.Must(template.New(&quot;name&quot;).Parse(&quot;_statusHTML&quot;))
+</code></pre>
+<p>Even in tests, prefer <code>t.Fatal</code> or <code>t.FailNow</code> over panics to ensure that the<br>
+test is marked as failed.</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">// func TestFoo(t *testing.T)
+
+f, err := ioutil.TempFile(&quot;&quot;, &quot;test&quot;)
+if err != nil {
+  panic(&quot;failed to set up test&quot;)
+}
+</code></pre>
+</td><td>
+<pre><code class="language-go">// func TestFoo(t *testing.T)
+
+f, err := ioutil.TempFile(&quot;&quot;, &quot;test&quot;)
+if err != nil {
+  t.Fatal(&quot;failed to set up test&quot;)
+}
+</code></pre>
+</td></tr>
+</tbody></table>
+<!-- TODO: Explain how to use _test packages. -->
+<h3 id="使用-gouberorgatomic">使用 go.uber.org/atomic</h3>
+<p>使用 <a href="https://golang.org/pkg/sync/atomic/">sync/atomic</a> 包的原子操作对原始类型 (<code>int32</code>, <code>int64</code>等）进行操作，因此很容易忘记使用原子操作来读取或修改变量。</p>
+<p><a href="https://godoc.org/go.uber.org/atomic">go.uber.org/atomic</a> 通过隐藏基础类型为这些操作增加了类型安全性。此外，它包括一个方便的<code>atomic.Bool</code>类型。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">type foo struct {
+  running int32  // atomic
+}
+
+func (f* foo) start() {
+  if atomic.SwapInt32(&amp;f.running, 1) == 1 {
+     // already running…
+     return
+  }
+  // start the Foo
+}
+
+func (f *foo) isRunning() bool {
+  return f.running == 1  // race!
+}
+</code></pre>
+</td><td>
+<pre><code class="language-go">type foo struct {
+  running atomic.Bool
+}
+
+func (f *foo) start() {
+  if f.running.Swap(true) {
+     // already running…
+     return
+  }
+  // start the Foo
+}
+
+func (f *foo) isRunning() bool {
+  return f.running.Load()
+}
+</code></pre>
+</td></tr>
+</tbody></table>
+<h2 id="性能">性能</h2>
+<p>性能方面的特定准则，适用于热路径。</p>
+<h3 id="优先使用-strconv-而不是-fmt">优先使用 strconv 而不是 fmt</h3>
+<p>将原语转换为字符串或从字符串转换时，<code>strconv</code>速度比<code>fmt</code>快。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">for i := 0; i &lt; b.N; i++ {
+  s := fmt.Sprint(rand.Int())
+}
+</code></pre>
+</td><td>
+<pre><code class="language-go">for i := 0; i &lt; b.N; i++ {
+  s := strconv.Itoa(rand.Int())
+}
+</code></pre>
+</td></tr>
+<tr><td>
+<pre><code>BenchmarkFmtSprint-4    143 ns/op    2 allocs/op
+</code></pre>
+</td><td>
+<pre><code>BenchmarkStrconv-4    64.2 ns/op    1 allocs/op
+</code></pre>
+</td></tr>
+</tbody></table>
+<h3 id="避免字符串到字节的转换">避免字符串到字节的转换</h3>
+<p>不要反复从固定字符串创建字节 slice。相反，请执行一次转换并捕获结果。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">for i := 0; i &lt; b.N; i++ {
+  w.Write([]byte(&quot;Hello world&quot;))
+}
+</code></pre>
+</td><td>
+<pre><code class="language-go">data := []byte(&quot;Hello world&quot;)
+for i := 0; i &lt; b.N; i++ {
+  w.Write(data)
+}
+</code></pre>
+</tr>
+<tr><td>
+<pre><code>BenchmarkBad-4   50000000   22.2 ns/op
+</code></pre>
+</td><td>
+<pre><code>BenchmarkGood-4  500000000   3.25 ns/op
+</code></pre>
+</td></tr>
+</tbody></table>
+<h2 id="规范">规范</h2>
+<h3 id="相似的声明放在一组">相似的声明放在一组</h3>
+<p>Go 语言支持将相似的声明放在一个组内。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">import &quot;a&quot;
+import &quot;b&quot;
+</code></pre>
+</td><td>
+<pre><code class="language-go">import (
+  &quot;a&quot;
+  &quot;b&quot;
+)
+</code></pre>
+</td></tr>
+</tbody></table>
+<p>这同样适用于常量、变量和类型声明：</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">
+const a = 1
+const b = 2
+
+var a = 1
+var b = 2
+
+type Area float64
+type Volume float64
+</code></pre>
+</td><td>
+<pre><code class="language-go">const (
+  a = 1
+  b = 2
+)
+
+var (
+  a = 1
+  b = 2
+)
+
+type (
+  Area float64
+  Volume float64
+)
+</code></pre>
+</td></tr>
+</tbody></table>
+<p>仅将相关的声明放在一组。不要将不相关的声明放在一组。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">type Operation int
+
+const (
+  Add Operation = iota + 1
+  Subtract
+  Multiply
+  ENV_VAR = &quot;MY_ENV&quot;
+)
+</code></pre>
+</td><td>
+<pre><code class="language-go">type Operation int
+
+const (
+  Add Operation = iota + 1
+  Subtract
+  Multiply
+)
+
+const ENV_VAR = &quot;MY_ENV&quot;
+</code></pre>
+</td></tr>
+</tbody></table>
+<p>分组使用的位置没有限制，例如：你可以在函数内部使用它们：</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">func f() string {
+  var red = color.New(0xff0000)
+  var green = color.New(0x00ff00)
+  var blue = color.New(0x0000ff)
+
+  ...
+}
+</code></pre>
+</td><td>
+<pre><code class="language-go">func f() string {
+  var (
+    red   = color.New(0xff0000)
+    green = color.New(0x00ff00)
+    blue  = color.New(0x0000ff)
+  )
+
+  ...
+}
+</code></pre>
+</td></tr>
+</tbody></table>
+<h3 id="import-组内的包导入顺序">import 组内的包导入顺序</h3>
+<p>应该有两类导入组：</p>
+<ul>
+<li>标准库</li>
+<li>其他一切</li>
+</ul>
+<p>默认情况下，这是 goimports 应用的分组。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">import (
+  &quot;fmt&quot;
+  &quot;os&quot;
+  &quot;go.uber.org/atomic&quot;
+  &quot;golang.org/x/sync/errgroup&quot;
+)
+</code></pre>
+</td><td>
+<pre><code class="language-go">import (
+  &quot;fmt&quot;
+  &quot;os&quot;
+
+  &quot;go.uber.org/atomic&quot;
+  &quot;golang.org/x/sync/errgroup&quot;
+)
+</code></pre>
+</td></tr>
+</tbody></table>
+<h3 id="包名">包名</h3>
+<p>当命名包时，请按下面规则选择一个名称：</p>
+<ul>
+<li>全部小写。没有大写或下划线。</li>
+<li>大多数使用命名导入的情况下，不需要重命名。</li>
+<li>简短而简洁。请记住，在每个使用的地方都完整标识了该名称。</li>
+<li>不用复数。例如<code>net/url</code>，而不是<code>net/urls</code>。</li>
+<li>不要用“common”，“util”，“shared”或“lib”。这些是不好的，信息量不足的名称。</li>
+</ul>
+<p>另请参阅 <a href="https://blog.golang.org/package-names">Package Names</a> 和 <a href="https://rakyll.org/style-packages/">Go 包样式指南</a>.</p>
+<h3 id="函数名">函数名</h3>
+<p>我们遵循 Go 社区关于使用 <a href="https://golang.org/doc/effective_go.html#mixed-caps">MixedCaps 作为函数名</a> 的约定。有一个例外，为了对相关的测试用例进行分组，函数名可能包含下划线，如：<code>TestMyFunction_WhatIsBeingTested</code>.</p>
+<h3 id="导入别名">导入别名</h3>
+<p>如果程序包名称与导入路径的最后一个元素不匹配，则必须使用导入别名。</p>
+<pre><code class="language-go">import (
+  &quot;net/http&quot;
+
+  client &quot;example.com/client-go&quot;
+  trace &quot;example.com/trace/v2&quot;
+)
+</code></pre>
+<p>在所有其他情况下，除非导入之间有直接冲突，否则应避免导入别名。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">import (
+  &quot;fmt&quot;
+  &quot;os&quot;
+
+  nettrace &quot;golang.net/x/trace&quot;
+)
+</code></pre>
+</td><td>
+<pre><code class="language-go">import (
+  &quot;fmt&quot;
+  &quot;os&quot;
+  &quot;runtime/trace&quot;
+
+  nettrace &quot;golang.net/x/trace&quot;
+)
+</code></pre>
+</td></tr>
+</tbody></table>
+<h3 id="函数分组与顺序">函数分组与顺序</h3>
+<ul>
+<li>函数应按粗略的调用顺序排序。</li>
+<li>同一文件中的函数应按接收者分组。</li>
+</ul>
+<p>因此，导出的函数应先出现在文件中，放在<code>struct</code>, <code>const</code>, <code>var</code>定义的后面。</p>
+<p>在定义类型之后，但在接收者的其余方法之前，可能会出现一个 <code>newXYZ()</code>/<code>NewXYZ()</code></p>
+<p>由于函数是按接收者分组的，因此普通工具函数应在文件末尾出现。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">func (s *something) Cost() {
+  return calcCost(s.weights)
+}
+
+type something struct{ ... }
+
+func calcCost(n []int) int {...}
+
+func (s *something) Stop() {...}
+
+func newSomething() *something {
+    return &amp;something{}
+}
+</code></pre>
+</td><td>
+<pre><code class="language-go">type something struct{ ... }
+
+func newSomething() *something {
+    return &amp;something{}
+}
+
+func (s *something) Cost() {
+  return calcCost(s.weights)
+}
+
+func (s *something) Stop() {...}
+
+func calcCost(n []int) int {...}
+</code></pre>
+</td></tr>
+</tbody></table>
+<h3 id="减少嵌套">减少嵌套</h3>
+<p>代码应通过尽可能先处理错误情况/特殊情况并尽早返回或继续循环来减少嵌套。减少嵌套多个级别的代码的代码量。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">for _, v := range data {
+  if v.F1 == 1 {
+    v = process(v)
+    if err := v.Call(); err == nil {
+      v.Send()
+    } else {
+      return err
+    }
+  } else {
+    log.Printf(&quot;Invalid v: %v&quot;, v)
+  }
+}
+</code></pre>
+</td><td>
+<pre><code class="language-go">for _, v := range data {
+  if v.F1 != 1 {
+    log.Printf(&quot;Invalid v: %v&quot;, v)
+    continue
+  }
+
+  v = process(v)
+  if err := v.Call(); err != nil {
+    return err
+  }
+  v.Send()
+}
+</code></pre>
+</td></tr>
+</tbody></table>
+<h3 id="不必要的-else">不必要的 else</h3>
+<p>如果在 if 的两个分支中都设置了变量，则可以将其替换为单个 if。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">var a int
+if b {
+  a = 100
+} else {
+  a = 10
+}
+</code></pre>
+</td><td>
+<pre><code class="language-go">a := 10
+if b {
+  a = 100
+}
+</code></pre>
+</td></tr>
+</tbody></table>
+<h3 id="顶层变量声明">顶层变量声明</h3>
+<p>在顶层，使用标准<code>var</code>关键字。请勿指定类型，除非它与表达式的类型不同。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">var _s string = F()
+
+func F() string { return &quot;A&quot; }
+</code></pre>
+</td><td>
+<pre><code class="language-go">var _s = F()
+// 由于 F 已经明确了返回一个字符串类型，因此我们没有必要显式指定_s 的类型
+// 还是那种类型
+
+func F() string { return &quot;A&quot; }
+</code></pre>
+</td></tr>
+</tbody></table>
+<p>如果表达式的类型与所需的类型不完全匹配，请指定类型。</p>
+<pre><code class="language-go">type myError struct{}
+
+func (myError) Error() string { return &quot;error&quot; }
+
+func F() myError { return myError{} }
+
+var _e error = F()
+// F 返回一个 myError 类型的实例，但是我们要 error 类型
+</code></pre>
+<h3 id="对于未导出的顶层常量和变量使用_作为前缀">对于未导出的顶层常量和变量,使用_作为前缀</h3>
+<p>在未导出的顶级<code>vars</code>和<code>consts</code>， 前面加上前缀_，以使它们在使用时明确表示它们是全局符号。</p>
+<p>例外：未导出的错误值，应以<code>err</code>开头。</p>
+<p>基本依据：顶级变量和常量具有包范围作用域。使用通用名称可能很容易在其他文件中意外使用错误的值。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">// foo.go
+
+const (
+  defaultPort = 8080
+  defaultUser = &quot;user&quot;
+)
+
+// bar.go
+
+func Bar() {
+  defaultPort := 9090
+  ...
+  fmt.Println(&quot;Default port&quot;, defaultPort)
+
+  // We will not see a compile error if the first line of
+  // Bar() is deleted.
+}
+</code></pre>
+</td><td>
+<pre><code class="language-go">// foo.go
+
+const (
+  _defaultPort = 8080
+  _defaultUser = &quot;user&quot;
+)
+</code></pre>
+</td></tr>
+</tbody></table>
+<h3 id="结构体中的嵌入">结构体中的嵌入</h3>
+<p>嵌入式类型（例如 mutex）应位于结构体内的字段列表的顶部，并且必须有一个空行将嵌入式字段与常规字段分隔开。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">type Client struct {
+  version int
+  http.Client
+}
+</code></pre>
+</td><td>
+<pre><code class="language-go">type Client struct {
+  http.Client
+
+  version int
+}
+</code></pre>
+</td></tr>
+</tbody></table>
+<h3 id="使用字段名初始化结构体">使用字段名初始化结构体</h3>
+<p>初始化结构体时，几乎始终应该指定字段名称。现在由 <a href="https://golang.org/cmd/vet/"><code>go vet</code></a> 强制执行。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">k := User{&quot;John&quot;, &quot;Doe&quot;, true}
+</code></pre>
+</td><td>
+<pre><code class="language-go">k := User{
+    FirstName: &quot;John&quot;,
+    LastName: &quot;Doe&quot;,
+    Admin: true,
+}
+</code></pre>
+</td></tr>
+</tbody></table>
+<p>例外：如果有 3 个或更少的字段，则可以在测试表中省略字段名称。</p>
+<pre><code class="language-go">tests := []struct{
+  op Operation
+  want string
+}{
+  {Add, &quot;add&quot;},
+  {Subtract, &quot;subtract&quot;},
+}
+</code></pre>
+<h3 id="本地变量声明">本地变量声明</h3>
+<p>如果将变量明确设置为某个值，则应使用短变量声明形式 (<code>:=</code>)。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">var s = &quot;foo&quot;
+</code></pre>
+</td><td>
+<pre><code class="language-go">s := &quot;foo&quot;
+</code></pre>
+</td></tr>
+</tbody></table>
+<p>但是，在某些情况下，<code>var</code> 使用关键字时默认值会更清晰。例如，声明空切片。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">func f(list []int) {
+  filtered := []int{}
+  for _, v := range list {
+    if v &gt; 10 {
+      filtered = append(filtered, v)
+    }
+  }
+}
+</code></pre>
+</td><td>
+<pre><code class="language-go">func f(list []int) {
+  var filtered []int
+  for _, v := range list {
+    if v &gt; 10 {
+      filtered = append(filtered, v)
+    }
+  }
+}
+</code></pre>
+</td></tr>
+</tbody></table>
+<h3 id="nil-是一个有效的-slice">nil 是一个有效的 slice</h3>
+<p><code>nil</code> 是一个有效的长度为 0 的 slice，这意味着，</p>
+<ul>
+<li>
+<p>您不应明确返回长度为零的切片。应该返回<code>nil</code> 来代替。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">if x == &quot;&quot; {
+  return []int{}
+}
+</code></pre>
+</td><td>
+<pre><code class="language-go">if x == &quot;&quot; {
+  return nil
+}
+</code></pre>
+</td></tr>
+</tbody></table>
+</li>
+<li>
+<p>要检查切片是否为空，请始终使用<code>len(s) == 0</code>。而非 <code>nil</code>。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">func isEmpty(s []string) bool {
+  return s == nil
+}
+</code></pre>
+</td><td>
+<pre><code class="language-go">func isEmpty(s []string) bool {
+  return len(s) == 0
+}
+</code></pre>
+</td></tr>
+</tbody></table>
+</li>
+<li>
+<p>零值切片（用<code>var</code>声明的切片）可立即使用，无需调用<code>make()</code>创建。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">nums := []int{}
+// or, nums := make([]int)
+
+if add1 {
+  nums = append(nums, 1)
+}
+
+if add2 {
+  nums = append(nums, 2)
+}
+</code></pre>
+</td><td>
+<pre><code class="language-go">var nums []int
+
+if add1 {
+  nums = append(nums, 1)
+}
+
+if add2 {
+  nums = append(nums, 2)
+}
+</code></pre>
+</td></tr>
+</tbody></table>
+</li>
+</ul>
+<h3 id="小变量作用域">小变量作用域</h3>
+<p>如果有可能，尽量缩小变量作用范围。除非它与 <a href="#%E5%87%8F%E5%B0%91%E5%B5%8C%E5%A5%97">减少嵌套</a>的规则冲突。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">err := ioutil.WriteFile(name, data, 0644)
+if err != nil {
+ return err
+}
+</code></pre>
+</td><td>
+<pre><code class="language-go">if err := ioutil.WriteFile(name, data, 0644); err != nil {
+ return err
+}
+</code></pre>
+</td></tr>
+</tbody></table>
+<p>如果需要在 if 之外使用函数调用的结果，则不应尝试缩小范围。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">if data, err := ioutil.ReadFile(name); err == nil {
+  err = cfg.Decode(data)
+  if err != nil {
+    return err
+  }
+
+  fmt.Println(cfg)
+  return nil
+} else {
+  return err
+}
+</code></pre>
+</td><td>
+<pre><code class="language-go">data, err := ioutil.ReadFile(name)
+if err != nil {
+   return err
+}
+
+if err := cfg.Decode(data); err != nil {
+  return err
+}
+
+fmt.Println(cfg)
+return nil
+</code></pre>
+</td></tr>
+</tbody></table>
+<h3 id="避免参数语义不明确avoid-naked-parameters">避免参数语义不明确(Avoid Naked Parameters)</h3>
+<p>函数调用中的<code>意义不明确的参数</code>可能会损害可读性。当参数名称的含义不明显时，请为参数添加 C 样式注释 (<code>/* ... */</code>)</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">// func printInfo(name string, isLocal, done bool)
+
+printInfo(&quot;foo&quot;, true, true)
+</code></pre>
+</td><td>
+<pre><code class="language-go">// func printInfo(name string, isLocal, done bool)
+
+printInfo(&quot;foo&quot;, true /* isLocal */, true /* done */)
+</code></pre>
+</td></tr>
+</tbody></table>
+<p>对于上面的示例代码，还有一种更好的处理方式是将上面的 <code>bool</code> 类型换成自定义类型。将来，该参数可以支持不仅仅局限于两个状态（true/false）。</p>
+<pre><code class="language-go">type Region int
+
+const (
+  UnknownRegion Region = iota
+  Local
+)
+
+type Status int
+
+const (
+  StatusReady = iota + 1
+  StatusDone
+  // Maybe we will have a StatusInProgress in the future.
+)
+
+func printInfo(name string, region Region, status Status)
+</code></pre>
+<h3 id="使用原始字符串字面值避免转义">使用原始字符串字面值,避免转义</h3>
+<p>Go 支持使用 <a href="https://golang.org/ref/spec#raw_string_lit">原始字符串字面值</a>，也就是 &quot; ` &quot; 来表示原生字符串，在需要转义的场景下，我们应该尽量使用这种方案来替换。</p>
+<p>可以跨越多行并包含引号。使用这些字符串可以避免更难阅读的手工转义的字符串。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">wantError := &quot;unknown name:\&quot;test\&quot;&quot;
+</code></pre>
+</td><td>
+<pre><code class="language-go">wantError := `unknown error:&quot;test&quot;`
+</code></pre>
+</td></tr>
+</tbody></table>
+<h3 id="初始化-struct-引用">初始化 Struct 引用</h3>
+<p>在初始化结构引用时，请使用<code>&amp;T{}</code>代替<code>new(T)</code>，以使其与结构体初始化一致。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">sval := T{Name: &quot;foo&quot;}
+
+// inconsistent
+sptr := new(T)
+sptr.Name = &quot;bar&quot;
+</code></pre>
+</td><td>
+<pre><code class="language-go">sval := T{Name: &quot;foo&quot;}
+
+sptr := &amp;T{Name: &quot;bar&quot;}
+</code></pre>
+</td></tr>
+</tbody></table>
+<h3 id="字符串-string-format">字符串 string format</h3>
+<p>如果你为<code>Printf</code>-style 函数声明格式字符串，请将格式化字符串放在外面，并将其设置为<code>const</code>常量。</p>
+<p>这有助于<code>go vet</code>对格式字符串执行静态分析。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">msg := &quot;unexpected values %v, %v\n&quot;
+fmt.Printf(msg, 1, 2)
+</code></pre>
+</td><td>
+<pre><code class="language-go">const msg = &quot;unexpected values %v, %v\n&quot;
+fmt.Printf(msg, 1, 2)
+</code></pre>
+</td></tr>
+</tbody></table>
+<h3 id="命名-printf-样式的函数">命名 Printf 样式的函数</h3>
+<p>声明<code>Printf</code>-style 函数时，请确保<code>go vet</code>可以检测到它并检查格式字符串。</p>
+<p>这意味着您应尽可能使用预定义的<code>Printf</code>-style 函数名称。<code>go vet</code>将默认检查这些。有关更多信息，请参见 <a href="https://golang.org/cmd/vet/#hdr-Printf_family">Printf 系列</a>。</p>
+<p>如果不能使用预定义的名称，请以 f 结束选择的名称：<code>Wrapf</code>，而不是<code>Wrap</code>。<code>go vet</code>可以要求检查特定的 Printf 样式名称，但名称必须以<code>f</code>结尾。</p>
+<pre><code class="language-shell">$ go vet -printfuncs=wrapf,statusf
+</code></pre>
+<p>另请参阅 <a href="https://kuzminva.wordpress.com/2017/11/07/go-vet-printf-family-check/">go vet: Printf family check</a>.</p>
+<h2 id="编程模式">编程模式</h2>
+<h3 id="表驱动测试">表驱动测试</h3>
+<p>当测试逻辑是重复的时候，通过  <a href="https://blog.golang.org/subtests">subtests</a> 使用 table 驱动的方式编写 case 代码看上去会更简洁。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">// func TestSplitHostPort(t *testing.T)
+
+host, port, err := net.SplitHostPort(&quot;192.0.2.0:8000&quot;)
+require.NoError(t, err)
+assert.Equal(t, &quot;192.0.2.0&quot;, host)
+assert.Equal(t, &quot;8000&quot;, port)
+
+host, port, err = net.SplitHostPort(&quot;192.0.2.0:http&quot;)
+require.NoError(t, err)
+assert.Equal(t, &quot;192.0.2.0&quot;, host)
+assert.Equal(t, &quot;http&quot;, port)
+
+host, port, err = net.SplitHostPort(&quot;:8000&quot;)
+require.NoError(t, err)
+assert.Equal(t, &quot;&quot;, host)
+assert.Equal(t, &quot;8000&quot;, port)
+
+host, port, err = net.SplitHostPort(&quot;1:8&quot;)
+require.NoError(t, err)
+assert.Equal(t, &quot;1&quot;, host)
+assert.Equal(t, &quot;8&quot;, port)
+</code></pre>
+</td><td>
+<pre><code class="language-go">// func TestSplitHostPort(t *testing.T)
+
+tests := []struct{
+  give     string
+  wantHost string
+  wantPort string
+}{
+  {
+    give:     &quot;192.0.2.0:8000&quot;,
+    wantHost: &quot;192.0.2.0&quot;,
+    wantPort: &quot;8000&quot;,
+  },
+  {
+    give:     &quot;192.0.2.0:http&quot;,
+    wantHost: &quot;192.0.2.0&quot;,
+    wantPort: &quot;http&quot;,
+  },
+  {
+    give:     &quot;:8000&quot;,
+    wantHost: &quot;&quot;,
+    wantPort: &quot;8000&quot;,
+  },
+  {
+    give:     &quot;1:8&quot;,
+    wantHost: &quot;1&quot;,
+    wantPort: &quot;8&quot;,
+  },
+}
+
+for _, tt := range tests {
+  t.Run(tt.give, func(t *testing.T) {
+    host, port, err := net.SplitHostPort(tt.give)
+    require.NoError(t, err)
+    assert.Equal(t, tt.wantHost, host)
+    assert.Equal(t, tt.wantPort, port)
+  })
+}
+</code></pre>
+</td></tr>
+</tbody></table>
+<p>很明显，使用 test table 的方式在代码逻辑扩展的时候，比如新增 test case，都会显得更加的清晰。</p>
+<p>我们遵循这样的约定：将结构体切片称为<code>tests</code>。 每个测试用例称为<code>tt</code>。此外，我们鼓励使用<code>give</code>和<code>want</code>前缀说明每个测试用例的输入和输出值。</p>
+<pre><code class="language-go">tests := []struct{
+  give     string
+  wantHost string
+  wantPort string
+}{
+  // ...
+}
+
+for _, tt := range tests {
+  // ...
+}
+</code></pre>
+<h3 id="功能选项">功能选项</h3>
+<p>功能选项是一种模式，您可以在其中声明一个不透明 Option 类型，该类型在某些内部结构中记录信息。您接受这些选项的可变编号，并根据内部结构上的选项记录的全部信息采取行动。</p>
+<p>将此模式用于您需要扩展的构造函数和其他公共 API 中的可选参数，尤其是在这些功能上已经具有三个或更多参数的情况下。</p>
+<table>
+<thead><tr><th>Bad</th><th>Good</th></tr></thead>
+<tbody>
+<tr><td>
+<pre><code class="language-go">// package db
+
+func Connect(
+  addr string,
+  timeout time.Duration,
+  caching bool,
+) (*Connection, error) {
+  // ...
+}
+
+// Timeout and caching must always be provided,
+// even if the user wants to use the default.
+
+db.Connect(addr, db.DefaultTimeout, db.DefaultCaching)
+db.Connect(addr, newTimeout, db.DefaultCaching)
+db.Connect(addr, db.DefaultTimeout, false /* caching */)
+db.Connect(addr, newTimeout, false /* caching */)
+</code></pre>
+</td><td>
+<pre><code class="language-go">type options struct {
+  timeout time.Duration
+  caching bool
+}
+
+// Option overrides behavior of Connect.
+type Option interface {
+  apply(*options)
+}
+
+type optionFunc func(*options)
+
+func (f optionFunc) apply(o *options) {
+  f(o)
+}
+
+func WithTimeout(t time.Duration) Option {
+  return optionFunc(func(o *options) {
+    o.timeout = t
+  })
+}
+
+func WithCaching(cache bool) Option {
+  return optionFunc(func(o *options) {
+    o.caching = cache
+  })
+}
+
+// Connect creates a connection.
+func Connect(
+  addr string,
+  opts ...Option,
+) (*Connection, error) {
+  options := options{
+    timeout: defaultTimeout,
+    caching: defaultCaching,
+  }
+
+  for _, o := range opts {
+    o.apply(&amp;options)
+  }
+
+  // ...
+}
+
+// Options must be provided only if needed.
+
+db.Connect(addr)
+db.Connect(addr, db.WithTimeout(newTimeout))
+db.Connect(addr, db.WithCaching(false))
+db.Connect(
+  addr,
+  db.WithCaching(false),
+  db.WithTimeout(newTimeout),
+)
+</code></pre>
+</td></tr>
+</tbody></table>
+<p>还可以参考下面资料：</p>
+<ul>
+<li>
+<p><a href="https://commandcenter.blogspot.com/2014/01/self-referential-functions-and-design.html">Self-referential functions and the design of options</a></p>
+</li>
+<li>
+<p><a href="https://dave.cheney.net/2014/10/17/functional-options-for-friendly-apis">Functional options for friendly APIs</a></p>
+</li>
+</ul>
+<!-- TODO: replace this with parameter structs and functional options, when to
+use one vs other -->
+<p><a href="https://github.com/xxjwxc/uber_go_guide_cn/blob/master/README.md">原始仓库地址</a></p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://xiusin.github.io/tag/6pF5-ENcP" class="tag">
+                    GO风格指南
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/slice-de-yi-chang-qing-kuang-yu-jie-xi">
+                  <h3 class="post-title">
+                    slice的异常情况与详细解析
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="/post-images/prism.js"></script>
+<link rel="stylesheet" href="/post-images/prism.css">
+<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>

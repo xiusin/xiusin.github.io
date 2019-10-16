@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" >
 
-<title>go中使用CommandContext的进程取消不掉 | Xiusin</title>
+<title>一个参数传引用的疑惑 | Xiusin</title>
 <meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -97,72 +97,71 @@
       <div class="main-container">
         <div class="content-container" data-aos="fade-up">
           <div class="post-detail">
-            <h2 class="post-title">go中使用CommandContext的进程取消不掉</h2>
-            <div class="post-date">2019-09-16</div>
+            <h2 class="post-title">一个参数传引用的疑惑</h2>
+            <div class="post-date">2019-10-16</div>
             
             <div class="post-content">
-              <p>最近写一个小DEMO进行进程的关闭、构建、启动, 有段代码:</p>
-<pre><code class="language-golang">for {
-		ctx, cancel := context.WithCancel(context.Background())
-		cmd := exec.CommandContext(ctx, &quot;go&quot;, &quot;run&quot;, &quot;main.go&quot;)
-		cmd.Stdout = os.Stdout
-		go func() {
-			&lt;-rebuildNotifier //其他协程通知关闭程序
-			fmt.Println(&quot;执行关闭程序&quot;)
-			cancel()
-		}()
-		if err := cmd.Run(); err != nil {
-			log.Println(err)
-		} 
-		fmt.Println(&quot;重新启动一个进程&quot;)
-	}
+              <p>下面一段普通代码, 我们希望scan方法替换掉原始数据:</p>
+<pre><code class="language-go">package main
+import(
+	&quot;fmt&quot;
+	&quot;encoding/json&quot;
+)
+
+type a []int
+
+func main(){
+	b := &amp;a{0}
+	b.Scan()
+	fmt.Printf(&quot;%v\n&quot;,*b)
+	b.Scan2()
+	fmt.Printf(&quot;%v\n&quot;,*b)
+}
+
+func (i *a) Scan(){
+	fmt.Printf(&quot;%p\n&quot;, i)
+	i = &amp;a{1}
+	fmt.Printf(&quot;%p\n&quot;, i)
+}
+
+func (i *a) Scan2(){
+	fmt.Printf(&quot;%p\n&quot;, i)
+	json.Unmarshal([]byte{'[','2',']'},i)
+	fmt.Printf(&quot;%p\n&quot;, i)
+}
 </code></pre>
-<p>在执行的时候发现当执行<code>cancel()</code>函数以后, <code>cmd.Run</code>得到一个<code>Killed</code>信号, 但是由<code>exec.CommandContext</code>启动的进程居然没有被杀死, 依然坚挺的在输出内容.<br>
-如果将内容:</p>
-<pre><code class="language-golang">		go func() {
-			&lt;-rebuildNotifier //其他协程通知关闭程序
-			fmt.Println(&quot;执行关闭程序&quot;)
-			cancel()
-		}()
+<p>我们最得到的结果是:</p>
+<pre><code class="language-bash">[0]
+0xc0000b4000
+0xc0000b4040
+[0]
+0xc0000b4000
+0xc0000b4000
+[2]
 </code></pre>
-<p>直接换成</p>
-<pre><code class="language-golang">cancel()
-</code></pre>
-<p>能够正常的得到结果, 但不是想要的(我可不想无限杀死cmd).  当  将代码:</p>
-<pre><code class="language-golang">	cmd := exec.CommandContext(ctx, &quot;go&quot;, &quot;run&quot;, &quot;main.go&quot;)
-</code></pre>
-<p>换成</p>
-<pre><code class="language-golang">// 构建main
-cmd := exec.CommandContext(ctx, &quot;./main&quot;)
-</code></pre>
-<p>代码能够正常执行了!</p>
+<p>出乎预料的结果,为什么会这样呢?</p>
 <blockquote>
-<p>推断: 可能是<code>go run main.go</code>包含子进程, 当执行<code>cancel</code>的时候是杀死了主进程, 子进程变成了孤儿进程. 具体需要代码测试结果.</p>
+<p>go语言内的参数传递都是值传递, 为什么叫 <code>*x</code> 为引用传递呢, 其实 <code>*x</code>作为参数的时候只是传递一个指向原始数据的副本(即形参不代表数据本身,而是一个指向数据的变量).</p>
 </blockquote>
-<p>资料:<br>
-<a href="http://ju.outofmemory.cn/entry/363221">golang的CommandContext取消不退出问题</a><br>
-<a href="https://blog.csdn.net/weixin_37887248/article/details/85280654">golang使用execCommand调用的时候子进程如何杀掉处理方法</a></p>
+<p>所以 当试图修改<code>形参</code>本身的时候,其实是影响的形参自身数据,不会影响其指向的数据.</p>
+<p>拿别人回答答案总结:</p>
+<blockquote>
+<p>当修改一个指针参数所指的值的时候，此指针可以被看做是一个引用值。<br>
+但是当此指针参数本身被修改的时候，此此指针应该被看做是一个非引用值。<br>
+简单说来，在一个函数内部对一个形参本身进行的任何修改都不会体现到相应传递的实参上。<br>
+因为此形参只不过是相应实参的一个副本。</p>
+</blockquote>
+<p>所以如果要用函数<code>scan</code>修改数据就需要使用 <code>*i = a{1}</code> 来表达, 即: 修改 <code>i</code>指向的数据为<code>a{1}</code>.</p>
+<p><strong>在实际项目的时候一定要注意这个问题!!!</strong></p>
 
             </div>
-            
-              <div class="tag-container">
-                
-                  <a href="https://xiusin.github.io/tag/8QTdjVvR4" class="tag">
-                    golang
-                  </a>
-                
-                  <a href="https://xiusin.github.io/tag/5bQQVZwQYY" class="tag">
-                    exec.Command
-                  </a>
-                
-              </div>
             
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://xiusin.github.io/post/innodb-isolation">
+                <a href="https://xiusin.github.io/post/uber-go-feng-ge-zhi-nan">
                   <h3 class="post-title">
-                    4种事务的隔离级别，InnoDB如何巧妙实现？
+                    uber Go风格指南
                   </h3>
                 </a>
               </div>
