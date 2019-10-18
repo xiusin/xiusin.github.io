@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://xiusin.github.io</id>
     <title>Xiusin</title>
-    <updated>2019-10-17T01:53:57.267Z</updated>
+    <updated>2019-10-18T09:55:42.914Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://xiusin.github.io"/>
     <link rel="self" href="https://xiusin.github.io/atom.xml"/>
@@ -10,6 +10,13 @@
     <logo>https://xiusin.github.io/images/avatar.png</logo>
     <icon>https://xiusin.github.io/favicon.ico</icon>
     <rights>All rights reserved 2019, Xiusin</rights>
+    <entry>
+        <title type="html"><![CDATA[memcache的分布式一致性算法的实现]]></title>
+        <id>https://xiusin.github.io/post/memcache-de-fen-bu-shi-yi-zhi-xing-suan-fa-de-shi-xian</id>
+        <link href="https://xiusin.github.io/post/memcache-de-fen-bu-shi-yi-zhi-xing-suan-fa-de-shi-xian">
+        </link>
+        <updated>2019-10-18T09:33:10.000Z</updated>
+    </entry>
     <entry>
         <title type="html"><![CDATA[一个参数传引用的疑惑]]></title>
         <id>https://xiusin.github.io/post/yi-ge-can-shu-chuan-yin-yong-de-yi-huo</id>
@@ -72,12 +79,5 @@
         <link href="https://xiusin.github.io/post/gao-bing-fa-chang-jing-xia-huan-cun-de-chang-jian-wen-ti">
         </link>
         <updated>2019-09-17T03:38:01.000Z</updated>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[缓存雪崩、缓存穿透、缓存预热、缓存更新、缓存降级等问题]]></title>
-        <id>https://xiusin.github.io/post/huan-cun-xue-beng-huan-cun-chuan-tou-huan-cun-yu-re-huan-cun-geng-xin-huan-cun-jiang-ji-deng-wen-ti</id>
-        <link href="https://xiusin.github.io/post/huan-cun-xue-beng-huan-cun-chuan-tou-huan-cun-yu-re-huan-cun-geng-xin-huan-cun-jiang-ji-deng-wen-ti">
-        </link>
-        <updated>2019-09-17T03:36:51.000Z</updated>
     </entry>
 </feed>

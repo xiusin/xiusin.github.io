@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>memcache的分布式一致性算法的实现 | Xiusin</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571392538285">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1571392538285" class="site-logo">
+        <h1 class="site-title">Xiusin</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="/leecode" class="site-nav">
+            leecode
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">memcache的分布式一致性算法的实现</h2>
+            <div class="post-date">2019-10-18</div>
+            
+            <div class="post-content">
+              <p>这段时间心血来潮要看一下关于缓存架构的设计与实现, 之前也会一直看资料, 都是在文章内描述<code>一致性hash</code>来实现memcache的分布式存储, 这样能更好的应对机器的不确定性, 比如动态添加机器或删减机器.</p>
+<p>看了一些文章的实现, 似懂非懂. 平时拿来主义的我就想着自己来实现一个类似的简单算法加深理解, 什么是<code>圆环</code>, 什么是<code>虚拟节点</code>.</p>
+<p>写案例的过程中也催生了很多疑问, 这些疑问后期在深入了解, 比如<code>crc32</code>出来的值可能会一致, 那么如果在虚拟节点的时候会不会出现节点覆盖不一致(数量)等情况.</p>
+<p>下面是用go实现了一个简单的一致性算法(也有参考地方):</p>
+<pre><code class="language-go">package main
+
+import (
+	&quot;errors&quot;
+	&quot;fmt&quot;
+	&quot;hash/crc32&quot;
+	&quot;math/rand&quot;
+	&quot;sort&quot;
+	&quot;strconv&quot;
+	&quot;time&quot;
+)
+
+
+type serverInfo struct {
+	No      uint8
+	Address string
+}
+
+// 每个服务器生成虚拟节点个数
+var (
+	everyServVmNodeNum = 20
+	crcNodeNums        []uint32
+	nodes              = map[uint32]serverInfo{}
+	totalNode          int
+)
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
+
+func main() {
+	// 设置服务器列表
+	servList := []string{
+		&quot;127.0.0.1:32796&quot;,
+		&quot;127.0.0.1:32797&quot;,
+		&quot;127.0.0.1:32798&quot;,
+	}
+	totalNode = everyServVmNodeNum * len(servList)
+	crcNodeNums = make([]uint32, totalNode)
+	for k, v := range servList {
+		for i := 0; i &lt; everyServVmNodeNum; i++ {
+			nodeNum := fmt.Sprintf(&quot;%s_%d&quot;, v, i)
+			// 这里发现如果crc32的值正好相同怎么办.. 有概率吗?
+			crcNodeNum := crc32.ChecksumIEEE([]byte(nodeNum))
+			crcNodeNums[k*everyServVmNodeNum+i] = crcNodeNum
+			nodes[crcNodeNum] = serverInfo{No: uint8(i), Address: v}
+		}
+	}
+	// 排序 方便后续查找节点
+	sort.Slice(crcNodeNums, func(i, j int) bool {
+		return crcNodeNums[i] &lt; crcNodeNums[j]
+	})
+
+	for i := 0; i &lt; 10000; i++ {
+		key := randStr()
+		srv, num, srvNum := peekServer(key)
+		fmt.Println(
+			string(key),
+			&quot;存储到&quot;,
+			srv.Address, &quot;的第&quot;,
+			srv.No, &quot;号虚拟节点&quot;,
+			&quot;key=&quot;+strconv.Itoa(int(num)),
+			&quot;server=&quot;+strconv.Itoa(int(srvNum)),
+			&quot;ContinuousThreeNum=&quot;, getContinuousThreeNum(srvNum),
+		)
+		if srvNum != crcNodeNums[0] &amp;&amp; num &gt; srvNum {
+			panic(errors.New(fmt.Sprintf(&quot;%s ==&gt; keyNum=%d, srvNum=%d&quot;, &quot;出错了!,预期不一致&quot;, num, srvNum)))
+		}
+	}
+
+}
+
+// 获取连续三个节点的值
+func getContinuousThreeNum(num uint32) []uint32 {
+	var res []uint32
+	for k, v := range crcNodeNums {
+		if v == num {
+			if k-1 &gt;= 0 {
+				res = append(res, crcNodeNums[k-1])
+			} else {
+				res = append(res, 0)
+			}
+			res = append(res, num)
+			if k+1 &lt; len(crcNodeNums) {
+				res = append(res, crcNodeNums[k+1])
+			} else {
+				res = append(res, 0)
+			}
+		}
+	}
+	return res
+}
+
+func peekServer(key []byte) (serverInfo, uint32, uint32) {
+	data := crcNodeNums[:]
+	nodeNum := crc32.ChecksumIEEE(key)
+	if s, ok := nodes[nodeNum]; ok {
+		return s, nodeNum, nodeNum
+	}
+	if len(data) == 1 {
+		return nodes[0], nodeNum, nodeNum
+	}
+	/**超出圆环最后一个节点则落点到第一台服务器**/
+	if crcNodeNums[totalNode-1] &lt; nodeNum {
+		return nodes[crcNodeNums[0]], nodeNum, crcNodeNums[0]
+	}
+	var idx = totalNode / 2
+	var nearbyBigNodeNum uint32
+	// 怎么二分节点并且能保留靠近的节点 ? !
+	for len(data) &gt; 1 {
+		// 选取点的值大于了key的值
+		if data[idx] &gt; nodeNum {
+			nearbyBigNodeNum = data[idx]
+			data = data[:idx]
+		} else { // 选取点小于了key的值, 取后半段
+			data = data[idx:]
+		}
+		idx = len(data) / 2
+	}
+	if nearbyBigNodeNum &gt; 0 {
+		return nodes[nearbyBigNodeNum], nodeNum, nearbyBigNodeNum
+	}
+	if len(data) &gt;= 2 {
+		panic(&quot;错误了!!!!&quot;)
+	}
+	return nodes[data[0]], nodeNum, data[0]
+}
+
+func randStr() []byte {
+	salt := &quot;abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&amp;*()_+1234567890-=&lt;&gt;,.?&quot;
+	var b []byte
+	for i := 0; i &lt; 10; i++ {
+		b = append(b, salt[rand.Intn(len(salt))])
+	}
+	return b
+}
+</code></pre>
+<p>存储<code>key</code>查找节点用的<code>二分查找</code>, 并且用一个变量<code>nearbyBigNodeNum</code>来存储最近一次大于<code>key</code>的crc值.<br>
+代码还是比较简陋的, 很多命名比较难看. 在本机测试没有发现查找节点不正确的情况. 所以理论上这个逻辑是没问题的.</p>
+<p>go语言中<code>gomemcache</code>的star数还是不少的, 有一定的参考意义, 这类的模块一般都为开发者实现好了一部分调度算法, 阅读<a href="https://github.com/bradfitz/gomemcache">gomemcache</a>代码发现他们没有虚拟节点, 直接使用的取模来查找的服务器, 应该是上边说的<code>取模</code>算法吧??, 不过今天实现了小型的程序来加深印象,还是挺开心的~~~</p>
+<blockquote>
+<p>不过现在还不知道到怎么实现类似redis的那种集群<code>主从复制</code>的功能, 下去在继续了解</p>
+</blockquote>
+<p>参考文章:<br>
+<a href="https://blog.csdn.net/qq_29677867/article/details/90055934">memcache 分布式集群算法</a></p>
+<p><a href="https://github.com/bradfitz/gomemcache">gomemcache</a></p>
+
+            </div>
+            
+              <div class="tag-container">
+                
+                  <a href="https://xiusin.github.io/tag/4XL9pzNdk" class="tag">
+                    memcache
+                  </a>
+                
+                  <a href="https://xiusin.github.io/tag/dBDpRcDkDF" class="tag">
+                    一致性hash
+                  </a>
+                
+              </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/yi-ge-can-shu-chuan-yin-yong-de-yi-huo">
+                  <h3 class="post-title">
+                    一个参数传引用的疑惑
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="/post-images/prism.js"></script>
+<link rel="stylesheet" href="/post-images/prism.css">
+<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+
+  </body>
+</html>
