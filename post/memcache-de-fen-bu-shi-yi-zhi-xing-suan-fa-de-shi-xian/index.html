@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571392538285">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571393246047">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
 
@@ -29,7 +29,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://xiusin.github.io">
-        <img src="https://xiusin.github.io/images/avatar.png?v=1571392538285" class="site-logo">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1571393246047" class="site-logo">
         <h1 class="site-title">Xiusin</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -248,9 +248,17 @@ func randStr() []byte {
 <blockquote>
 <p>不过现在还不知道到怎么实现类似redis的那种集群<code>主从复制</code>的功能, 下去在继续了解</p>
 </blockquote>
+<h2 id="memcache-特点补充">memcache 特点补充</h2>
+<ol>
+<li>memcache容易发生单点故障(因为没有主从复制功能)</li>
+<li>memcache没有直接提供数据同步功能 , 不过现在好的开发者实现了类似的功能. 比如<code>magent</code>, <code>repcached</code> 等等.</li>
+<li>Memcached单个key-value大小有限，一个value最大只支持1MB</li>
+<li>Memcached只是个内存缓存，对可靠性无要求；而Redis更倾向于内存数据库，因此对对可靠性方面要求比较高；</li>
+</ol>
 <p>参考文章:<br>
 <a href="https://blog.csdn.net/qq_29677867/article/details/90055934">memcache 分布式集群算法</a></p>
 <p><a href="https://github.com/bradfitz/gomemcache">gomemcache</a></p>
+<p><a href="https://blog.csdn.net/softbinary/article/details/50769932">用magent+repcache搭建memcache集群和主备缓存</a></p>
 
             </div>
             
