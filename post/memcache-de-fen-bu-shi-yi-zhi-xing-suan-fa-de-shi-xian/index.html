@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571394717718">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1571625303531">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
 
@@ -29,7 +29,7 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://xiusin.github.io">
-        <img src="https://xiusin.github.io/images/avatar.png?v=1571394717718" class="site-logo">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1571625303531" class="site-logo">
         <h1 class="site-title">Xiusin</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
@@ -157,10 +157,10 @@ func main() {
 	sort.Slice(crcNodeNums, func(i, j int) bool {
 		return crcNodeNums[i] &lt; crcNodeNums[j]
 	})
-
+    // 做10000次测试
 	for i := 0; i &lt; 10000; i++ {
 		key := randStr()
-		srv, num, srvNum := peekServer(key)
+		srv, num, srvNum := pickServer(key)
 		fmt.Println(
 			string(key),
 			&quot;存储到&quot;,
@@ -168,7 +168,7 @@ func main() {
 			srv.No, &quot;号虚拟节点&quot;,
 			&quot;key=&quot;+strconv.Itoa(int(num)),
 			&quot;server=&quot;+strconv.Itoa(int(srvNum)),
-			&quot;ContinuousThreeNum=&quot;, getContinuousThreeNum(srvNum),
+			&quot;getContinuousThreeNode=&quot;, getContinuousThreeNode(srvNum),
 		)
 		if srvNum != crcNodeNums[0] &amp;&amp; num &gt; srvNum {
 			panic(errors.New(fmt.Sprintf(&quot;%s ==&gt; keyNum=%d, srvNum=%d&quot;, &quot;出错了!,预期不一致&quot;, num, srvNum)))
@@ -178,7 +178,7 @@ func main() {
 }
 
 // 获取连续三个节点的值
-func getContinuousThreeNum(num uint32) []uint32 {
+func getContinuousThreeNode(num uint32) []uint32 {
 	var res []uint32
 	for k, v := range crcNodeNums {
 		if v == num {
@@ -198,7 +198,7 @@ func getContinuousThreeNum(num uint32) []uint32 {
 	return res
 }
 
-func peekServer(key []byte) (serverInfo, uint32, uint32) {
+func pickServer(key []byte) (serverInfo, uint32, uint32) {
 	data := crcNodeNums[:]
 	nodeNum := crc32.ChecksumIEEE(key)
 	if s, ok := nodes[nodeNum]; ok {
