@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://xiusin.github.io</id>
     <title>Xiusin</title>
-    <updated>2019-10-21T02:41:36.293Z</updated>
+    <updated>2019-10-22T04:13:16.796Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://xiusin.github.io"/>
     <link rel="self" href="https://xiusin.github.io/atom.xml"/>
@@ -10,6 +10,13 @@
     <logo>https://xiusin.github.io/images/avatar.png</logo>
     <icon>https://xiusin.github.io/favicon.ico</icon>
     <rights>All rights reserved 2019, Xiusin</rights>
+    <entry>
+        <title type="html"><![CDATA[Go中哪些值可以被取地址，哪些值不可以被取地址？]]></title>
+        <id>https://xiusin.github.io/post/go-zhong-na-xie-zhi-ke-yi-bei-qu-di-zhi-na-xie-zhi-bu-ke-yi-bei-qu-di-zhi</id>
+        <link href="https://xiusin.github.io/post/go-zhong-na-xie-zhi-ke-yi-bei-qu-di-zhi-na-xie-zhi-bu-ke-yi-bei-qu-di-zhi">
+        </link>
+        <updated>2019-10-22T03:57:17.000Z</updated>
+    </entry>
     <entry>
         <title type="html"><![CDATA[memcache的分布式一致性算法的实现]]></title>
         <id>https://xiusin.github.io/post/memcache-de-fen-bu-shi-yi-zhi-xing-suan-fa-de-shi-xian</id>
@@ -72,12 +79,5 @@
         <link href="https://xiusin.github.io/post/yi-wen-gao-dong-mysql-de-join-liao-yi-liao-miao-sha-jia-gou-she-ji">
         </link>
         <updated>2019-09-17T03:39:31.000Z</updated>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[高并发场景下缓存的常见问题]]></title>
-        <id>https://xiusin.github.io/post/gao-bing-fa-chang-jing-xia-huan-cun-de-chang-jian-wen-ti</id>
-        <link href="https://xiusin.github.io/post/gao-bing-fa-chang-jing-xia-huan-cun-de-chang-jian-wen-ti">
-        </link>
-        <updated>2019-09-17T03:38:01.000Z</updated>
     </entry>
 </feed>
