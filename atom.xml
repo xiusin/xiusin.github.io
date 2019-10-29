@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://xiusin.github.io</id>
     <title>Xiusin</title>
-    <updated>2019-10-22T04:13:16.796Z</updated>
+    <updated>2019-10-29T08:22:52.193Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://xiusin.github.io"/>
     <link rel="self" href="https://xiusin.github.io/atom.xml"/>
@@ -10,6 +10,13 @@
     <logo>https://xiusin.github.io/images/avatar.png</logo>
     <icon>https://xiusin.github.io/favicon.ico</icon>
     <rights>All rights reserved 2019, Xiusin</rights>
+    <entry>
+        <title type="html"><![CDATA[RateLimit节流理解实现]]></title>
+        <id>https://xiusin.github.io/post/ratelimit-jie-liu-li-jie-shi-xian</id>
+        <link href="https://xiusin.github.io/post/ratelimit-jie-liu-li-jie-shi-xian">
+        </link>
+        <updated>2019-10-28T06:29:56.000Z</updated>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Go中哪些值可以被取地址，哪些值不可以被取地址？]]></title>
         <id>https://xiusin.github.io/post/go-zhong-na-xie-zhi-ke-yi-bei-qu-di-zhi-na-xie-zhi-bu-ke-yi-bei-qu-di-zhi</id>
@@ -72,12 +79,5 @@
         <link href="https://xiusin.github.io/post/shuang-huan-cun-shu-ju-ku-shuang-xie-yi-zhi-xing-wen-ti-jiu-ying-gai-zhe-me-jie-jue">
         </link>
         <updated>2019-09-20T06:39:08.000Z</updated>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[一文搞懂MySQL的Join-聊一聊秒杀架构设计]]></title>
-        <id>https://xiusin.github.io/post/yi-wen-gao-dong-mysql-de-join-liao-yi-liao-miao-sha-jia-gou-she-ji</id>
-        <link href="https://xiusin.github.io/post/yi-wen-gao-dong-mysql-de-join-liao-yi-liao-miao-sha-jia-gou-she-ji">
-        </link>
-        <updated>2019-09-17T03:39:31.000Z</updated>
     </entry>
 </feed>
