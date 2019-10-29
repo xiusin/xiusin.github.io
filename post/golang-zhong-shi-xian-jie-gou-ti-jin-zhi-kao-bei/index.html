@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" >
 
-<title>Go中哪些值可以被取地址，哪些值不可以被取地址？ | Xiusin</title>
+<title>Golang中实现结构体禁止拷贝 | Xiusin</title>
 <meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -97,72 +97,64 @@
       <div class="main-container">
         <div class="content-container" data-aos="fade-up">
           <div class="post-detail">
-            <h2 class="post-title">Go中哪些值可以被取地址，哪些值不可以被取地址？</h2>
-            <div class="post-date">2019-10-22</div>
+            <h2 class="post-title">Golang中实现结构体禁止拷贝</h2>
+            <div class="post-date">2019-10-29</div>
             
             <div class="post-content">
-              <p>Go中以下的值是可寻址的，因此可以被取地址：</p>
-<ul>
-<li>变量</li>
-<li>可寻址的结构体的字段</li>
-<li>可寻址的数组的元素</li>
-<li>任意切片的元素（无论是可寻址切片或不可寻址切片）</li>
-<li>指针解引用操作</li>
-</ul>
-<p>示例：</p>
-<pre><code class="language-go">package main 
-func main (){
-    x := struct {a [5]int}{}
+              <blockquote>
+<p>本文转载自：https://jiajunhuang.com/articles/2018_11_12-golang_nocopy.md.html，本站转载出于传递更多信息之目的，版权归原作者或者来源机构所有。</p>
+</blockquote>
+<p>Go中没有原生的禁止拷贝的方式，所以如果有的结构体，你希望使用者无法拷贝，只能指针传递保证全局唯一的话，可以这么干，定义 一个结构体叫 <code>noCopy</code> ，要实现 <code>sync.Locker</code> 这个接口</p>
+<pre><code class="language-go">// noCopy may be embedded into structs which must not be copied
+// after the first use.
+//
+// See https://golang.org/issues/8005#issuecomment-190753527
+// for details.
+type noCopy struct{}
 
-    // 所有的变量都可寻址
-    _ = &amp;x
-
-    // 若结构体可寻址, 则其字段也可寻址
-    _ = &amp;x.a
-
-    // 若一个数组可寻址, 则其元素也可寻址
-    _ = &amp;x.a[1]
-
-    // 函数的的返回值不可寻址
-    f := func () []int{ return x.a[:]}
-    _ = &amp;f() //error
-
-    //不可寻址的切片元素总是可以寻址
-    p:= &amp;f()[1]
-    
-    // 解引用表达式是可寻址的
-    _ = &amp;*p
-    _ = &amp;*&amp;*&amp;*&amp;*&amp;*p
-} 
+// Lock is a no-op used by -copylocks checker from `go vet`.
+func (*noCopy) Lock() {}
+func (*noCopy) UnLock() {}
 </code></pre>
-<p>Go中以下的值是不可寻址的：</p>
-<ul>
-<li>字符串的字节元素</li>
-<li>映射元素</li>
-<li>接口值的动态值（类型断言的结果）</li>
-<li>常量值</li>
-<li>字面值 (如:1, &quot;hello wrold&quot;)</li>
-<li>声明的包级别函数</li>
-<li>方法（用做函数值）</li>
-<li>表达式中间结果值</li>
-<li>数据通道接收操作</li>
-<li>子字符串操作</li>
-<li>子切片操作</li>
-<li>加法、减法、乘法、以及除法等等。</li>
-<li>函数调用</li>
-<li>显式值转换</li>
-<li>各种操作，不包含指针解引用（dereference）操作，但是包含数据通道接收操作、子字符串操作、子切片操作，以及加法/减法/乘法/除法等等。</li>
-</ul>
-<p>虽然字面值是不可寻址的，但是组合字面值T{}可以被取地址（虽然它是不可寻址的），这只是为了编程方便而设计的一个语法糖，并非为以上规则的特例。比如下面这段代码编译时没问题的。</p>
-<p>示例：</p>
+<p>然后把 <code>noCopy</code> 嵌到你自定义的结构体里，然后 <code>go vet</code> 就可以帮我们进行检查了。举个例子：</p>
 <pre><code class="language-go">package main
 
-func main (){
-    _ = &amp;[3]int{1,2,3}
-    _ = &amp;[]int{1,2,3}
-    _ = &amp;map[string]int{&quot;Go&quot;: 2012}
-    _ = &amp;struct{}{}
+import (
+    &quot;fmt&quot;
+)
+
+type noCopy struct{}
+
+func (*noCopy) Lock()   {}
+func (*noCopy) Unlock() {}
+
+type Demo struct {
+    noCopy noCopy
 }
+
+func Copy(d Demo) {
+    CopyTwice(d)
+}
+func CopyTwice(d Demo) {}
+
+func main() {
+    d := Demo{}
+    fmt.Printf(&quot;%+v&quot;, d)
+
+    Copy(d)
+
+    fmt.Printf(&quot;%+v&quot;, d)
+}
+</code></pre>
+<p>执行以下<code>go vet</code>:</p>
+<pre><code class="language-shell">$ go vet main.go
+# command-line-arguments
+./main.go:16: Copy passes lock by value: main.Demo contains main.noCopy
+./main.go:17: call of CopyTwice copies lock value: main.Demo contains main.noCopy
+./main.go:19: CopyTwice passes lock by value: main.Demo contains main.noCopy
+./main.go:23: call of fmt.Printf copies lock value: main.Demo contains main.noCopy
+./main.go:25: call of Copy copies lock value: main.Demo contains main.noCopy
+./main.go:27: call of fmt.Printf copies lock value: main.Demo contains main.noCopy
 </code></pre>
 
             </div>
@@ -170,9 +162,9 @@ func main (){
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://xiusin.github.io/post/memcache-de-fen-bu-shi-yi-zhi-xing-suan-fa-de-shi-xian">
+                <a href="https://xiusin.github.io/post/ratelimit-jie-liu-li-jie-shi-xian">
                   <h3 class="post-title">
-                    memcache的分布式一致性算法的实现
+                    RateLimit节流理解实现
                   </h3>
                 </a>
               </div>

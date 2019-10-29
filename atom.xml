@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://xiusin.github.io</id>
     <title>Xiusin</title>
-    <updated>2019-10-29T08:48:43.971Z</updated>
+    <updated>2019-10-29T09:42:04.381Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://xiusin.github.io"/>
     <link rel="self" href="https://xiusin.github.io/atom.xml"/>
@@ -10,6 +10,13 @@
     <logo>https://xiusin.github.io/images/avatar.png</logo>
     <icon>https://xiusin.github.io/favicon.ico</icon>
     <rights>All rights reserved 2019, Xiusin</rights>
+    <entry>
+        <title type="html"><![CDATA[Golang中实现结构体禁止拷贝]]></title>
+        <id>https://xiusin.github.io/post/golang-zhong-shi-xian-jie-gou-ti-jin-zhi-kao-bei</id>
+        <link href="https://xiusin.github.io/post/golang-zhong-shi-xian-jie-gou-ti-jin-zhi-kao-bei">
+        </link>
+        <updated>2019-10-29T08:55:02.000Z</updated>
+    </entry>
     <entry>
         <title type="html"><![CDATA[RateLimit节流理解实现]]></title>
         <id>https://xiusin.github.io/post/ratelimit-jie-liu-li-jie-shi-xian</id>
@@ -72,12 +79,5 @@
         <link href="https://xiusin.github.io/post/mian-shi-ti-shi-xian-yi-ge-fu-zai-jun-heng-qi">
         </link>
         <updated>2019-09-23T08:57:18.000Z</updated>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[ 双缓存数据库双写一致性问题]]></title>
-        <id>https://xiusin.github.io/post/shuang-huan-cun-shu-ju-ku-shuang-xie-yi-zhi-xing-wen-ti-jiu-ying-gai-zhe-me-jie-jue</id>
-        <link href="https://xiusin.github.io/post/shuang-huan-cun-shu-ju-ku-shuang-xie-yi-zhi-xing-wen-ti-jiu-ying-gai-zhe-me-jie-jue">
-        </link>
-        <updated>2019-09-20T06:39:08.000Z</updated>
     </entry>
 </feed>
