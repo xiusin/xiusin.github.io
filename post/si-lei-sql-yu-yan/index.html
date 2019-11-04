@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" >
 
-<title>面试题 - 实现一个负载均衡器 | Xiusin</title>
+<title>四类SQL语言 | Xiusin</title>
 <meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
@@ -97,128 +97,66 @@
       <div class="main-container">
         <div class="content-container" data-aos="fade-up">
           <div class="post-detail">
-            <h2 class="post-title">面试题 - 实现一个负载均衡器</h2>
-            <div class="post-date">2019-09-23</div>
+            <h2 class="post-title">四类SQL语言</h2>
+            <div class="post-date">2019-11-01</div>
             
             <div class="post-content">
-              <p>bilibili视频上看的一个面试题, 看了很久, 也想了很久, 自己平时都是做web后端开发,很少接触到并发编程,  最后困难的实现了一下:</p>
-<blockquote>
-<p>描述: 实现一个负载器, 可以注册多个worker工作, 每个worker的工作能力不同, lb也不能阻塞.  <a href="https://www.bilibili.com/video/av58159544/?spm_id_from=333.788.videocard.17">哔哩哔哩网址</a></p>
-</blockquote>
-<pre><code class="language-go">package test_dir
-
-import (
-	&quot;fmt&quot;
-	&quot;testing&quot;
-	&quot;time&quot;
-)
-var workerQueue = make(chan *worker)
-
-type loadBalance struct {
-	tasks  chan func(int)
-}
-
-type worker struct {
-	id    int
-	queue chan func(int)
-}
-
-func (w *worker) work() {
-	for t := range w.queue {
-		t(w.id)
-	}
-}
-
-func (w *worker) submit(task func(int)) {
-	w.queue &lt;- task
-}
-
-func (l *loadBalance) submit(task func(int)) {
-			go func() { l.tasks &lt;- task }()   //不可阻塞LB
-}
-
-func (l *loadBalance) wait() {
-	go func() {
-		for {
-			w := &lt;-workerQueue // 获取一个worker, 没有可用的会阻塞在这
-			f := &lt;-l.tasks // 获取一个task任务, 没有也会阻塞
-			go func() {
-				w.submit(f) // 提交任务给worker, 如果塞不进去会阻塞当前worker重回workerQueue
-				workerQueue &lt;- w
-			}()
-		}
-	}()
-	select {}
-}
-
-// 注册负载
-func LB(workerPowerNum ...int) *loadBalance {
-	for k, v := range workerPowerNum {
-		worker := &amp;worker{queue: make(chan func(int), v), id: k + 1}
-		// 添加到ch
-		go func() { workerQueue &lt;- worker }()
-		go worker.work()
-	}
-	return &amp;loadBalance{tasks: make(chan func(int))}
-}
-
-func Test_LB(t *testing.T) {
-	lb := LB(4, 1, 2, 5, 6)
-	for i := 0; i &lt; 20; i++ {
-		lb.submit(func(v int) func(int) {
-			return func(i int) {
-				time.Sleep(time.Second)
-				fmt.Println(&quot;任务执行完成: &quot;, v, &quot;机器编号&quot;, i)
-			}
-		}(i))
-	}
-	lb.wait()
-}
-</code></pre>
-<p>输出:</p>
-<pre><code>=== RUN   Test_LB
-任务执行完成:  0 机器编号 2
-任务执行完成:  1 机器编号 3
-任务执行完成:  4 机器编号 1
-任务执行完成:  2 机器编号 4
-任务执行完成:  3 机器编号 5
-任务执行完成:  19 机器编号 3
-任务执行完成:  12 机器编号 5
-任务执行完成:  18 机器编号 2
-任务执行完成:  11 机器编号 1
-任务执行完成:  16 机器编号 1
-任务执行完成:  17 机器编号 2
-任务执行完成:  5 机器编号 5
-任务执行完成:  13 机器编号 1
-任务执行完成:  6 机器编号 5
-任务执行完成:  14 机器编号 1
-任务执行完成:  7 机器编号 5
-任务执行完成:  15 机器编号 1
-任务执行完成:  8 机器编号 5
-任务执行完成:  9 机器编号 5
-任务执行完成:  10 机器编号 5
-</code></pre>
-<p>自己跑测试结果能基本符合,也不知道是不是符合题意, 但是视频最后博主说要实现LB和worker的状态分离: <code>我自己用了第三个变量workerQueue ::&gt;_&lt;::,技穷了</code>, 不要暴力检测的: <code>各种锁什么的临界</code>, 大家可以各自实现一下完美需求.</p>
-<blockquote>
-<p>最后发现用select{}阻塞进程会报死锁异常, 不知到大家为啥不会报死锁~~</p>
-</blockquote>
+              <p>SQL语言共分为四大类:</p>
+<ul>
+<li>DQL: 数据查询语言 (data query language)</li>
+<li>DML: 数据操纵语言 (Data manipulation language)</li>
+<li>DDL: 数据定义语言 (data definition language)</li>
+<li>DCL: 数据控制语言 (data control language)</li>
+</ul>
+<h1 id="dql-数据查询语言">DQL: 数据查询语言</h1>
+<p>数据查询语言DQL基本结构是由<code>SELECT子句</code>，<code>FROM子句</code>，<code>WHERE子句</code>组成的查询块：<br>
+SELECT &lt;字段名表&gt;<br>
+FROM &lt;表或视图名&gt;<br>
+WHERE &lt;查询条件&gt;</p>
+<h1 id="dml-数据操纵语言">DML: 数据操纵语言</h1>
+<p>数据操纵语言DML主要有三种形式：</p>
+<ul>
+<li>插入：INSERT</li>
+<li>更新：UPDATE</li>
+<li>删除：DELETE</li>
+</ul>
+<h1 id="ddl-数据定义语言">DDL: 数据定义语言</h1>
+<p>数据定义语言DDL用来创建数据库中的各种对象-----表、视图、索引、同义词、聚簇等如：</p>
+<ul>
+<li>CREATE TABLE/VIEW/INDEX/SYN/CLUSTER</li>
+<li>DROP TABLE ...</li>
+<li>ALTER TABLE ...</li>
+</ul>
+<h1 id="dcl-数据控制语言">DCL: 数据控制语言</h1>
+<p>数据控制语言DCL用来授予或回收访问数据库的某种特权，并控制数据库操纵事务发生的时间及效果，对数据库实行监视等。如：</p>
+<h2 id="1-grant授权">1. GRANT：授权</h2>
+<h2 id="2-rollback-work-to-savepoint回退到某一点">2. ROLLBACK <code>[WORK]</code> TO <code>[SAVEPOINT]</code>：回退到某一点</h2>
+<p>回滚---<code>ROLLBACK</code><br>
+回滚命令使数据库状态回到上次最后提交的状态。其格式为：<br>
+SQL&gt;ROLLBACK;</p>
+<h2 id="3-commit-work提交">3. COMMIT <code>[WORK]</code>：提交</h2>
+<p>在数据库的插入、删除和修改操作时，只有当事务在提交到数据库时才算完成。在事务提交前，只有操作数据库的这个人才能有权看到所做的事情，别人只有在最后提交完成后才可以看到。<br>
+提交数据有三种类型：显式提交、隐式提交及自动提交。下面分别说明这三种类型。</p>
+<h3 id="显式提交">显式提交</h3>
+<p>用COMMIT命令直接完成的提交为显式提交。其格式为：<br>
+SQL&gt;COMMIT；</p>
+<h3 id="隐式提交">隐式提交</h3>
+<p>用SQL命令间接完成的提交为隐式提交。这些命令是：<br>
+ALTER，AUDIT，COMMENT，CONNECT，CREATE，DISCONNECT，DROP，EXIT，GRANT，NOAUDIT，QUIT，REVOKE，RENAME。</p>
+<h3 id="自动提交">自动提交</h3>
+<p>若把AUTOCOMMIT设置为ON，则在插入、修改、删除语句执行后，<br>
+系统将自动进行提交，这就是自动提交。其格式为：<br>
+SQL&gt;SET AUTOCOMMIT ON；</p>
+<p>原文链接： https://blog.csdn.net/weixin_33398032/article/details/77187556</p>
 
             </div>
-            
-              <div class="tag-container">
-                
-                  <a href="https://xiusin.github.io/tag/003YhPAZu" class="tag">
-                    面试题
-                  </a>
-                
-              </div>
             
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://xiusin.github.io/post/shuang-huan-cun-shu-ju-ku-shuang-xie-yi-zhi-xing-wen-ti-jiu-ying-gai-zhe-me-jie-jue">
+                <a href="https://xiusin.github.io/post/synccond-tiao-jian-suo">
                   <h3 class="post-title">
-                     双缓存数据库双写一致性问题
+                    sync.cond条件锁
                   </h3>
                 </a>
               </div>

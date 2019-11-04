@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>设计模式七大原则 | Xiusin</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1572848931199">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css" />
+  
+
+  
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1572848931199" class="site-logo">
+        <h1 class="site-title">Xiusin</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">设计模式七大原则</h2>
+            <div class="post-date">2019-11-04</div>
+            
+            <div class="post-content">
+              <p>设计模式是一套被反复使用、多数人知晓的、经过分类的、代码设计经验的总结。使用设计模式是为了重用代码、让代码更容易被他人理解、保证代码可靠性。</p>
+<p>任何不可维护的代码，都是等待过时的代码。设计模式就是从长期开发中总结出来的，用以提高类的内聚性、降低类间的耦合性、提高代码的可扩展性和可维护性的方法。</p>
+<h1 id="职责单一原则">职责单一原则</h1>
+<ul>
+<li>
+<p>核心<br>
+每个类都应该有一个单一的功能，并且该功能应该由这个类完全封装起来。也就是高内聚。</p>
+</li>
+<li>
+<p>思想<br>
+如果一个类承担的职责过多，就等于把这些职责耦合在一起，一个职责的变化可能会削弱或者抑制这个类完成其他职责的能力。这种耦合会导致脆弱的设计，当变化发生时，设计会遭受到意想不到的破坏。<br>
+【Eg:游戏的界面组成与逻辑组成分离】</p>
+</li>
+<li>
+<p>简单的例子</p>
+</li>
+</ul>
+<pre><code class="language-go">type UserService interface{
+    Login(username, password string)
+    Register(email, username, password string)
+    LogError(msg string)
+    SendEmail(email string)
+}
+</code></pre>
+<p>这段代码存在很大的问题，<code>UserService</code> 既要负责用户的注册和登录，还要负责日志的记录和邮件的发送，并且后者的行为明显区别于前者。<code>这就相当于一个程序员既要编代码，中午还要给公司全体员工做午饭，并且公司的卫生也由他负责</code>。</p>
+<ul>
+<li>对代码进行改造</li>
+</ul>
+<ol>
+<li>UserService 用户服务</li>
+</ol>
+<pre><code class="language-go">type UserService interface{
+    Login(username, password string)
+    Register(email, username, password string)
+}
+</code></pre>
+<ol start="2">
+<li>LogService 日志服务</li>
+</ol>
+<pre><code class="language-go">type LogService interface{
+    LogError(msg string)
+}
+</code></pre>
+<ol start="3">
+<li>EmailService 邮箱服务</li>
+</ol>
+<pre><code class="language-go">type LogService interface{
+    SendEmail(email string)
+}
+</code></pre>
+<ul>
+<li>职责单一原则的好处: 类的复杂度降低，并且，当想发邮件却不知道实现哪个类的时候，这种设计模式可以快速的帮我们定位到具体哪个类可以实现这个功能。</li>
+</ul>
+<h1 id="开闭原则">开闭原则</h1>
+<ul>
+<li>核心<br>
+一个软件实体应当对<code>拓展开放</code>，对<code>修改关闭</code>。即：软件实体应尽量在不修改原有代码的情况下进行拓展。</li>
+</ul>
+<figure data-type="image" tabindex="1"><img src="https://images2017.cnblogs.com/blog/1173617/201709/1173617-20170928120255778-182350730.png" alt=""></figure>
+<blockquote>
+<p>对Operation类的修改关闭，对Operation类的继承（拓展）开放。</p>
+</blockquote>
+<ul>
+<li>简单的例子</li>
+</ul>
+<ol>
+<li>Rectangle</li>
+</ol>
+<pre><code class="language-go">type Rectangle struct {
+    width int
+    height int
+}
+
+func(r Rectangle) getWidth() int{
+    return r.width
+}
+
+func(r Rectangle) getHeight() int{
+    return r.height
+}
+
+</code></pre>
+<ol start="2">
+<li>面积计算器: AreaCalculator</li>
+</ol>
+<pre><code class="language-go">type AreaCalculator struct {}
+
+func (a AreaCalculator) area(shape Rectangle) int{
+    return shape.getHeight() * shape.getWidth()
+}
+</code></pre>
+<p>上面代码完全可以完成矩形面积的计算，但是，这时有一个新的需求，让计算圆形的面积. 可以这样更改 <code>AreaCalculator</code> 代码，来满足这个需求:</p>
+<p>Circular:</p>
+<pre><code class="language-go">type Circular struct {
+    radius int
+}
+
+func(c Circular) getRadius() int{
+    return c.radius
+}
+</code></pre>
+<p>更改 AreaCalculator:</p>
+<pre><code class="language-go">type AreaCalculator struct {}
+
+func (a AreaCalculator) area(shape interface{}) int{
+    switch shape.(type):
+        case Circular:
+            return math.Pow((shape.(Circular)).getRadius(), 2) * math.PI 
+        case Rectangle:
+            r := shape.(Rectangle)
+            return r.getHeight() * r.getWidth()
+        default: 
+            panic(&quot;不支持的参数类型&quot;)
+}
+</code></pre>
+<p>这么更改完成，完全没有问题。但是在真实的生产环境中，情况更为复杂，更改涉及的部分较多，那样就可能导致牵一发动全身。并且，以前编写的经过测试的一些功能需要重新测试，甚至导致某些功能不可用。</p>
+<ul>
+<li>进行开闭原则代码改进</li>
+</ul>
+<p>shape:</p>
+<pre><code class="language-go">type shape interface{
+    area() int
+}
+</code></pre>
+<p>Rectangle:</p>
+<pre><code class="language-go">type Rectangle struct {
+    width height int
+}
+
+func (r Rectangle) area() int{
+    return r.width * r.height
+}
+</code></pre>
+<p>这样，当需求变更，需要计算圆形面积的时候，我们只需创建一个圆形的结构体，并实现 <code>Shape</code> 接口即可:</p>
+<pre><code class="language-go">type Circular struct {
+    radius int
+}
+
+func (c Circular) area() int {
+    return math.Pow(c.radius, 2) * math.PI  
+}
+</code></pre>
+<p>这样计算<code>三角形面积</code>、<code>四边形面积</code>... 的时候，我们只需让它们去实现 <code>Shape</code> 接口即可，无需修改源代码。</p>
+<ul>
+<li>好处<br>
+一般编写完的代码，都是经过精心设计和测试过的，如果我们对其进行修改，就需要重新测试，这个测试可能涉及到所有依赖这个方法的类，如果大量修改源代码的话，那就是个可观的工程。<br>
+所以，开闭原则可以在保证我们代码的质量的前提下，实现<code>功能的扩展</code>，<code>减少开发难度</code>。</li>
+</ul>
+<h1 id="里式替换原则">里式替换原则</h1>
+<ul>
+<li>核心<br>
+在程序里，把父类都换成它的子类，程序的行为没有变化。</li>
+<li>思考<br>
+里氏替换原则是开闭原则的基石，正是因为里斯替换原则才可以在不修改父类源码的情况下，实现功能的扩展。<br>
+如果子类无法实现父类的全部功能，比如鸟类有个 fly() 方法，企鹅也是鸟类的一种，但是企鹅如果继承鸟类的话，就必须得实现 fly() 方法，这时就产生了一种&quot;畸形&quot;，这种情况应该断开继承关系。如果强行继承的话，子类并无法完全替代父类，程序就有可能因此出现故障，比如一只企鹅在天上翱翔。</li>
+</ul>
+<blockquote>
+<p>我喜欢动物（父类）------（替换为）-------&gt;我喜欢狗（子类）      【√】<br>
+我喜欢狗（子类）   ------（替换为）-------&gt;我喜欢动物（父类）   【×】</p>
+</blockquote>
+<h1 id="依赖倒置原则">依赖倒置原则</h1>
+<ul>
+<li>
+<p>核心<br>
+抽象不应该依赖于细节，细节应当依赖于抽象。换言之，要针对接口编程，而非针对实现编程。</p>
+</li>
+<li>
+<p>思想<br>
+抽象不应该依赖于细节，细节应当依赖于抽象。换言之，<code>要针对接口编程，而不是针对实现编程。依赖倒转其实可以说是面向对象设计的标志，用哪种语言来编写程序不重要，如果编写时考虑的都是如何针对抽象编程而不是针对细节编程，即 程序中所有的依赖关系都是终止于抽象类或者接口，那就是面向对象的设计，反之就是面向过程化设计了。</code></p>
+</li>
+<li>
+<p>原则:</p>
+<ol>
+<li>高层模块不应该依赖于低层模块。两个都应该依赖于抽象。</li>
+<li>抽象不应该依赖细节。细节应该依赖于抽象。</li>
+</ol>
+</li>
+<li>
+<p>简单的例子<br>
+InterCpu:</p>
+</li>
+</ul>
+<pre><code class="language-go">type InterCpu struct {}
+
+func(i InterCpu) add(a, b int) int {
+    return a + b
+}
+</code></pre>
+<p>MainBoard:</p>
+<pre><code class="language-go">type MainBoard struct {
+    cpu InterCpu
+}
+
+func(m *MainBoard) setCpu(cpu InterCpu)  {
+    m.cpu = cpu
+}
+</code></pre>
+<p>当某一天，CPU 需要更换的时候，只能装配英特尔 CPU。<br>
+虽然这个例子比较简单，但是在实际的开发中，经常会被眼前的需求所蒙蔽，而不去思考拓展性，导致每次来个新需求，都要违背开闭原则。</p>
+<ul>
+<li>进行改进<br>
+CPU:</li>
+</ul>
+<pre><code class="language-go">type CPU interface {
+    add(a, b int) int
+}
+</code></pre>
+<p>InterCPU:</p>
+<pre><code class="language-go">type InterCPU struct{}
+func (_ interCPU) add(a, b int) int {
+    return a + b
+}
+</code></pre>
+<p>AMD CPU:</p>
+<pre><code class="language-go">type AmdCPU struct{}
+func (_ AmdCPU) add(a, b int) int {
+    return a + b - b + b
+}
+</code></pre>
+<p>MainBoard:</p>
+<pre><code class="language-go">type MainBoard struct{
+    cpu CPU
+}
+func(m MainBoard) setCPU(cpu CPU) {
+    m.cpu = cpu
+}
+</code></pre>
+<ul>
+<li>好处<br>
+依赖倒置原则的好处很明显，当需求变更的时候，我们可以很灵活的进行扩展，而不用破坏开闭原则。</li>
+</ul>
+<h1 id="接口隔离原则">接口隔离原则</h1>
+<ul>
+<li>
+<p>核心<br>
+建立单一接口，不要建立庞大臃肿的接口，尽量<code>细化接口</code>，接口中的方法<code>尽量少</code>。</p>
+</li>
+<li>
+<p>思考<br>
+这个原则跟单一职责原则很像，都是为了精细化管理，将功能尽可能的细化。这样，当某个功能出现问题的时候，可以快速的定位问题，并且在最小范围内修复，功能的扩展也是一样的。</p>
+</li>
+</ul>
+<blockquote>
+<p>但是，接口也不能无限的小，那样会产生大量的接口，造成设计过于负责。</p>
+</blockquote>
+<h1 id="迪米特法则-又称最少知道原则demeter-principle">迪米特法则 又称最少知道原则（Demeter Principle）#</h1>
+<ul>
+<li>核心<br>
+一个软件实体应当尽可能少地与其他实体发生作用。（无熟人难办事）. 降低类间的耦合性，如果两个类不必彼此通信，那么，这两个类就不要发生直接的作用。</li>
+</ul>
+<p>在迪米特法则中，对于一个对象，其朋友包括如下几类：<br>
+（1）当前对象 this<br>
+（2）以参数形式传入到当前对象方法中的对象<br>
+（3）当前对象的成员对象<br>
+（4）若当前对象的成员你对象是一个集合，那么集合中的对象也都是朋友<br>
+（5）当前对象所创建的对象</p>
+<ul>
+<li>简单的例子<br>
+Phone:</li>
+</ul>
+<pre><code class="language-go">type Phone struct {}
+
+func (p Phone) seeMovie(m Movie) {
+    title := m.getTitle()
+    totalTime := m.getTotalTime()
+    // ... 
+}
+</code></pre>
+<p>电影和我们的电话并没有直接的关系，这两个类的耦合度过高，也就是，<code>电话类</code>需要知道<code>电影类</code>的具体实现细节，这两个类之间没有必要进行直接的通信。</p>
+<ul>
+<li>进行改进<br>
+MovieApp:</li>
+</ul>
+<pre><code class="language-go">type MovieApp interface {
+    seeMovie(Movie) 
+}
+</code></pre>
+<p>Phone:</p>
+<pre><code class="language-go">type Phone struct {
+    m MovieApp
+}
+
+func (p *Phone) setMovieApp(m MovieApp) {
+    p.m = m
+}
+
+func (p *Phone) seeMovie(m Movie) {
+    p.m.seeMovie(movie)
+}
+</code></pre>
+<ul>
+<li>好处</li>
+</ul>
+<blockquote>
+<p>低耦合、低耦合、低耦合...</p>
+</blockquote>
+<h1 id="合成复用原则">合成复用原则</h1>
+<ul>
+<li>
+<p>核心<br>
+尽量使用对象组合，而不是继承来达到复用的目的。</p>
+</li>
+<li>
+<p>思想<br>
+合成复用原则就是在一个新的对象里通过关联关系（包括组合关系和聚合关系）来使用一些已有的对象，使之成为新对象的一部分；新对象通过委派调用已有对象的方法达到复用功能的目的。简言之：<code>复用时要尽量使用组合/聚合关系（关联关系），少用继承。</code></p>
+</li>
+</ul>
+<p>在面向对象设计中，可以通过两种方法在不同的环境中复用已有的设计和实现，即<code>通过组合/聚合关系或通过继承，但首先应该考虑使用组合/聚合</code>，组合/聚合可以使系统更加灵活，降低类与类之间的耦合度，一个类的变化对其他类造成的影响相对较少；<code>其次才考虑继承</code>，在使用继承时，需要严格遵循里氏代换原则，有效使用继承会有助于对问题的理解，降低复杂度，而滥用继承反而会增加系统构建和维护的难度以及系统的复杂度，<code>因此需要慎重使用继承复用</code>。</p>
+<ul>
+<li>简单的例子<br>
+汽车分类管理程序:<br>
+汽车按“动力源”划分可分为汽油汽车、电动汽车等；按“颜色”划分可分为白色汽车、黑色汽车和红色汽车等。如果同时考虑这两种分类，其组合就很多。图 1 所示是用继淨：关系实现的汽车分类的类图。</li>
+</ul>
+<figure data-type="image" tabindex="2"><img src="https://xiusin.github.io/post-images/1572848826854.gif" alt=""></figure>
+<p>从图 1 可以看出用继承关系实现会产生很多子类，而且增加新的“动力源”或者增加新的“颜色”都要修改源代码，这违背了开闭原则，显然不可取。但如果改用组合关系实现就能很好地解决以上问题，其类图如图 2 所示。</p>
+<figure data-type="image" tabindex="3"><img src="https://xiusin.github.io/post-images/1572848848798.gif" alt=""></figure>
+<p>这 7 种设计原则是软件设计模式必须尽量遵循的原则，各种原则要求的侧重点不同。其中，开闭原则是总纲，它告诉我们要对扩展开放，对修改关闭；里氏替换原则告诉我们不要破坏继承体系；依赖倒置原则告诉我们要面向接口编程；单一职责原则告诉我们实现类要职责单一；接口隔离原则告诉我们在设计接口的时候要精简单一；迪米特法则告诉我们要降低耦合度；合成复用原则告诉我们要优先使用组合或者聚合关系复用，少用继承关系复用。</p>
+<h1 id="设计模式之间的关系">设计模式之间的关系</h1>
+<figure data-type="image" tabindex="4"><img src="https://xiusin.github.io/post-images/1572848892911.jpg" alt=""></figure>
+<h1 id="参考">参考</h1>
+<p><a href="https://www.cnblogs.com/guxuanqing/p/11185207.html">设计模式的六大原则</a><br>
+<a href="https://www.jianshu.com/p/1423193f5598">设计模式六大原则</a><br>
+<a href="http://c.biancheng.net/view/1333.html">合成复用原则</a></p>
+
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/cha-xun-mysql-zhong-shi-fou-biao-bei-suo">
+                  <h3 class="post-title">
+                    查询mysql中是否表被锁
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+              
+                <div id="gitalk-container" data-aos="fade-in"></div>
+              
+
+              
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="/post-images/prism.js"></script>
+<link rel="stylesheet" href="/post-images/prism.css">
+<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+  
+    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+    <script>
+
+      var gitalk = new Gitalk({
+        clientID: 'a526dbb05037d7bf1972',
+        clientSecret: '0238529511fc560513e8b6ed865d3e33c11e3ccb',
+        repo: 'xiusin.github.io',
+        owner: 'xiusin',
+        admin: ['xiusin'],
+        id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+      })
+
+      gitalk.render('gitalk-container')
+
+    </script>
+  
+
+  
+
+
+
+
+  </body>
+</html>

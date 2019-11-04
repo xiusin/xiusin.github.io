@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://xiusin.github.io</id>
     <title>Xiusin</title>
-    <updated>2019-10-29T09:42:04.381Z</updated>
+    <updated>2019-11-04T06:28:56.546Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://xiusin.github.io"/>
     <link rel="self" href="https://xiusin.github.io/atom.xml"/>
@@ -10,6 +10,34 @@
     <logo>https://xiusin.github.io/images/avatar.png</logo>
     <icon>https://xiusin.github.io/favicon.ico</icon>
     <rights>All rights reserved 2019, Xiusin</rights>
+    <entry>
+        <title type="html"><![CDATA[设计模式七大原则]]></title>
+        <id>https://xiusin.github.io/post/she-ji-mo-shi-qi-da-yuan-ze</id>
+        <link href="https://xiusin.github.io/post/she-ji-mo-shi-qi-da-yuan-ze">
+        </link>
+        <updated>2019-11-04T03:09:14.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[查询mysql中是否表被锁]]></title>
+        <id>https://xiusin.github.io/post/cha-xun-mysql-zhong-shi-fou-biao-bei-suo</id>
+        <link href="https://xiusin.github.io/post/cha-xun-mysql-zhong-shi-fou-biao-bei-suo">
+        </link>
+        <updated>2019-11-01T01:54:15.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[四类SQL语言]]></title>
+        <id>https://xiusin.github.io/post/si-lei-sql-yu-yan</id>
+        <link href="https://xiusin.github.io/post/si-lei-sql-yu-yan">
+        </link>
+        <updated>2019-11-01T01:40:28.000Z</updated>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[sync.cond条件锁]]></title>
+        <id>https://xiusin.github.io/post/synccond-tiao-jian-suo</id>
+        <link href="https://xiusin.github.io/post/synccond-tiao-jian-suo">
+        </link>
+        <updated>2019-10-30T02:34:49.000Z</updated>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Golang中实现结构体禁止拷贝]]></title>
         <id>https://xiusin.github.io/post/golang-zhong-shi-xian-jie-gou-ti-jin-zhi-kao-bei</id>
@@ -51,33 +79,5 @@
         <link href="https://xiusin.github.io/post/uber-go-feng-ge-zhi-nan">
         </link>
         <updated>2019-10-16T09:23:29.000Z</updated>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[slice的异常情况与详细解析]]></title>
-        <id>https://xiusin.github.io/post/slice-de-yi-chang-qing-kuang-yu-jie-xi</id>
-        <link href="https://xiusin.github.io/post/slice-de-yi-chang-qing-kuang-yu-jie-xi">
-        </link>
-        <updated>2019-10-16T04:02:31.000Z</updated>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[leetcode - 去除数组重复项]]></title>
-        <id>https://xiusin.github.io/post/leetcode-qu-chu-shu-zu-chong-fu-xiang</id>
-        <link href="https://xiusin.github.io/post/leetcode-qu-chu-shu-zu-chong-fu-xiang">
-        </link>
-        <updated>2019-09-29T04:29:58.000Z</updated>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[自旋锁的自旋是什么意思-底层原理又是什么]]></title>
-        <id>https://xiusin.github.io/post/zi-xuan-suo-de-zi-xuan-shi-shi-me-yi-si-di-ceng-yuan-li-you-shi-shi-me</id>
-        <link href="https://xiusin.github.io/post/zi-xuan-suo-de-zi-xuan-shi-shi-me-yi-si-di-ceng-yuan-li-you-shi-shi-me">
-        </link>
-        <updated>2019-09-24T12:26:09.000Z</updated>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[面试题 - 实现一个负载均衡器]]></title>
-        <id>https://xiusin.github.io/post/mian-shi-ti-shi-xian-yi-ge-fu-zai-jun-heng-qi</id>
-        <link href="https://xiusin.github.io/post/mian-shi-ti-shi-xian-yi-ge-fu-zai-jun-heng-qi">
-        </link>
-        <updated>2019-09-23T08:57:18.000Z</updated>
     </entry>
 </feed>

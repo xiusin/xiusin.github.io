@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>查询mysql中是否表被锁 | Xiusin</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1572848931199">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css" />
+  
+
+  
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1572848931199" class="site-logo">
+        <h1 class="site-title">Xiusin</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">查询mysql中是否表被锁</h2>
+            <div class="post-date">2019-11-01</div>
+            
+            <div class="post-content">
+              <ol>
+<li>
+<p>可直接在mysql命令行执行：<code>show engine innodb status\G</code>;（只能通过cmd或者shell登录mysql）</p>
+</li>
+<li>
+<p>查看造成死锁的sql语句，分析索引情况，然后优化sql然后show processlist;</p>
+</li>
+<li>
+<p><code>show status like ‘%lock%’</code></p>
+</li>
+<li>
+<p><code>show OPEN TABLES where In_use &gt; 0;</code> 这个语句记录当前锁表状态</p>
+</li>
+<li>
+<p>另外打开慢查询日志，linux下打开需在my.cnf的[mysqld]里面加上以下内容：</p>
+<pre><code class="language-ini">slow_query_log=TRUE/ON #是否记录慢查询
+slow_query_log_file= 记录日志的文件地址
+long_query_time=3    # 慢日志执行时长（秒），超过设定的时间才会记日志
+</code></pre>
+</li>
+</ol>
+<p>完成之后重启mysql服务才能生效记录输出, 最后在MySQL客户端中输入命令：<code>show variables like '%quer%'</code>; 核查一哈是否配置完成</p>
+<p>查看慢日志配置语句:</p>
+<pre><code>//查看慢查询时间
+show variables like &quot;long_query_time&quot;;默认10s
+//查看慢查询配置情况
+show status like &quot;%slow_queries%&quot;;
+//查看慢查询日志路径
+ show variables like &quot;%slow%&quot;;
+</code></pre>
+<h1 id="mysql锁定状态查看命令">MySQL锁定状态查看命令</h1>
+<ol>
+<li><code>show processlist</code>;<br>
+SHOW PROCESSLIST显示哪些线程正在运行。您也可以使用<code>mysqladmin processlist</code>语句得到此信息。如果您有SUPER权限，您可以看到所有线程。否则，您只能看到您自己的线程（也就是，与您正在使用的MySQL账户相关的线程）。如果有线程在update或者insert 某个表，此时进程的status为updating 或者 sending data。</li>
+</ol>
+<p>如果您得到<code>“too many connections”</code>错误信息，并且想要了解正在发生的情况，本语句是非常有用的。<code>MySQL保留一个额外的连接</code>，让拥有SUPER权限的账户使用，以确保管理员能够随时连接和检查系统（假设您没有把此权限给予所有的用户）</p>
+<table>
+<thead>
+<tr>
+<th>Status</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Checking table</td>
+<td>正在检查数据表（这是自动的）。</td>
+</tr>
+<tr>
+<td>Closing tables</td>
+<td>正在将表中修改的数据刷新到磁盘中，同时正在关闭已经用完的表。这是一个很快的操作，如果不是这样的话，就应该确认磁盘空间是否已经满了或者磁盘是否正处于重负中。</td>
+</tr>
+<tr>
+<td>Connect Out</td>
+<td>复制从服务器正在连接主服务器。</td>
+</tr>
+<tr>
+<td>Copying to tmp table on disk</td>
+<td>由于临时结果集大于tmp_table_size，正在将临时表从内存存储转为磁盘存储以此节省内存。</td>
+</tr>
+<tr>
+<td>Creating tmp table</td>
+<td>正在创建临时表以存放部分查询结果。</td>
+</tr>
+<tr>
+<td>deleting from main table</td>
+<td>服务器正在执行多表删除中的第一部分，刚删除第一个表。</td>
+</tr>
+<tr>
+<td>deleting from reference tables</td>
+<td>服务器正在执行多表删除中的第二部分，正在删除其他表的记录。</td>
+</tr>
+<tr>
+<td>Flushing tables</td>
+<td>正在执行FLUSH TABLES，等待其他线程关闭数据表。</td>
+</tr>
+<tr>
+<td>Killed</td>
+<td>发送了一个kill请求给某线程，那么这个线程将会检查kill标志位，同时会放弃下一个kill请求。MySQL会在每次的主循环中检查kill标志位，不过有些情况下该线程可能会过一小段才能死掉。如果该线程程被其他线程锁住了，那么kill请求会在锁释放时马上生效。</td>
+</tr>
+<tr>
+<td>Locked</td>
+<td>被其他查询锁住了</td>
+</tr>
+<tr>
+<td>Sending data</td>
+<td>正在处理SELECT查询的记录，同时正在把结果发送给客户端。</td>
+</tr>
+<tr>
+<td>Sorting for group</td>
+<td>正在为GROUP BY做排序。</td>
+</tr>
+<tr>
+<td>Sorting for order</td>
+<td>正在为ORDER BY做排序。</td>
+</tr>
+<tr>
+<td>Opening tables</td>
+<td>这个过程应该会很快，除非受到其他因素的干扰。例如，在执ALTER TABLE或LOCK TABLE语句行完以前，数据表无法被其他线程打开。正尝试打开一个表。</td>
+</tr>
+<tr>
+<td>Removing duplicates</td>
+<td>正在执行一个SELECT DISTINCT方式的查询，但是MySQL无法在前一个阶段优化掉那些重复的记录。因此，MySQL需要再次去掉重复的记录，然后再把结果发送给客户端。</td>
+</tr>
+<tr>
+<td>Reopen table</td>
+<td>获得了对一个表的锁，但是必须在表结构修改之后才能获得这个锁。已经释放锁，关闭数据表，正尝试重新打开数据表。</td>
+</tr>
+<tr>
+<td>Repair by sorting</td>
+<td>修复指令正在排序以创建索引。</td>
+</tr>
+<tr>
+<td>Repair with keycache</td>
+<td>修复指令正在利用索引缓存一个一个地创建新索引。它会比Repair by sorting慢些。</td>
+</tr>
+<tr>
+<td>Searching rows for update</td>
+<td>正在讲符合条件的记录找出来以备更新。它必须在UPDATE要修改相关的记录之前就完成了。</td>
+</tr>
+<tr>
+<td>Sleeping</td>
+<td>正在等待客户端发送新请求。</td>
+</tr>
+<tr>
+<td>System lock</td>
+<td>正在等待取得一个外部的系统锁。如果当前没有运行多个mysqld服务器同时请求同一个表，那么可以通过增加--skip-external-locking参数来禁止外部系统锁。</td>
+</tr>
+<tr>
+<td>Upgrading lock</td>
+<td>INSERT DELAYED正在尝试取得一个锁表以插入新记录。</td>
+</tr>
+<tr>
+<td>Updating</td>
+<td>正在搜索匹配的记录，并且修改它们。</td>
+</tr>
+<tr>
+<td>User Lock</td>
+<td>正在等待GET_LOCK()。</td>
+</tr>
+<tr>
+<td>Waiting for tables</td>
+<td>该线程得到通知，数据表结构已经被修改了，需要重新打开数据表以取得新的结构。然后，为了能的重新打开数据表，必须等到所有其他线程关闭这个表。以下几种情况下会产生这个通知：FLUSH TABLES tbl_name, ALTER TABLE, RENAME TABLE, REPAIR TABLE, ANALYZE TABLE,或OPTIMIZE TABLE。</td>
+</tr>
+<tr>
+<td>waiting for handler insert</td>
+<td>NSERT DELAYED已经处理完了所有待处理的插入操作，正在等待新的请求。</td>
+</tr>
+</tbody>
+</table>
+<p>大部分状态对应很快的操作，只要有一个线程保持同一个状态好几秒钟，那么可能是有问题发生了，需要检查一下。还有其他的状态没在上面中列出来，不过它们大部分只是在查看服务器是否有存在错误是才用得着。</p>
+<ol start="2">
+<li>
+<p><code>show full processlist;</code><br>
+<code>show processlist;</code>只列出前<code>100</code>条，如果想全列出请使用<code>show full processlist;</code></p>
+</li>
+<li>
+<p><code>show open tables;</code><br>
+这条命令能够查看当前有那些表是打开的。<code>In_use</code>列表示有多少线程正在使用某张表，<code>Name_locked</code>表示表名是否被锁，这一般发生在Drop或Rename命令操作这张表时。</p>
+</li>
+</ol>
+<p>当前某张表是否有死锁，谁拥有表上的这个锁,可以执行:</p>
+<pre><code class="language-sql">show open tables from database;
+</code></pre>
+<ol start="4">
+<li>
+<p><code>show status like '%lock%'</code><br>
+查看服务器状态。</p>
+</li>
+<li>
+<p><code>show engine innodb status\G;</code><br>
+MySQL 5.5使用上面命令即可查看innodb引擎的运行时信息。</p>
+</li>
+<li>
+<p><code>show variables like '%timeout%';</code><br>
+查看服务器配置参数。</p>
+</li>
+</ol>
+<h1 id="参考">参考</h1>
+<p><a href="https://www.cnblogs.com/jpfss/p/9203679.html">如何查询mysql中是否表被锁</a></p>
+
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/si-lei-sql-yu-yan">
+                  <h3 class="post-title">
+                    四类SQL语言
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+              
+                <div id="gitalk-container" data-aos="fade-in"></div>
+              
+
+              
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <script src="/post-images/prism.js"></script>
+<link rel="stylesheet" href="/post-images/prism.css">
+<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+  
+    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+    <script>
+
+      var gitalk = new Gitalk({
+        clientID: 'a526dbb05037d7bf1972',
+        clientSecret: '0238529511fc560513e8b6ed865d3e33c11e3ccb',
+        repo: 'xiusin.github.io',
+        owner: 'xiusin',
+        admin: ['xiusin'],
+        id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+      })
+
+      gitalk.render('gitalk-container')
+
+    </script>
+  
+
+  
+
+
+
+
+  </body>
+</html>
