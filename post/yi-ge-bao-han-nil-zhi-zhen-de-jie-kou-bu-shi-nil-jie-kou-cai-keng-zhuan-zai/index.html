@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8" >
 
-<title>“一个包含nil指针的接口不是nil接口”踩坑 [转载] | Xiusin</title>
+<title>“一个包含nil指针的接口不是nil接口”踩坑 [转载] | 修心修己</title>
 <meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1572848931199">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1586743156105">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
 
@@ -22,6 +22,7 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
 
 <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
 
@@ -35,8 +36,8 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://xiusin.github.io">
-        <img src="https://xiusin.github.io/images/avatar.png?v=1572848931199" class="site-logo">
-        <h1 class="site-title">Xiusin</h1>
+        <img src="https://xiusin.github.io/images/avatar.png?v=1586743156105" class="site-logo">
+        <h1 class="site-title">修心修己</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
         <div class="line"></div>
@@ -65,6 +66,12 @@
         
           <a href="/post/about" class="site-nav">
             关于
+          </a>
+        
+      
+        
+          <a href="http://github.com/xiusin" class="site-nav" target="_blank">
+            GitHub
           </a>
         
       
@@ -101,9 +108,10 @@
             <div class="post-date">2019-09-16</div>
             
             <div class="post-content">
-              <p>最近在项目中踩了一个深坑——“Golang中一个包含nil指针的接口不是nil接口”，总结下分享出来，如果你不是很理解这句话，那推荐认真看下下面的示例代码，避免以后写代码时踩坑。</p>
+              <p>最新文章: 官方的讨论: <a href="https://golang.org/doc/faq#nil_error">Why is my nil error value not equal to nil?</a></p>
+<p>最近在项目中踩了一个深坑——“Golang中一个包含nil指针的接口不是nil接口”，总结下分享出来，如果你不是很理解这句话，那推荐认真看下下面的示例代码，避免以后写代码时踩坑。</p>
 <p>先一起来看下这段代码，你感觉有没有问题呢？</p>
-<pre><code>type IPeople interface {
+<pre><code class="language-go">type IPeople interface {
 	hello()
 }
 type People struct {
@@ -144,15 +152,14 @@ func main() {
 复制代码
 </code></pre>
 <p>这段代码的执行结果是:</p>
-<pre><code>importantFunc返回了一个nil
+<pre><code class="language-go">importantFunc返回了一个nil
 咦，外部接收到不是nil哦
 &lt;nil&gt;, *main.People
 复制代码
 </code></pre>
 <p>可以看到在main函数中收到的返回值不是nil， 明明在errFunc1()函数中返回的是nil，到了main函数为什么收到的不是nil呢？ 这是因为：将nil赋值给<code>*People</code>后再将<code>*People</code>赋值给interface，<code>*People</code>本身是是个指向nil的指针，但是将其赋给接口时只是接口中的值为nil，但是接口中的类型信息为<code>*main.People</code>而不是nil，所以这个接口不是nil。 是的，Golang中的interface类型包含两部分信息——值信息和类型信息，只有interface的值合并类型都为nil时interface才为nil，interface底层实现可以在后面的源码分析看到。</p>
 <p>先来看看正确的处理接口返回值的方法，是直接将nil赋给interface：</p>
-<pre><code>
-func rightFunc(in int) IPeople {
+<pre><code class="language-go">func rightFunc(in int) IPeople {
 	if in == 0 {
 		fmt.Println(&quot;importantFunc返回了一个nil&quot;)
 		return nil
@@ -165,7 +172,7 @@ func rightFunc(in int) IPeople {
 复制代码
 </code></pre>
 <p>下面的代码更清晰的证明了<code>一个包含nil指针的接口不是nil接口</code>的结论：</p>
-<pre><code>type IPeople interface {
+<pre><code class="language-go">type IPeople interface {
 	hello()
 }
 type People struct {
@@ -217,7 +224,7 @@ func main() {
 复制代码
 </code></pre>
 <p>下面的注释信息来自参考文章中，从interface底层实现可以看出iface比eface 中间多了一层itab结构， itab 存储_type信息和[]fun方法集，所以即使data指向了nil 并不代表interface 就是nil， 还要考虑_type信息。</p>
-<pre><code>type eface struct {      
+<pre><code class="language-go">type eface struct {      
     _type *_type         
     data  unsafe.Pointer 
 }
@@ -248,6 +255,53 @@ type itab struct {
 }
 复制代码
 </code></pre>
+<h1 id="2019-12-13补充">2019-12-13补充</h1>
+<p>下面代码段:</p>
+<pre><code class="language-go">package test
+
+import &quot;testing&quot;
+
+type Intf interface {
+	Write(string)
+}
+
+type T struct {}
+
+func (t *T) Write(str string) {}
+
+func CreateT() *T { return nil }
+
+func CreateIntf() Intf { return nil }
+
+func TestInterfaceNil(t *testing.T) {
+	// 方式1
+	t1 := CreateT()
+	t.Log(t1 == nil)
+
+	// 方式2
+	var t2 *T
+	t2 = CreateT()
+	t.Log(t2 == nil)
+
+	// 方式3
+	var t3 Intf
+	t3 = CreateT()
+	t.Log(t3 == nil) // 结果与预期不一致,
+	// 为什么会这样?
+	// 其实一个interface{}类型包含两个指针, 一个指向值类型一个指向值内容
+	// 如果定义了一个interface{}类型, 如同定义了一个结构体一样, 会初始化内部数据的指向.
+	//当我们将一个具体类型的值赋值给一个interface类型的变量的时候，就同时把类型和值都赋值给了interface里的两个指针。如果这个具体类型的值是nil的话，interface变量依然会存储对应的类型指针和值指针。
+
+	var t4 Intf
+	t4 = CreateIntf()
+	t.Log(t4 == nil)
+
+
+}
+</code></pre>
+<blockquote>
+<p>如果外层定义了一个接口类型变量, 会自动初始化<code>inerface</code>内部的指针, 如果函数返回的是接口的具体实现类型, 那个go语言会自动使用<code>nil concrete-typed value</code> 而非 <code>nil inerface value</code>, 所以在<code>方式3</code>中判断是<code>t3 != nil</code>, 如果函数返回的就是接口类型, 那么go语言会将返回值作为 <code>nil intface value</code>赋值, 所以, 此时<code>t4 == nil</code>.</p>
+</blockquote>
 <p>以上完整代码均整理在<a href="https://link.juejin.im/?target=https%3A%2F%2Fgithub.com%2Fmeetbetter%2Flearn-golang%2Ftree%2Fmaster%2F02_advance%2F11_nil-interface">Github-跟着示例代码学Golang项目</a>。</p>
 <p>参考文章： <a href="https://link.juejin.im/?target=https%3A%2F%2Fstudygolang.com%2Farticles%2F10635">Golang第一大坑</a></p>
 <p><a href="https://link.juejin.im/?target=https%3A%2F%2Fgocn.vip%2Fquestion%2F1011">&quot;一个包含nil指针的接口不是nil接口&quot;的讨论</a></p>
@@ -259,7 +313,7 @@ type itab struct {
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://xiusin.github.io/post/gao-xing-neng-go-fu-wu-zhi-gao-xiao-nei-cun-fen-pei">
+                <a href="https://xiusin.github.io/post/gao-xing-neng-go-fu-wu-zhi-gao-xiao-nei-cun-fen-pei/">
                   <h3 class="post-title">
                     高性能go服务之高效内存分配
                   </h3>
@@ -281,13 +335,27 @@ type itab struct {
       </div>
     </div>
 
-    <script src="/post-images/prism.js"></script>
+    <!--
+<script src="/post-images/prism.js"></script>
 <link rel="stylesheet" href="/post-images/prism.css">
+-->
 <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
 
 <script type="application/javascript">
 
 AOS.init();
+
+// hljs.initHighlightingOnLoad()
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    if (block.className.indexOf('language-go') > -1) {
+	block.className='hljs go'
+    }
+    hljs.highlightBlock(block);
+  });
+});
 
 var app = new Vue({
   el: '#app',

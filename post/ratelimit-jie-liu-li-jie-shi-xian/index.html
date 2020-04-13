@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8" >
 
-<title>RateLimit节流理解实现 | Xiusin</title>
+<title>RateLimit节流理解实现 | 修心修己</title>
 <meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1572848931199">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1586743156105">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
 
@@ -22,6 +22,7 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
 
 <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
 
@@ -35,8 +36,8 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://xiusin.github.io">
-        <img src="https://xiusin.github.io/images/avatar.png?v=1572848931199" class="site-logo">
-        <h1 class="site-title">Xiusin</h1>
+        <img src="https://xiusin.github.io/images/avatar.png?v=1586743156105" class="site-logo">
+        <h1 class="site-title">修心修己</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
         <div class="line"></div>
@@ -65,6 +66,12 @@
         
           <a href="/post/about" class="site-nav">
             关于
+          </a>
+        
+      
+        
+          <a href="http://github.com/xiusin" class="site-nav" target="_blank">
+            GitHub
           </a>
         
       
@@ -112,7 +119,7 @@
 <h2 id="漏桶算法">漏桶算法:</h2>
 <p>漏桶算法以一个常量限制了出口流量速率，因此漏桶算法可以平滑突发的流量。其中漏桶作为流量容器我们可以看做一个FIFO的队列，当入口流量速率大于出口流量速率时，因为流量容器是有限的，当超出流量容器大小时，超出的流量会被丢弃。</p>
 <p>下图比较形象的说明了漏桶算法的原理，其中水龙头是入口流量，漏桶是流量容器，匀速流出的水是出口流量。</p>
-<figure data-type="image" tabindex="1"><img src="https://xiusin.github.io/post-images/1572329563537.png" alt=""></figure>
+<figure data-type="image" tabindex="1"><img src="https://xiusin.github.io/post-images/1572329563537.png" alt="" loading="lazy"></figure>
 <p>实例代码:</p>
 <pre><code class="language-go">package main
 
@@ -170,10 +177,10 @@ func main() {
 </blockquote>
 <h2 id="固定窗口算法-fixed-window">固定窗口算法 (fixed window):</h2>
 <p>设置一个时间段内可以处理的最大请求上限，超过的这个上限的请求会拒绝服务. 某个API在一分钟内只能固定被访问N次（可能是出于安全考虑，也可能是出于服务器资源的考虑），那么我们就可以直接统计这一分钟开始对API的访问次数，如果访问次数超过了限定值，则抛弃后续的访问。直到下一分钟开始，再开放对API的访问。</p>
-<figure data-type="image" tabindex="2"><img src="https://xiusin.github.io/post-images/1572329458751.jpg" alt=""></figure>
+<figure data-type="image" tabindex="2"><img src="https://xiusin.github.io/post-images/1572329458751.jpg" alt="" loading="lazy"></figure>
 <ul>
 <li>在窗口的起始时间，最差情况下可能会带来 2 倍的流量<br>
-<img src="https://xiusin.github.io/post-images/1572329471130.jpg" alt=""></li>
+<img src="https://xiusin.github.io/post-images/1572329471130.jpg" alt="" loading="lazy"></li>
 <li>很多<code>handle</code>可能都在等待窗口被重置，造成<a href="https://blog.csdn.net/second60/article/details/81252106">惊群效应</a>, 即当有请求过来,所有handle都会争夺.</li>
 </ul>
 <p>实例代码:</p>
@@ -226,7 +233,7 @@ func main() {
 <h2 id="滑动窗口算法">滑动窗口算法:</h2>
 <p>滑动窗口将固定窗口再等分为多个小的窗口，每一次对一个小的窗口进行流量控制。这种方法可以很好的解决之前的临界问题。</p>
 <p>假设我们将1s划分为4个窗口，则每个窗口对应250ms。假设恶意用户还是在上一秒的最后一刻和下一秒的第一刻冲击服务，按照滑动窗口的原理，此时统计上一秒的最后750毫秒和下一秒的前250毫秒，这种方式能够判断出用户的访问依旧超过了1s的访问数量，因此依然会阻拦用户的访问。</p>
-<figure data-type="image" tabindex="3"><img src="https://xiusin.github.io/post-images/1572329686994.jpg" alt=""></figure>
+<figure data-type="image" tabindex="3"><img src="https://xiusin.github.io/post-images/1572329686994.jpg" alt="" loading="lazy"></figure>
 <ul>
 <li>为每个窗口进行请求量的计数</li>
 <li>结合上一个窗口的请求量和这一个窗口已经经过的时间来计算出上限，以此 <code>平滑请求尖锋</code></li>
@@ -343,7 +350,7 @@ func main() {
 </code></pre>
 <h2 id="令牌桶算法">令牌桶算法:</h2>
 <p>令牌桶算法是<code>网络流量整形（Traffic Shaping）</code>和<code>速率限制（Rate Limiting）</code>中最常使用的一种算法。典型情况下，令牌桶算法用来控制发送到网络上的数据的数目，并允许突发数据的发送。<br>
-<img src="https://xiusin.github.io/post-images/1572329525740.png" alt=""><br>
+<img src="https://xiusin.github.io/post-images/1572329525740.png" alt="" loading="lazy"><br>
 令牌桶算法的原理是系统会以一个恒定的速度往桶里放入令牌，而如果请求需要被处理，则需要先从桶里获取一个令牌，当桶里没有令牌可取时，则拒绝服务。<code>从原理上看，令牌桶算法和漏桶算法是相反的，一个“进水”，一个是“漏水”。</code></p>
 <p>实例代码:</p>
 <pre><code class="language-go">package main
@@ -421,7 +428,7 @@ func main() {
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://xiusin.github.io/post/go-zhong-na-xie-zhi-ke-yi-bei-qu-di-zhi-na-xie-zhi-bu-ke-yi-bei-qu-di-zhi">
+                <a href="https://xiusin.github.io/post/go-zhong-na-xie-zhi-ke-yi-bei-qu-di-zhi-na-xie-zhi-bu-ke-yi-bei-qu-di-zhi/">
                   <h3 class="post-title">
                     Go中哪些值可以被取地址，哪些值不可以被取地址？
                   </h3>
@@ -443,13 +450,27 @@ func main() {
       </div>
     </div>
 
-    <script src="/post-images/prism.js"></script>
+    <!--
+<script src="/post-images/prism.js"></script>
 <link rel="stylesheet" href="/post-images/prism.css">
+-->
 <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
 
 <script type="application/javascript">
 
 AOS.init();
+
+// hljs.initHighlightingOnLoad()
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    if (block.className.indexOf('language-go') > -1) {
+	block.className='hljs go'
+    }
+    hljs.highlightBlock(block);
+  });
+});
 
 var app = new Vue({
   el: '#app',

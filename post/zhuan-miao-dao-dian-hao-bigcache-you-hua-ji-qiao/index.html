@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>[转] 妙到颠毫: bigcache优化技巧 | 修心修己</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1586743156105">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css" />
+  
+
+  
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1586743156105" class="site-logo">
+        <h1 class="site-title">修心修己</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="http://github.com/xiusin" class="site-nav" target="_blank">
+            GitHub
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">[转] 妙到颠毫: bigcache优化技巧</h2>
+            <div class="post-date">2019-12-19</div>
+            
+            <div class="post-content">
+              <blockquote>
+<p>原文:   https://colobu.com/2019/11/18/how-is-the-bigcache-is-fast/</p>
+</blockquote>
+<p>最近看到 yoko 翻译的一篇文章: <a href="https://pengrl.com/p/35302/">[译] Go开源项目BigCache如何加速并发访问以及避免高额的GC开销</a>, 翻译自 <a href="https://dev.to/douglasmakey/how-bigcache-avoids-expensive-gc-cycles-and-speeds-up-concurrent-access-in-go-12bb">How BigCache avoids expensive GC cycles and speeds up concurrent access in Go</a>, 应该是 Douglas Makey Mendez Molero 在阅读了 bigcache 的作者写的 bigcache设计文章<a href="https://allegro.tech/2016/03/writing-fast-cache-service-in-go.html">Writing a very fast cache service with millions of entries in Go</a>做的一些调研和总结。</p>
+<p>我在刚读取这篇文档的时候，顺着连接把相关的文章都找出来细细读了一遍，结合bigcache的代码，仔细学习了相关的优化设计，感觉设计非常的精妙，所以特意根据自己的理解又总结了一篇。</p>
+<p>bigcache的精妙的设计也吸引了fasthttp的作者Aliaksandr Valialkin，他在bigcache的基础上，结合自己的公司的使用场景，进一步的做了相应的优化， 也开源了这个项目<a href="https://github.com/VictoriaMetrics/fastcache">fastcache</a>, 本文在最后也做了介绍。</p>
+<h2 id="设计bigcache的初衷">设计BigCache的初衷</h2>
+<p>bigcache的作者也不是想当然的开发一个库，而且项目遇到了需求。需求如下：</p>
+<ul>
+<li>支持http协议</li>
+<li>支持 <strong>10K</strong> RPS (5k 写，5k 读)</li>
+<li>cache对象至少保持10分钟</li>
+<li>相应时间平均 5ms, p99.9 10毫秒， p99.999 400毫秒</li>
+<li>其它HTTP的一些需求</li>
+</ul>
+<p>为了满足这些需求,要求开发的cache库要保证：</p>
+<ul>
+<li>即使有百万的缓存对象也要非常快</li>
+<li>支持大并发访问</li>
+<li>一定时间后支持剔除</li>
+</ul>
+<p>作者考察了一番缓存框架比如memcached、redis、couchbase等，发觉都不太满足需求，因为这些都是独立的程序，访问它们需要网络的开销，延时无法保障，作者需要一个进程内的基于内存的cache库。虽然Go生态圈有众多的cache库如 <a href="https://github.com/golang/groupcache/tree/master/lru">LRU groups cache</a>, <a href="https://github.com/patrickmn/go-cache">go-cache</a>, <a href="https://github.com/diegobernardes/ttlcache">ttlcache</a>, <a href="https://github.com/coocood/freecache">freecache</a>,但是只有freecache满足需求，不过作者最后还是决定自己取开发一个cache库。</p>
+<p>以上是bigcache诞生的背景，接下来我们欣赏一下bigcache和其它库优美的设计。</p>
+<h2 id="处理大并发访问">处理大并发访问</h2>
+<p>cache就像一个大的hashtable, 可不可以使用一个<code>map[string][]byte</code> + <code>sync.RWMutex</code> 实现满足需求的cache呢？</p>
+<p><code>sync.RWMutex</code>虽然对读写进行了优化，但是对于并发的读，最终还是把写变成了串行，一旦写的并发量大的时候，即使写不同的key, 对应的goroutine也会block住，只允许一个写执行，这是一个瓶颈，并且不可控。</p>
+<p>解决并发的问题有一个方法叫做 shard (分片), 每个分片一把锁。 很多大并发场景下为了减小并发的压力都会采用这种方法，大的场景比如数据库的分片，小的场景就如刚才的场景。 Java 8 之前的ConcurrentMap就是采用分片(segment)的方式减少竞争, Go也有一个类似思想设计的map库:<a href="https://github.com/orcaman/concurrent-map">concurrent-map</a>。</p>
+<p>对于每一个缓存对象，根据它的key计算它的哈希值: <code>hash(key) % N</code>, <code>N</code>是分片数量。 理想情况下N个 goroutine 每次请求正好平均落在各自的分片上，这样就不会有竞争了，即使有多个goroutine落在同一个分片上，如果hash比较平均的话，单个shard的压力也会比较小。</p>
+<p>竞争小了有什么好处？ 延迟可以大大提高，因为等待获取锁的时间变小了。</p>
+<p>当然这里有一些要考虑的地方：</p>
+<p><strong>1、N的选择</strong></p>
+<p>既然分片可以很好的降低锁的竞争，那么N是不是越大越好呢？当然不是，如果N非常大，比如每个缓存对象一个锁，那么会带来很多额外的不必要的开销。可以选择一个不太大的值，在性能和花销上寻找一个平衡。</p>
+<p>另外, <code>N</code>是 2的幂， 比如16、32、64。这样设计的好处就是计算余数可以使用位运算快速计算。</p>
+<pre><code class="language-go">func (c *BigCache) getShard(hashedKey uint64) (shard *cacheShard) {
+    return c.shards[hashedKey&amp;c.shardMask]
+}
+</code></pre>
+<p>因为对于2的幂<code>N</code>，对于任意的<code>x</code>, 下面的公式成立:</p>
+<pre><code>x mod N = (x &amp; (N − 1))
+</code></pre>
+<p>所以只需要使用一次按位AND (<code>&amp;</code>)就可以求得它的余数。</p>
+<p><strong>2、选择hash算法</strong></p>
+<p>以前已经有非常多的哈希算法，最近几年也出现了一些新的哈希算法，也被人使用Go语言来实现。</p>
+<p>很显然，一个优秀的哈希算法要保证:</p>
+<ul>
+<li>哈希值应该比较随机 (质量)</li>
+<li>哈希速度比较快 (速度)</li>
+<li>尽量不产生额外的内存分配,避免对垃圾回收产生压力 (耗费资源少)</li>
+</ul>
+<p>项目<a href="https://github.com/smallnest/hash-bench">hash-bench</a>对常用的几种Hash算法进行了比较。</p>
+<p>bigcache提供了一个默认的Hash的实现，采用fnv64a算法。这个算法的好处是采用位运算的方式在栈上进行运算，避免在堆上分配。</p>
+<pre><code class="language-go">type fnv64a struct{}
+
+const (
+
+	offset64 = 14695981039346656037
+
+	prime64 = 1099511628211
+
+)
+
+func (f fnv64a) Sum64(key string) uint64 {
+
+var hash uint64 = offset64
+
+for i := 0; i &lt; len(key); i++ {
+
+		hash ^= uint64(key\[i\])
+
+		hash *= prime64
+
+	}
+
+return hash
+
+}
+</code></pre>
+<h2 id="忽略内存开销">忽略内存开销</h2>
+<p>对于Go语言中的map, 垃圾回收器在 <code>mark</code>和<code>scan</code>阶段检查map中的每一个元素, 如果缓存中包含数百万的缓存对象，垃圾回收器对这些对象的无意义的检查导致不必要的时间开销。</p>
+<p>bigcache的作者做了测试。他们测试了简单的HTTP/JSON序列化(不会访问cache)。 在cache为空的时候1万的QPS的耗时大约10毫秒。当cache填满的时候， P99的请求都会超过1秒。监控显示堆中包含4千万的对象， GC过程中的 <code>mark</code> 和 <code>scan</code> 也需要4秒。</p>
+<p>我们可以很容易测试这种状况，比如下面的代码：</p>
+<pre><code class="language-go">
+package main
+
+import &quot;time&quot;
+
+type Item struct {
+
+	A string
+
+	B string
+
+	C string
+
+	D string
+
+	E string
+
+	F string
+
+	G G
+
+}
+
+type G struct {
+
+	H int
+
+	I int
+
+	K int
+
+	L int
+
+	M int
+
+	N int
+
+}
+
+func main() {
+
+	m := make(map[int]*Item, 10*1024*1024)
+
+for i := 0; i &lt; 1024*1024; i++ {
+
+		m[i] = &amp;Item{}
+
+	}
+
+for i := 0; ; i++ {
+
+delete(m, i)
+
+		m[1024*1024+i] = &amp;Item{}
+
+		time.Sleep(10 * time.Millisecond)
+
+	}
+
+}
+</code></pre>
+<p>只有一个map对象，里面包含一百万的元素，每10毫秒删一个放一个。<br>
+并发量相当小，并且单个的goroutine也没有竞争，但是由于元素的数量巨大，垃圾回收在<code>mark/scan</code>阶段需要花费上百毫秒进行标记和遍历。</p>
+<p><a href="https://colobu.com/2019/11/18/how-is-the-bigcache-is-fast/gc.png"><img src="https://colobu.com/2019/11/18/how-is-the-bigcache-is-fast/gc.png" alt="" loading="lazy"><br>
+</a></p>
+<p>那么如何解决这个问题呢？</p>
+<p>我们知道垃圾回收器检查的是堆上的资源，如果不把对象放在堆上，不就解决这个问题了吗？还真有这样的项目<a href="https://godoc.org/github.com/glycerine/offheap">offheap</a>，它提供了定制的<code>Malloc()</code> 和 <code>Free()</code>，但是你的缓存需要基于这些方法定制。当然一些基于垃圾回收的编程语言为了减少垃圾回收的时间，都会提供相应的库，比如<a href="https://dzone.com/articles/java-chroniclemap-part-1-go-off-heap">Java: ChronicleMap, Part 1: Go Off-Heap</a>。堆外内存很容易产生内存泄漏。</p>
+<p>第二种方式是使用<a href="https://github.com/coocood/freecache">freecache</a>。freecache通过减少指针的数量以零GC开销实现map。它将键和值保存在<code>ringbuffer</code>中，并使用索引查找对象。</p>
+<p>第三种优化方法是和Go 1.5中一个修复有关(<a href="https://github.com/golang/go/issues/9477">#9477</a>), 这个issue还是描述了包含大量对象的map的垃圾回收时的耗时问题，Go的开发者优化了垃圾回收时对于map的处理，如果map对象中的key和value不包含指针，那么垃圾回收器就会对它们进行优化：</p>
+<blockquote>
+<p>runtime: do not scan maps when k/v do not contain pointers</p>
+<p>Currently we scan maps even if k/v does not contain pointers.<br>
+This is required because overflow buckets are hanging off the main table.<br>
+This change introduces a separate array that contains pointers to all<br>
+overflow buckets and keeps them alive. Buckets themselves are marked<br>
+as containing no pointers and are not scanned by GC (if k/v does not<br>
+contain pointers).</p>
+<p>This brings maps in line with slices and chans -- GC does not scan<br>
+their contents if elements do not contain pointers.</p>
+<p>Currently scanning of a map[int]int with 2e8 entries (~8GB heap)<br>
+takes ~8 seconds. With this change scanning takes negligible time.</p>
+<p><a href="https://go-review.googlesource.com/c/go/+/3288">https://go-review.googlesource.com/c/go/+/3288</a></p>
+</blockquote>
+<p>所以如果我们的对象不包含指针，虽然也是分配在堆上，但是垃圾回收可以无视它们。</p>
+<p>如果我们把map定义成<code>map[int]int</code>，就会发现gc的耗时就会将下来了。</p>
+<p><a href="https://colobu.com/2019/11/18/how-is-the-bigcache-is-fast/gc2.png"><img src="https://colobu.com/2019/11/18/how-is-the-bigcache-is-fast/gc2.png" alt="" loading="lazy"><br>
+</a></p>
+<p>遗憾的是，我们没办法要求用户的缓存对象只能包含<code>int</code>、<code>bool</code>这样的基本数据类型。</p>
+<p>解决办法就是使用哈希值作为<code>map[int]int</code>的key。 把缓存对象序列化后放到一个预先分配的大的字节数组中，然后将它在数组中的offset作为<code>map[int]int</code>的value。</p>
+<pre><code class="language-go">type cacheShard struct {
+
+	hashmap     map\[uint64\]uint32
+
+	entries     queue.BytesQueue
+
+	lock        sync.RWMutex
+
+	entryBuffer \[\]byte
+
+	onRemove    onRemoveCallback
+
+	isVerbose    bool
+
+	statsEnabled bool
+
+	logger       Logger
+
+	clock        clock
+
+	lifeWindow   uint64
+
+	hashmapStats map\[uint64\]uint32
+
+	stats        Stats
+
+}
+
+func (s *cacheShard) set(key string, hashedKey uint64, entry \[\]byte) error {
+
+	currentTimestamp := uint64(s.clock.epoch())
+
+	s.lock.Lock()
+
+if previousIndex := s.hashmap\[hashedKey\]; previousIndex != 0 {
+
+if previousEntry, err := s.entries.Get(int(previousIndex)); err == nil {
+
+			resetKeyFromEntry(previousEntry)
+
+		}
+
+	}
+
+if oldestEntry, err := s.entries.Peek(); err == nil {
+
+		s.onEvict(oldestEntry, currentTimestamp, s.removeOldestEntry)
+
+	}
+
+	w := wrapEntry(currentTimestamp, hashedKey, key, entry, &amp;s.entryBuffer)
+
+for {
+
+if index, err := s.entries.Push(w); err == nil {
+
+			s.hashmap\[hashedKey\] = uint32(index)
+
+			s.lock.Unlock()
+
+return nil
+
+        }
+
+if s.removeOldestEntry(NoSpace) != nil {
+
+			s.lock.Unlock()
+
+return fmt.Errorf(&quot;entry is bigger than max shard size&quot;)
+
+		}
+
+	}
+
+}
+
+func wrapEntry(timestamp uint64, hash uint64, key string, entry \[\]byte, buffer *\[\]byte) \[\]byte {
+
+	keyLength := len(key)
+
+	blobLength := len(entry) + headersSizeInBytes + keyLength
+
+if blobLength &gt; len(*buffer) {
+
+		*buffer = make(\[\]byte, blobLength)
+
+	}
+
+	blob := *buffer
+
+	binary.LittleEndian.PutUint64(blob, timestamp)
+
+	binary.LittleEndian.PutUint64(blob\[timestampSizeInBytes:\], hash)
+
+	binary.LittleEndian.PutUint16(blob\[timestampSizeInBytes+hashSizeInBytes:\], uint16(keyLength))
+
+copy(blob\[headersSizeInBytes:\], key)
+
+copy(blob\[headersSizeInBytes+keyLength:\], entry)
+
+return blob\[:blobLength\]
+
+}
+
+</code></pre>
+<p><code>queue.BytesQueue</code>是一个字节数组，可以做到按需分配。当加入一个<code>[]byte</code>时，它会把数据copy到尾部。</p>
+<p>值得注意的是删除缓存元素的时候bigcache只是把它从的索引从<code>map[uint64]uint32</code>中删除了，并把它在<code>queue.BytesQueue</code>队列中的长度置为0。那么删除操作会不会在<code>queue.BytesQueue</code>中造成很多的“虫洞”？从它的实现上来看，<strong>会</strong>, 而且这些&quot;虫洞&quot;不会被整理，也不会被移除。因为它的底层是使用一个字节数组实现的，&quot;虫洞&quot;的移除是一个耗时的操作，会导致锁的持有时间过长。 那么寻找合适的&quot;虫洞&quot;重用呢？虽然遍历的方法寻找&quot;虫洞&quot;也是一个比较耗时的操作，我觉得这里有优化的空间。</p>
+<p>bigcache只能等待清理最老的元素的时候把这些&quot;虫洞&quot;删除掉。</p>
+<h2 id="剔除">剔除</h2>
+<p>对于 bigcache来说， 剔除还有意义吗？或许有。如果我们不想使用某个key的缓存对象，我们可以把它删除。</p>
+<p>首先，在增加一个元素之前，会检查最老的元素要不要删除。</p>
+<pre><code class="language-go">
+if oldestEntry, err := s.entries.Peek(); err == nil {
+
+	s.onEvict(oldestEntry, currentTimestamp, s.removeOldestEntry)
+
+   }
+</code></pre>
+<p>其次，在添加一个元素失败后，会清理空间删除最老的元素。</p>
+<p>同时， 还会专门有一个定时的清理goroutine, 负责移除过期数据。</p>
+<p>另外需要注意的是缓存对象没有读取的时候刷新过期时间的功能，所以放入的缓存对象最终免不了过期的命运。</p>
+<p>另外所有的缓存对象的<code>lifewindow</code>都是一样的，比如30分钟、两小时。</p>
+<p>所以，如果你真的使用bigcache, 还是得需要注意它的这些设计，看看这些设计是否和你的场景相吻合。</p>
+<h2 id="fastcache">fastcache</h2>
+<p>bigcache在特定时候还是有问题，就是当<code>queue.BytesQueue</code>的容量不够的时候，它会进行扩展，扩展是一个很重的操作，它会复制原来的数据到新的字节数组上。</p>
+<p>fasthttp 的作者采用类似bigcache的思想实现了<a href="https://github.com/VictoriaMetrics/fastcache">fastcache</a>，他使用<code>chunks [][]byte</code>替换<code>queue.BytesQueue</code>，chunk是一个 ring buffer, 每个chunk 64KB。</p>
+<pre><code class="language-go">type bucket struct {
+	mu sync.RWMutex
+	chunks \[\]\[\]byte
+	m map\[uint64\]uint64
+	idx uint64
+	gen uint64
+	getCalls    uint64
+	setCalls    uint64
+	misses      uint64
+	collisions  uint64
+	corruptions uint64
+}
+</code></pre>
+<p>虽然<code>chunks [][]byte</code>也包含很多的chunk, 但是由于chunk的size比较大，所以可以大大缩小垃圾回收需要mark/scan的对象的数量。带来的好处就是扩容的时候只需要增加更多的chunk即可。</p>
+<p>删除还是一样，只是从map中删除，不会从<code>chunks</code>中删除。</p>
+<p>fastcache没有过期的概念，所以缓存对象不会被过期剔除。</p>
+<h2 id="参考文档">参考文档</h2>
+<ol>
+<li><a href="http://allegro.tech/2016/03/writing-fast-cache-service-in-go.html">http://allegro.tech/2016/03/writing-fast-cache-service-in-go.html</a></li>
+<li><a href="https://github.com/allegro/bigcache">https://github.com/allegro/bigcache</a></li>
+<li><a href="https://dev.to/douglasmakey/how-bigcache-avoids-expensive-gc-cycles-and-speeds-up-concurrent-access-in-go-12bb">https://dev.to/douglasmakey/how-bigcache-avoids-expensive-gc-cycles-and-speeds-up-concurrent-access-in-go-12bb</a></li>
+<li><a href="https://pengrl.com/p/35302/">https://pengrl.com/p/35302/</a></li>
+<li><a href="https://github.com/VictoriaMetrics/fastcache">https://github.com/VictoriaMetrics/fastcache</a></li>
+<li><a href="https://www.openmymind.net/Shard-Your-Hash-table-to-reduce-write-locks/">https://www.openmymind.net/Shard-Your-Hash-table-to-reduce-write-locks/</a></li>
+<li><a href="https://medium.com/@itsromiljain/curious-case-of-concurrenthashmap-90249632d335">https://medium.com/@itsromiljain/curious-case-of-concurrenthashmap-90249632d335</a></li>
+<li><a href="https://segmentfault.com/a/1190000012926722">https://segmentfault.com/a/1190000012926722</a></li>
+<li><a href="https://github.com/coocood/freecache">https://github.com/coocood/freecache</a></li>
+</ol>
+
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/zhuan-nethttp-biao-zhun-ku-xue-xi/">
+                  <h3 class="post-title">
+                    [转]NET/HTTP标准库学习
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+              
+                <div id="gitalk-container" data-aos="fade-in"></div>
+              
+
+              
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!--
+<script src="/post-images/prism.js"></script>
+<link rel="stylesheet" href="/post-images/prism.css">
+-->
+<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+// hljs.initHighlightingOnLoad()
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    if (block.className.indexOf('language-go') > -1) {
+	block.className='hljs go'
+    }
+    hljs.highlightBlock(block);
+  });
+});
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+  
+    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+    <script>
+
+      var gitalk = new Gitalk({
+        clientID: 'a526dbb05037d7bf1972',
+        clientSecret: '0238529511fc560513e8b6ed865d3e33c11e3ccb',
+        repo: 'xiusin.github.io',
+        owner: 'xiusin',
+        admin: ['xiusin'],
+        id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+      })
+
+      gitalk.render('gitalk-container')
+
+    </script>
+  
+
+  
+
+
+
+
+  </body>
+</html>

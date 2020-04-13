@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8" >
 
-<title>text2img文本变图片的使用 | Xiusin</title>
+<title>text2img文本变图片的使用 | 修心修己</title>
 <meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1572848931199">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1586743156105">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
 
@@ -22,6 +22,7 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
 
 <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
 
@@ -35,8 +36,8 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://xiusin.github.io">
-        <img src="https://xiusin.github.io/images/avatar.png?v=1572848931199" class="site-logo">
-        <h1 class="site-title">Xiusin</h1>
+        <img src="https://xiusin.github.io/images/avatar.png?v=1586743156105" class="site-logo">
+        <h1 class="site-title">修心修己</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
         <div class="line"></div>
@@ -65,6 +66,12 @@
         
           <a href="/post/about" class="site-nav">
             关于
+          </a>
+        
+      
+        
+          <a href="http://github.com/xiusin" class="site-nav" target="_blank">
+            GitHub
           </a>
         
       
@@ -103,7 +110,7 @@
             <div class="post-content">
               <h1 id="需求描述">需求描述</h1>
 <p>自己在写技术博客需要一个图片来作为文章的封面, 由于懒惰和时间成本没有开发这项功能.  在对接 web 端以及小程序端都需要封面图来撑起来大大的版面怎么办, 那么这个 <code>text2img</code>的扩展包就起作用了, 它能用指定的文本来生成固定格式的图片. 效果如下:</p>
-<figure data-type="image" tabindex="1"><img src="https://www.mirchen.com/img/5.jpg" alt="https://www.mirchen.com/img/5.jpg"></figure>
+<figure data-type="image" tabindex="1"><img src="https://www.mirchen.com/img/5.jpg" alt="https://www.mirchen.com/img/5.jpg" loading="lazy"></figure>
 <p>好, 那我们现在开始吧.</p>
 <h1 id="命令行使用">命令行使用</h1>
 <p>扩展地址: https://github.com/Iwark/text2img.git</p>
@@ -130,11 +137,11 @@ Usage of text2img:
 <p>我们要生成随机背景颜色的图片:</p>
 <pre><code class="language-shell">$ text2img -fontpath=&quot;fonts/font.ttf&quot; -output=&quot;test.jpg&quot; -text=&quot;text2img generates the image from a text&quot;
 </code></pre>
-<figure data-type="image" tabindex="2"><img src="https://camo.githubusercontent.com/dcb4b5d949ffdfb329716d49af2947f1d96e0638/68747470733a2f2f692e696d6775722e636f6d2f334d6a4c3150672e6a7067" alt=""></figure>
+<figure data-type="image" tabindex="2"><img src="https://camo.githubusercontent.com/dcb4b5d949ffdfb329716d49af2947f1d96e0638/68747470733a2f2f692e696d6775722e636f6d2f334d6a4c3150672e6a7067" alt="" loading="lazy"></figure>
 <p>我们要生成指定背景图片和指定内容的图片,我们可以使用下面的命令:</p>
 <pre><code class="language-shell">$ text2img -fontpath=&quot;fonts/font.ttf&quot; -output=&quot;test.jpg&quot; -text=&quot;text2img generates the image from a text&quot; -bgimg=&quot;gophers.jpg&quot;
 </code></pre>
-<figure data-type="image" tabindex="3"><img src="https://camo.githubusercontent.com/4eed21383601def6b937e5a0d6a7121304a4dcea/68747470733a2f2f692e696d6775722e636f6d2f4d574e563434662e6a7067" alt=""></figure>
+<figure data-type="image" tabindex="3"><img src="https://camo.githubusercontent.com/4eed21383601def6b937e5a0d6a7121304a4dcea/68747470733a2f2f692e696d6775722e636f6d2f4d574e563434662e6a7067" alt="" loading="lazy"></figure>
 <p>以上是命令行的基本用法.</p>
 <h1 id="go-代码">GO 代码</h1>
 <h2 id="使用命令下载第三方包">使用命令下载第三方包</h2>
@@ -192,7 +199,7 @@ func main (){
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://xiusin.github.io/post/shi-yong-golang-shi-yu-dao-de-yi-xie-keng">
+                <a href="https://xiusin.github.io/post/shi-yong-golang-shi-yu-dao-de-yi-xie-keng/">
                   <h3 class="post-title">
                     使用Golang时遇到的一些坑
                   </h3>
@@ -214,13 +221,27 @@ func main (){
       </div>
     </div>
 
-    <script src="/post-images/prism.js"></script>
+    <!--
+<script src="/post-images/prism.js"></script>
 <link rel="stylesheet" href="/post-images/prism.css">
+-->
 <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
 
 <script type="application/javascript">
 
 AOS.init();
+
+// hljs.initHighlightingOnLoad()
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    if (block.className.indexOf('language-go') > -1) {
+	block.className='hljs go'
+    }
+    hljs.highlightBlock(block);
+  });
+});
 
 var app = new Vue({
   el: '#app',

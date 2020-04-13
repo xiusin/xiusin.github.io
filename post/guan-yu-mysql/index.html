@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>性能记录 | 修心修己</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1586743156105">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css" />
+  
+
+  
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1586743156105" class="site-logo">
+        <h1 class="site-title">修心修己</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="http://github.com/xiusin" class="site-nav" target="_blank">
+            GitHub
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">性能记录</h2>
+            <div class="post-date">2019-11-01</div>
+            
+            <div class="post-content">
+              <p><strong><mark><mark><mark>MYSQL</mark></mark></mark></strong></p>
+<h1 id="为什么不应该使用数据库外键">为什么不应该使用数据库外键</h1>
+<ul>
+<li>
+<p>你实际是用 FK 来拆分数据库，你的应用程序习惯于依靠 FK 来保持完整性，而不是自己代码来完成。它甚至可能依赖于FK来级联删除（发抖）。最终你想来自己来实现数据拆分或者提取时，就需要在不确定的范围内更改和测试该应用程序。</p>
+</li>
+<li>
+<p>FK 对性能有影响。他需要索引的开销可能还好，因为大部分情况都需要这些索引，但是为每个插入/删除进行的查找是一项额外开销。</p>
+</li>
+<li>
+<p>FK 执行在线 schema 迁移会有问题。</p>
+</li>
+</ul>
+<blockquote>
+<p>参考: https://mp.weixin.qq.com/s/B4cgC0OSTJLzuXKnOOsH8w</p>
+</blockquote>
+<h1 id="mysql主从服务器如果主服务器是innodb引擎从服务器是myisam引擎在实际应用中会遇到什么问题">MYSQL主从服务器,如果主服务器是innodb引擎,从服务器是myisam引擎,在实际应用中会遇到什么问题？</h1>
+<h1 id="两台服务器如果其中一台挂了怎么在业务端做到无缝切换">两台服务器如果其中一台挂了，怎么在业务端做到无缝切换？</h1>
+<h1 id="mysql多表关联查询效率高点还是多次单表查询效率高">MySQL多表关联查询效率高点还是多次单表查询效率高</h1>
+<h1 id="分库分表的几种常见玩法及如何解决跨库查询等问题">分库分表的几种常见玩法及如何解决跨库查询等问题</h1>
+<h1 id="跨库查询">跨库查询</h1>
+<h1 id="垂直分库">垂直分库</h1>
+<h1 id="垂直分表">垂直分表</h1>
+<h1 id="水平分表-跨表查询查询问题">水平分表 (跨表查询查询问题)</h1>
+<h1 id="水平分库分表">水平分库分表</h1>
+<h1 id="跨库join的问题">跨库join的问题</h1>
+<h1 id="分布式事务">分布式事务</h1>
+<p>参考: http://www.infoq.com/cn/articles/solution-of-distributed-system-transaction-consistency</p>
+<h1 id="数据页">数据页</h1>
+<h1 id="表锁与行锁">表锁与行锁</h1>
+<h1 id="索引与关联查询">索引与关联查询</h1>
+<h1 id="事务隔离级别-脏读-幻读-不可读-不可重复读等">事务隔离级别: 脏读, 幻读, 不可读, 不可重复读等</h1>
+<h3 id="脏读">脏读</h3>
+<p>脏读是指在一个事务处理过程里读取了另一个未提交的事务中的数据。</p>
+<p>当一个事务正在多次修改某个数据，而在这个事务中这多次的修改都还未提交，这时一个并发的事务来访问该数据，就会造成两个事务得到的数据不一致。</p>
+<p>举个例子，A在一个转账事务中，转了100块钱给B，此时B读到了这个转账的数据，然后做了一些操作（发货给A，或者其他的），可是这时候A的事务并没有提交，如果A回滚了事务，那就GG了。这就是脏读了。</p>
+<h3 id="不可重复读">不可重复读</h3>
+<p>不可重复读是指在对于数据库中的某个数据，一个事务范围内多次查询却返回了不同的数据值，这是由于在查询间隔，被另一个事务修改并提交了。</p>
+<p>例如事务T1在读取某一数据，而事务T2立马修改了这个数据并且提交事务给数据库，事务T1再次读取该数据就得到了不同的结果，发送了不可重复读。</p>
+<p>不可重复读和脏读的区别是，脏读是某一事务读取了另一个事务未提交的脏数据，而不可重复读则是读取了前一事务提交的数据。</p>
+<p>在某些情况下，不可重复读并不是问题，比如我们多次查询某个数据当然以最后查询得到的结果为主。但在另一些情况下就有可能发生问题，例如对于同一个数据A和B依次查询就可能不同，A和B就可能打起来了……</p>
+<h3 id="幻读">幻读</h3>
+<p>幻读是事务非独立执行时发生的一种现象。例如事务T1对一个表中所有的行的某个数据项做了从“1”修改为“2”的操作，这时事务T2又对这个表中插入了一行数据项，而这个数据项的数值还是为“1”并且提交给数据库。而操作事务T1的用户如果再查看刚刚修改的数据，会发现还有一行没有修改，其实这行是从事务T2中添加的，就好像产生幻觉一样，这就是发生了幻读。</p>
+<p>幻读和不可重复读都是读取了另一条已经提交的事务（这点就脏读不同），所不同的是不可重复读查询的都是同一个数据项，而幻读针对的是一批数据整体（比如数据的个数）。</p>
+<h3 id="不可重复读-2">不可重复读</h3>
+<p>即事物之间完全隔离(串行化), 可以完全避免在并发时候出现数据问题.</p>
+<p>现在来看看MySQL数据库为我们提供的四种隔离级别：</p>
+<p>① Serializable (串行化)：可避免脏读、不可重复读、幻读的发生。</p>
+<p>② Repeatable read (可重复读)：可避免脏读、不可重复读的发生。</p>
+<p>③ Read committed (读已提交)：可避免脏读的发生。</p>
+<p>④ Read uncommitted (读未提交)：最低级别，任何情况都无法保证。</p>
+<p>以上四种隔离级别最高的是Serializable级别，最低的是Read uncommitted级别，当然级别越高，执行效率就越低。像Serializable这样的级别，就是以锁表的方式(类似于Java多线程中的锁)使得其他的线程只能在锁外等待，所以平时选用何种隔离级别应该根据实际情况。在MySQL数据库中默认的隔离级别为Repeatable read (可重复读)。</p>
+<blockquote>
+<p>在MySQL数据库中，支持上面四种隔离级别，<code>默认的为Repeatable read (可重复读)</code>；</p>
+</blockquote>
+<p>mysql 查询事务的隔离级别</p>
+<pre><code class="language-sql">select @@tx_isolation;
+</code></pre>
+<p>上面描述体现在表格内:</p>
+<table>
+<thead>
+<tr>
+<th>动作</th>
+<th>脏读</th>
+<th>不可重复读</th>
+<th>幻读</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Read uncommitted</td>
+<td>√</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr>
+<td>Read committed</td>
+<td>×</td>
+<td>√</td>
+<td>√</td>
+</tr>
+<tr>
+<td>Repeatable read (默认)</td>
+<td>×</td>
+<td>×</td>
+<td>√</td>
+</tr>
+<tr>
+<td>Serializable</td>
+<td>×</td>
+<td>×</td>
+<td>×</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>参考: https://www.cnblogs.com/balfish/p/8298296.html</p>
+</blockquote>
+<h1 id="乐观锁和悲观锁">乐观锁和悲观锁</h1>
+<ul>
+<li><code>悲观锁</code>：总是假设最坏的情况，认为竞争总是存在，每次拿数据的时候都认为会被修改，因此每次都会先上锁。其他线程阻塞等待释放锁。</li>
+<li><code>乐观锁</code>：总是假设最好的情况，认为竞争总是不存在，每次拿数据的时候都认为不会被修改，因此不会先上锁，在最后更新的时候比较数据有无更新，可通过版本号或CAS实现。</li>
+</ul>
+<h1 id="mysql-多源复制场景分析">MySQL 多源复制场景分析</h1>
+<blockquote>
+<p>参考: https://www.toutiao.com/a6755380652440289804/</p>
+</blockquote>
+<h1 id="mysql的索引失效">Mysql的索引失效</h1>
+<h1 id="事务四大特性acid原子性-一致性-隔离性-持久性">事务四大特性（ACID）原子性、一致性、隔离性、持久性？</h1>
+<ul>
+<li>
+<p>原子性: 就是一组操作要么同时发生, 要么一个都不发生</p>
+</li>
+<li>
+<p>一致性(CONSISTENCY): 就是说, 执行完数据库操作后, 数据不会被破坏. 打个比方, 如果a账户转账到b账户, 不可能因为a账户扣了钱, 而b账户没有加钱</p>
+</li>
+<li>
+<p>隔离性(LSOLATION): 当我们编写了一条update语句, 提交到数据库的一刹那, 有可能别人也提交了一条delete语句到数据库, 也许我们都是对同一条记录进行操作, 可以想象, 如果不稍加控制, 就会出大麻烦来, 我们必须保证数据库操作之间是&quot;隔离&quot;的, 彼此之间没有任何干扰. 这就是隔离性. 但是想要操作之间没有任何干扰是非常难的, 所以就有了事务隔离级别(Transaction Lsolation level)<br>
+READ_UNCOMMITTED<br>
+READ_COMMITTED<br>
+REPEATABLE_READ<br>
+SERIALIZABLE<br>
+从上往下, 级别越来越高, 并发行越来越差, 安全性越来越高</p>
+</li>
+<li>
+<p>当我们执行最后一条insert语句后, 数据库必须要保证有一条数据永久的存放在磁盘中, 这个也算事务的一条特性, 它就是持久性(DURABILITY)</p>
+</li>
+</ul>
+<p>这四条特性, 是事务管理的基石. <code>原子性是基础, 隔离性是手段, 持久性是目的, 一致性是最重要的</code>. 数据不一致了, 所有的东西都会乱套.</p>
+<h1 id="mysql常见的三种存储引擎innodb-myisam-memory的区别">MySQL常见的三种存储引擎（InnoDB、MyISAM、MEMORY）的区别？</h1>
+<h2 id="innodb引擎">Innodb引擎</h2>
+<p>Innodb引擎提供了对数据库<code>ACID事务</code>的支持，并且实现了SQL标准的四种隔离级别。该引擎还提供了<code>行级锁和外键约束</code>，它的设计目标是处理大容量数据库系统，它本身其实就是基于MySQL后台的完整数据库系统，<code>MySQL运行时Innodb会在内存中建立缓冲池，用于缓冲数据和索引</code>。但是该引擎不支持FULLTEXT类型的索引，而且它没有<code>保存表的行数</code>，当<code>SELECT COUNT(*) FROM TABLE</code>时需要扫描全表。当需要使用数据库事务时，该引擎当然是首选。由于锁的粒度更小，写操作不会锁定全表，所以在并发较高时，使用Innodb引擎会提升效率。但是使用行级锁也不是绝对的，<code>如果在执行一个SQL语句时MySQL不能确定要扫描的范围，InnoDB表同样会锁全表</code>。</p>
+<h2 id="myiasm引擎">MyIASM引擎</h2>
+<p>MyIASM是MySQL的<code>默认引擎</code>，但是它没有提供对数据库事务的支持，也<code>不支持行级锁和外键</code>，因此<code>当INSERT(插入)或UPDATE(更新)数据时即写操作需要锁定整个表</code>，效率便会低一些。不过和Innodb不同，MyIASM中<code>存储了表的行数</code>，于是<code>SELECT COUNT(*) FROM TABLE</code>时只需要直接读取已经保存好的值而不需要进行全表扫描。如果表的<code>读操作远远多于写操作且不需要数据库事务的支持</code>，那么MyIASM也是很好的选择。</p>
+<h2 id="引擎的主要区别">引擎的主要区别</h2>
+<ol>
+<li>MyIASM是非事务安全的，而InnoDB是事务安全的</li>
+<li>MyIASM锁的粒度是表级的，而InnoDB支持行级锁</li>
+<li>MyIASM支持全文类型索引，而InnoDB不支持全文索引</li>
+<li>MyIASM相对简单，效率上要优于InnoDB，小型应用可以考虑使用MyIASM</li>
+<li>MyIASM表保存成文件形式，跨平台使用更加方便</li>
+</ol>
+<h2 id="适用场景">适用场景</h2>
+<ol>
+<li>MyIASM管理非事务表，提供高速存储和检索以及全文搜索能力，如果再应用中执行大量select操作，应该选择MyIASM</li>
+<li>InnoDB用于事务处理，具有ACID事务支持等特性，如果在应用中执行大量insert和update操作，应该选择InnoDB</li>
+<li>MEMORY一般用于临时使用,并且不重要的数据, 可接受丢失. 其速度访问快,低延迟. 更适用于只读数据或大部分读. 不适合大量写操作.</li>
+</ol>
+<h1 id="查询语句不同元素where-jion-limit-group-by-having等等执行先后顺序">查询语句不同元素（where、jion、limit、group by、having等等）执行先后顺序？</h1>
+<p>一个查询语句同时出现了where,group by,having,order by的时候，执行顺序和编写顺序是：</p>
+<ol>
+<li>执行where xx对全表数据做筛选，返回第1个结果集。</li>
+<li>针对第1个结果集使用group by分组，返回第2个结果集。</li>
+<li>针对第2个结果集中的每1组数据执行select xx，有几组就执行几次，返回第3个结果集。</li>
+<li>针对第3个结集执行having xx进行筛选，返回第4个结果集。</li>
+<li>针对第4个结果集排序。</li>
+</ol>
+<p>通过一个顺口溜总结下顺序：<code>我(W)哥(G)是(SH)偶(O)像</code>。按照执行顺序的关键词首字母分别是<code>W（where）-&gt;G（Group）-&gt;S（Select）-&gt;H（Having）-&gt;O（Order）</code>，对应汉语首字母可以编成容易记忆的顺口溜：<code>我(W)哥(G)是(SH)偶(O)像</code></p>
+<p>参考: https://zhuanlan.zhihu.com/p/86906096</p>
+<h1 id="什么是临时表临时表什么时候删除">什么是临时表，临时表什么时候删除?</h1>
+<p>临时表在我们需要保存一些临时数据时是非常有用的。<code>临时表只在当前连接可见</code>，当关闭连接时，Mysql会<code>自动删除表并释放所有空间</code>。 当然你也可以<code>手动销毁</code>。 当使用<code>SHOW TABLES</code>命令显示数据表列表时，你将无法看到创建的临时表。</p>
+<h2 id="mysql-btree索引和hash索引的区别">MySQL B+Tree索引和Hash索引的区别？</h2>
+<blockquote>
+<p>参考: https://www.jianshu.com/p/8bcb815af870</p>
+</blockquote>
+<h2 id="聚集索引和非聚集索引区别">聚集索引和非聚集索引区别？</h2>
+<blockquote>
+<p>参考: https://www.cnblogs.com/aspnethot/articles/1504082.html</p>
+</blockquote>
+<p>#有哪些锁（乐观锁悲观锁），select 时怎么加排它锁？#<br>
+#非关系型数据库和关系型数据库区别，优势比较？#<br>
+#数据库三范式，根据某个场景设计数据表？#<br>
+#数据库的读写分离、主从复制，主从复制分析的 7 个问题？#<br>
+#使用explain优化sql和索引？#<br>
+https://blog.csdn.net/cc41798520101/article/details/79472428<br>
+https://www.toutiao.com/a6763219739956216328/</p>
+<h1 id="mysql慢查询怎么解决">MySQL慢查询怎么解决？#</h1>
+<p>#什么是 内连接、外连接、交叉连接、笛卡尔积等？#<br>
+#mysql都有什么锁，死锁判定原理和具体场景，死锁怎么解决？#<br>
+#varchar和char的区别和使用场景？#<br>
+https://blog.csdn.net/belen_xue/article/details/52671363</p>
+<p>#数据库崩溃时事务的恢复机制（REDO日志和UNDO日志）？#</p>
+<p><strong><mark><mark><mark>PHP和其他相关</mark></mark></mark></strong></p>
+<ol>
+<li>隔离性和锁 (https://www.jianshu.com/p/890adca63a67)</li>
+<li>php代码解释过程(http://www.laruence.com/2008/06/18/221.html)</li>
+<li>nfs</li>
+<li>swoole 协程</li>
+</ol>
+<p><strong><mark><mark><mark>REDIS</mark></mark></mark></strong></p>
+<h1 id="冷热数据分离思路">冷热数据分离思路</h1>
+<blockquote>
+<p>参考: https://www.cnblogs.com/lyc94620/p/9648058.html</p>
+</blockquote>
+<h1 id="redis混合存储-冷热数据识别与交换">Redis混合存储-冷热数据识别与交换</h1>
+<blockquote>
+<p>参考: https://blog.csdn.net/rlnLo2pNEfx9c/article/details/81091547</p>
+</blockquote>
+<h1 id="redis真的只支持单线程吗">redis真的只支持单线程吗?</h1>
+<p>单线程指的是网络请求模块使用了一个线程（所以不需考虑并发安全性），即一个线程处理所有网络请求，其他模块仍用了多个线程。 快速执行的原因是:</p>
+<ul>
+<li>纯内存操作</li>
+<li>采用单线程, 避免了上下文切换以及竞争条件</li>
+<li>非阻塞式IO, IO多路复用</li>
+</ul>
+<blockquote>
+<p>参考: https://www.cnblogs.com/yulibostu/articles/9774667.html</p>
+</blockquote>
+<h1 id="怎么用redis实现分布式锁">怎么用redis实现分布式锁？</h1>
+<p>在使用redis分布式锁的时候有两个重要函数:</p>
+<ol>
+<li><code>SETNX key value</code></li>
+</ol>
+<p>当且仅当 key 不存在，将 key 的值设为 value ，并返回1；若给定的 key 已经存在，则 SETNX 不做任何动作，并返回0。</p>
+<ol start="2">
+<li>
+<p><code>GETSET key value</code><br>
+将给定 key 的值设为 value ，并返回 key 的旧值 (old value)，当 key 存在但不是字符串类型时，返回一个错误，当key不存在时，返回nil。</p>
+</li>
+<li>
+<p>利用<code>Memcached的add</code>命令。此命令是原子性操作，只有在key不存在的情况下，才能add成功，也就意味着线程得到了锁。</p>
+</li>
+</ol>
+<h2 id="引来的问题-死锁">引来的问题:  死锁</h2>
+<ol>
+<li>
+<p>客户端拿到锁了以后出现异常宕机问题没有释放锁, 可以采用设置key的时候添加上过期时间.</p>
+</li>
+<li>
+<p>如果在过期时间内没有完成任务然后锁被释放了,然后线程B拿到了锁, 当A线程执行完以后接下来要删除锁,这时候就是删除B线程加的锁. 此时可以采用设置锁的值在当前线程或客户端内可查. 在删除之前判断是否为当前客户端设置的key. 然后再删除. 更完美的做法是<code>采用另起线程延续锁时长,直到任务结束解锁</code>.</p>
+</li>
+<li>
+<p>参考:</p>
+</li>
+</ol>
+<blockquote>
+<p>https://blog.csdn.net/ugg/article/details/41894947<br>
+https://blog.csdn.net/kongmin_123/article/details/82080962</p>
+</blockquote>
+<h1 id="缓存的并发竞争问题">缓存的并发竞争问题</h1>
+<p>Redis的并发竞争问题，主要是发生在并发写竞争。<br>
+考虑到redis没有像db中的sql语句，<code>update val = val + 10 where ...</code>，无法使用这种方式进行对数据的更新。</p>
+<p>假如有某个key = &quot;price&quot;，  value值为10，现在想把value值进行+10操作。正常逻辑下，就是先把数据key为price的值读回来，加上10，再把值给设置回去。如果只有一个连接的情况下，这种方式没有问题，可以工作得很好，但如果有两个连接时，两个连接同时想对还price进行+10操作，就可能会出现问题了。</p>
+<p>例如：两个连接同时对price进行写操作，同时加10，最终结果我们知道，应该为30才是正确。</p>
+<p>考虑到一种情况：</p>
+<pre><code>T1时刻，连接1将price读出，目标设置的数据为10+10 = 20。
+T2时刻，连接2也将数据读出，也是为10，目标设置为20。
+T3时刻，连接1将price设置为20。
+T4时刻，连接2也将price设置为20，则最终结果是一个错误值20。
+</code></pre>
+<h2 id="解决方案">解决方案</h2>
+<ol>
+<li>
+<p>方案1<br>
+利用redis自带的incr命令，具体用法看这里http://doc.redisfans.com/string/incr.html。(<code>仅针对本案例</code>)</p>
+</li>
+<li>
+<p>方案2 (分布式锁,如getset, setnx)<br>
+可以使用独占锁的方式，类似操作系统的mutex机制。</p>
+</li>
+<li>
+<p>方案3 (事务)<br>
+使用乐观锁的方式进行解决（成本较低，非阻塞，性能较高）</p>
+</li>
+</ol>
+<pre><code class="language-shell">watch price
+get price $price
+$price = $price + 10
+multi
+set price $price
+exec
+</code></pre>
+<blockquote>
+<p>watch这里表示监控该key值，后面的事务是有条件的执行，如果从watch的exec语句执行时，watch的key对应的value值被修改了，则事务不会执行。</p>
+</blockquote>
+<ol start="4">
+<li>方案4 (客户端自行实现)<br>
+这个是针对客户端来的，在代码里要对redis操作的时候，针对同一key的资源，就先进行加锁（java里的synchronized或lock）。</li>
+</ol>
+<h1 id="redis-和-memcached-的区别">redis 和 memcached 的区别</h1>
+<ol>
+<li>memcache是内存缓存, redis是内存数据库</li>
+<li>memcache宕机以后数据会丢失, redis 数据会缓存到本地文件,可恢复缓存数据</li>
+<li>memcache缓存数据类型单一,  redis支持多种数据类型, 如: list, hash, set, string, zset, bitmap(原理也是string)等类型.</li>
+<li>memcache不支持复制, 不支持分布式. redis支持</li>
+<li>并发场景 memcache 使用cas保证一致性. redis对事务支持较弱, 只能保证事务中的操作连续执行</li>
+<li>Memcached是多线程，非阻塞IO复用的网络模型；Redis使用单线程的多路 IO 复用模型。</li>
+</ol>
+<h1 id="redis-同步机制同步方式-数据异常回滚">redis 同步机制，同步方式， 数据异常回滚</h1>
+<h1 id="rdb-和-aof-的区别">RDB 和 AOF 的区别</h1>
+<h1 id="redis-常见数据结构以及使用场景分析string-hash-list-set-sorted-set">redis 常见数据结构以及使用场景分析（String、Hash、List、Set、Sorted Set）</h1>
+<blockquote>
+<p>参考: https://blog.csdn.net/kqqkqq123/article/details/97019403</p>
+</blockquote>
+<h1 id="redis-内存淘汰机制">redis 内存淘汰机制</h1>
+<blockquote>
+<p>参考: https://blog.csdn.net/qq_38366063/article/details/89210140</p>
+</blockquote>
+<h1 id="redis-常见异常及解决方案缓存穿透-缓存雪崩-缓存预热-缓存降级">Redis 常见异常及解决方案（缓存穿透、缓存雪崩、缓存预热、缓存降级）</h1>
+<ol>
+<li>
+<p>缓存雪崩问题<br>
+由于原有缓存失效，新缓存未到期间(例如：我们设置缓存时采用了相同的过期时间，在同一时刻出现大面积的缓存过期)，所有原本应该访问缓存的请求都去查询数据库了，而对数据库CPU和内存造成巨大压力，严重的会造成数据库宕机。从而形成一系列连锁反应，造成整个系统崩溃。</p>
+</li>
+<li>
+<p>缓存击穿(穿透)问题<br>
+缓存穿透是指用户查询数据，在数据库没有，自然在缓存中也不会有。这样就导致用户查询的时候，在缓存中找不到，每次都要去数据库再查询一遍，然后返回空（相当于进行了两次无用的查询）。这样请求就绕过缓存直接查数据库，这也是经常提的缓存命中率问题。</p>
+</li>
+</ol>
+<ul>
+<li>
+<p>采用布隆过滤器，将所有可能存在的数据哈希到一个足够大的bitmap中，一个一定不存在的数据会被这个bitmap拦截掉，从而避免了对底层存储系统的查询压力。</p>
+</li>
+<li>
+<p>如果一个查询返回的数据为空（不管是数据不存在，还是系统故障），我们仍然把这个空结果进行缓存，但它的过期时间会很短，最长不超过五分钟。通过这个直接设置的默认值存放到缓存，这样第二次到缓存中获取就有值了，而不会继续访问数据库，这种办法最简单粗暴！</p>
+</li>
+</ul>
+<p>把空结果也给缓存起来，这样下次同样的请求就可以直接返回空了，即可以避免当查询的值为空时引起的缓存穿透。同时也可以单独设置个缓存区域存储空值，对要查询的key进行预先校验，然后再放行给后面的正常缓存处理逻辑。</p>
+<p>缓存层和存储层的数据会有一段时间窗口的不一致，可能会对业务有一定影响。例如过期时间设置为 5分钟，如果此时存储层添加了这个数据，那此段时间就会出现缓存层和存储层数据的不一致，此时可以利用消息系统或者其他方式清除掉缓存层中的空对象。</p>
+<ol start="3">
+<li>缓存预热<br>
+缓存预热就是系统上线后，提前将相关的缓存数据直接加载到缓存系统。避免在用户请求的时候，先查询数据库，然后再将数据缓存的问题！<br>
+缓存预热解决方案：</li>
+</ol>
+<ul>
+<li>直接写个缓存刷新页面，上线时手工操作下；</li>
+<li>数据量不大，可以在项目启动的时候自动进行加载；</li>
+<li>定时刷新缓存；</li>
+</ul>
+<ol start="4">
+<li>缓存降级<br>
+当访问量剧增、服务出现问题（如响应时间慢或不响应）或非核心服务影响到核心流程的性能时，仍然需要保证服务还是可用的，即使是有损服务。系统可以根据一些关键数据进行自动降级，也可以配置开关实现人工降级。</li>
+</ol>
+<p><code>降级的最终目的是保证核心服务可用</code>，即使是有损的。而且有些服务是无法降级的（如加入购物车、结算）。</p>
+<p>在进行降级之前要对系统进行梳理，看看系统是不是可以丢卒保帅；从而梳理出哪些必须誓死保护，哪些可降级；比如可以参考日志级别设置预案：</p>
+<ul>
+<li>一般：比如有些服务偶尔因为网络抖动或者服务正在上线而超时，可以自动降级；</li>
+<li>警告：有些服务在一段时间内成功率有波动（如在95~100%之间），可以自动降级或人工降级，并发送告警；</li>
+<li>错误：比如可用率低于90%，或者数据库连接池被打爆了，或者访问量突然猛增到系统能承受的最大阀值，此时可以根据情况自动降级或者人工降级；</li>
+<li>严重错误：比如因为特殊原因数据错误了，此时需要紧急人工降级。</li>
+</ul>
+<blockquote>
+<p>参考: https://www.cnblogs.com/leeSmall/p/8594542.html</p>
+</blockquote>
+<p>分布式环境下常见的应用场景（分布式锁、分布式自增 ID）<br>
+Redis 集群模式（主从模式、哨兵模式、Cluster 集群模式）</p>
+<h1 id="如何保证缓存与数据库双写时的数据一致性">如何保证缓存与数据库双写时的数据一致性？#</h1>
+<ol>
+<li>
+<p>最初级的缓存不一致问题及解决方案<br>
+<code>先删除缓存, 删除失败阻止后续操作. 再更新数据库, 就算数据库更新失败, 缓存是空的也能达到数据的最终一致性</code>. 如果顺序反过来最终的结果可能是<code>数据库更新成功了, 缓存删除失败, 导致缓存与数据库不一致</code>.</p>
+</li>
+<li>
+<p>复杂的数据不一致分析<br>
+按照<code>1</code>的描述, 如果在删除缓存的时候产生并发, 另一个请求过来发现缓存不存在直接去读取了数据库里<code>未来得及更新的数据</code>, 导致了最终不一致. (高并发极易出现的问题)</p>
+</li>
+</ol>
+<ul>
+<li>可以通过全局锁来实现一个进程在<code>更新数据</code>的时候, 其他线程等待 (或分布式锁).</li>
+<li>将<code>更新缓存</code>发送到固定队列. 让操作串行化, 如果一个读缓存操作进来读取到了空数据, 就将更新缓存操作入到队列. 并将自己处于<code>轮训状态</code>(如果时间允许)直到可以读取到缓存或直接从数据库读取值(不触发缓存), 队列会积压操作,直到缓存更新缓存, 可优化点: 如果发送过相同的<code>更新操作</code>,可以直接等待结果.</li>
+</ul>
+<h2 id="方案引发的问题点">方案引发的问题点:</h2>
+<p>高并发时会触发很多的更新操作, 如果同时入队操作, 可能会积压队列很多任务, 并且如果采用轮训等待结果造成的问题是<code>阻塞时间过长</code>, 如果采用直接直接到数据库取值, 可能会<code>导致数据库崩溃</code>(缓存穿透),需要将缓存失效的时间<code>离散</code>(缓存雪崩), 防止<code>同一时间缓存同时失效</code>.  如果热点操作过度倾斜(操作量远大于其他任务), 需要实际测试热点操作, 调整对应架构策略(数据更新到固定的不是实例, 保证相同的任务路由到固定的机器).</p>
+<p>无论哪种方案都可能引起<code>吞吐量下降</code></p>
+<blockquote>
+<p>参考: https://mp.weixin.qq.com/s?__biz=MzIwMzY1OTU1NQ%3D%3D&amp;mid=2247486174&amp;idx=1&amp;sn=642f4a12d5cfea9767b5d77e2ed6bb4c&amp;chksm=96cd4a92a1bac384e1829f95a5c0b1e8b73faccc0248a23643460f4b8463fc20d1a0e03cc18d&amp;mpshare=1&amp;scene=23&amp;srcid=%23rd</p>
+</blockquote>
+<h1 id="redis的事务功能详解">Redis的事务功能详解</h1>
+<p>参考: https://www.cnblogs.com/shamo89/p/8376907.html</p>
+<h1 id="redis的布隆过滤器">redis的布隆过滤器</h1>
+<p>应用场景:</p>
+<ul>
+<li>缓存穿透<br>
+一般的查询请求流程是这样的：先查缓存，有缓存的话直接返回，如果缓存中没有，再去数据库查询，然后再把数据库取出来的数据放入缓存，一切看起来很美好。但是如果现在有大量请求进来，而且都在请求一个不存在的产品Id，会发生什么？既然产品Id都不存在，那么肯定没有缓存，没有缓存，那么大量的请求都怼到数据库，数据库的压力一下子就上来了，还有可能把数据库打死。</li>
+</ul>
+<blockquote>
+<p>对所有可能查询的参数以hash形式存储，在控制层先进行校验，不符合则丢弃。还有最常见的则是采用布隆过滤器，将所有可能存在的数据哈希到一个足够大的bitmap中，一个一定不存在的数据会被这个bitmap拦截掉，从而避免了对底层存储系统的查询压力。</p>
+</blockquote>
+<ul>
+<li>大量数据，判断给定的是否在其中<br>
+现在有大量的数据，而这些数据的大小已经远远超出了服务器的内存，现在再给你一个数据，如何判断给你的数据在不在其中。如果服务器的内存足够大，那么用HashMap是一个不错的解决方案，理论上的时间复杂度可以达到O(1)，但是现在数据的大小已经远远超出了服务器的内存，所以无法使用HashMap，这个时候就可以使用“布隆过滤器”来解决这个问题。但是还是同样的，会有一定的<code>“误判率”</code>(当大量数据通过某些hash函数存储进来, 可能会填满不存在数据的位置, 所以初始化长度的时候尽量长)。</li>
+</ul>
+<p><strong><code>用 redis来实现布隆过滤器，我们要使用的数据结构是bitmap</code>, 高版本redis 4.0 实现了布隆过滤器的插件, 基本用法是: <code>bf.add</code> 和 <code>bf.exists</code> . 其他的可能需要自己实现</strong></p>
+<blockquote>
+<p>参考: https://www.cnblogs.com/liyulong1982/p/6013002.html<br>
+参考: https://baijiahao.baidu.com/s?id=1611754128562106165&amp;wfr=spider&amp;for=pc</p>
+</blockquote>
+<h1 id="缓存cas和aba问题">缓存CAS和ABA问题</h1>
+<h2 id="cas-compare-and-swap-比较并且交换">CAS: compare and swap 比较并且交换</h2>
+<pre><code class="language-go">except := redis.get(&quot;foo&quot;)
+value := &quot;newvalue&quot;
+if except == redis.get(&quot;foo&quot;) {
+    redis.set(&quot;foo&quot;, value) 
+} else {
+    panic(&quot;数据已经发生改变&quot;)
+}
+
+// go atomic操作的cas操作
+atomic.CompareAndSwapInt32(&amp;v,addr,(delta+v))
+</code></pre>
+<p>这里会发现 如果在第二次对比的时候可能已经被另一个线程修改了数据.  会发现自己可能得不到自己理想的结果, 此刻遇到的问题就是常见的: ABA问题</p>
+<h2 id="aba-问题">ABA 问题</h2>
+<p>ABA问题是指在CAS操作中带来的潜在问题<br>
+对于一个要更新的变量A，我们提供一个它的旧值a 和新值 b ，如果变量A的值等于旧值 那么更新成功， 否则失败。如果CAS操作是基于CPU内核的原子操作，那基本是不会出现ABA问题的，<code>但是如果CAS本身操作不满足原子性</code>，则会带来ABA问题，<br>
+比如两个线程</p>
+<ul>
+<li>线程1 查询A的值为a，与旧值a比较，</li>
+<li>线程2 查询A的值为a，与旧值a比较，相等，更新为b值</li>
+<li>线程2 查询A的值为b，与旧值b比较，相等，更新为a值</li>
+<li>线程1 相等，更新B的值为c</li>
+</ul>
+<p>小明在提款机，提取了50元，因为提款机问题，有两个线程，同时把余额从100变为50</p>
+<ul>
+<li>线程1（提款机）：获取当前值100，期望更新为50</li>
+<li>线程2（提款机）：获取当前值100，期望更新为50</li>
+<li>线程1成功执行，线程2某种原因block了，这时，某人给小明汇款50</li>
+<li>线程3（默认）：获取当前值50，期望更新为100<br>
+这时候线程3成功执行，余额变为100，线程2从Block中恢复，获取到的也是100，compare之后，继续更新余额为50！！！此时可以看到，实际余额应该为100（100-50+50），但是实际上变为了50（100-50+50-50）这就是ABA问题带来的成功提交</li>
+</ul>
+<blockquote>
+<p>参考: https://www.zhihu.com/question/23281499</p>
+</blockquote>
+<h1 id="rabbitmq死信队列详解">rabbitmq死信队列详解</h1>
+<p>https://www.jianshu.com/p/986ee5eb78bc<br>
+https://www.cnblogs.com/mfrank/p/11184929.html<br>
+https://blog.csdn.net/zhangcongyi420/article/details/100126666</p>
+
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/cha-xun-mysql-zhong-shi-fou-biao-bei-suo/">
+                  <h3 class="post-title">
+                    查询mysql中是否表被锁
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+              
+                <div id="gitalk-container" data-aos="fade-in"></div>
+              
+
+              
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!--
+<script src="/post-images/prism.js"></script>
+<link rel="stylesheet" href="/post-images/prism.css">
+-->
+<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+// hljs.initHighlightingOnLoad()
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    if (block.className.indexOf('language-go') > -1) {
+	block.className='hljs go'
+    }
+    hljs.highlightBlock(block);
+  });
+});
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+  
+    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+    <script>
+
+      var gitalk = new Gitalk({
+        clientID: 'a526dbb05037d7bf1972',
+        clientSecret: '0238529511fc560513e8b6ed865d3e33c11e3ccb',
+        repo: 'xiusin.github.io',
+        owner: 'xiusin',
+        admin: ['xiusin'],
+        id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+      })
+
+      gitalk.render('gitalk-container')
+
+    </script>
+  
+
+  
+
+
+
+
+  </body>
+</html>

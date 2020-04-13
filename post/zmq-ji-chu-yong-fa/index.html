@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8" >
 
-<title>ZMQ基础用法 | Xiusin</title>
+<title>ZMQ基础用法 | 修心修己</title>
 <meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1572848931199">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1586743156105">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
 
@@ -22,6 +22,7 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
 
 <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
 
@@ -35,8 +36,8 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://xiusin.github.io">
-        <img src="https://xiusin.github.io/images/avatar.png?v=1572848931199" class="site-logo">
-        <h1 class="site-title">Xiusin</h1>
+        <img src="https://xiusin.github.io/images/avatar.png?v=1586743156105" class="site-logo">
+        <h1 class="site-title">修心修己</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
         <div class="line"></div>
@@ -65,6 +66,12 @@
         
           <a href="/post/about" class="site-nav">
             关于
+          </a>
+        
+      
+        
+          <a href="http://github.com/xiusin" class="site-nav" target="_blank">
+            GitHub
           </a>
         
       
@@ -205,7 +212,7 @@ php reply.php
 <p>使用ZeroMQ创建通信比socket简单多了，与stream_socket差不多。但是使用ZeroMQ，<strong>客户端可以先启动而不用管服务端是否已经启动了，等服务端连接上了便会自动传递消息，还可以维持节点之间的心跳</strong>.</p>
 <p>ZeroMQ与socket通信是不一样的。<strong>ZeroMQ是无状态的</strong>，对socket的细节进行了封装，<strong>不能知道彼此的socket连接信息，仅能接收和发送消息；ZeroMQ能够使用一个socket与多个节点进行通信，具有极高的性能</strong>。</p>
 <p>再回头看一下服务端程序，<code>这里采用while循环来处理，亦即同一时刻只能处理一个请求，多个请求排队直到被轮询到，客户端的发送和接收都是同步等待。由于不知道客户端信息，也不能在子进程内处理完成再返回。这里就需要用到ZeroMQ各种范式的组合</code>，比如下面这个</p>
-<figure data-type="image" tabindex="1"><img src="http://blog-bucket.nos-eastchina1.126.net/zmq-model.png" alt="模型"></figure>
+<figure data-type="image" tabindex="1"><img src="http://blog-bucket.nos-eastchina1.126.net/zmq-model.png" alt="模型" loading="lazy"></figure>
 <p>这里使用<code>ROUTER</code>和<code>DEALER</code>作为中介，转发请求，<code>客户端可以异步发送求</code>，不用等待服务端响应。</p>
 <pre><code>&lt;?php
 $pContext = new ZMQContext();
@@ -304,7 +311,7 @@ while (true) {
 <p>Pub/Sub模型，发布者只能发布消息，要求发布消息前，先声明主题（地址），然后发布消息内容；订阅者只能接收消息，先设置订阅主题，然后两次接收，第一次为消息主题，第二次为消息内容。<br>
 Pub/Sub模型通消息为单向流动，可以结合其他模型让订阅者与发布者互动，比如REQ\REP。</p>
 <p>ZeroMQ的Push/Pull模型，生产者负责推送消息，消费者负责拉取消息。初看之下Pull/Push模型与Pub/sub模型类似，但是Pull/Push下生产者产生的消息只会投递给一个消费者，并不会发布给全部消费者，适合用于任务投递分配</p>
-<figure data-type="image" tabindex="2"><img src="http://blog-bucket.nos-eastchina1.126.net/zmq-model-task.png" alt="image"></figure>
+<figure data-type="image" tabindex="2"><img src="http://blog-bucket.nos-eastchina1.126.net/zmq-model-task.png" alt="image" loading="lazy"></figure>
 <p>Push和Pull都既可作为服务端，也可作为客户端。服务端Push.php</p>
 <pre><code>&lt;?php
 $pContext = new ZMQContext();
@@ -328,9 +335,9 @@ $pPull-&gt;connect(&quot;tcp://localhost:5559&quot;);
 var_dump($pPull-&gt;recv());
 </code></pre>
 <p>如果同时启动了两个客户端Pull.php，而只启动一个服务端Push.php，那么一次只会有一个客户端接收到消息。也可以以Pull作为主动监听，Push作为被动连接。可以同时接可以Pub/Sub和Pull/Push来处理任务</p>
-<figure data-type="image" tabindex="3"><img src="http://blog-bucket.nos-eastchina1.126.net/zmq-model-task2.png" alt="image"></figure>
+<figure data-type="image" tabindex="3"><img src="http://blog-bucket.nos-eastchina1.126.net/zmq-model-task2.png" alt="image" loading="lazy"></figure>
 <p>如果是用ZeroMQ传递消息收不到，可以按下面这个流程查问题</p>
-<figure data-type="image" tabindex="4"><img src="http://blog-bucket.nos-eastchina1.126.net/zmq-model-task3.png" alt="image"></figure>
+<figure data-type="image" tabindex="4"><img src="http://blog-bucket.nos-eastchina1.126.net/zmq-model-task3.png" alt="image" loading="lazy"></figure>
 <p>除了客户端可以连接多个服务端，服务端同样可以绑定多个地址。在REQ/REP模型里，让服务端同时使用IPC（进程间通信）来处理本机的连接</p>
 <pre><code>&lt;?php
 $pContext = new ZMQContext();
@@ -376,15 +383,15 @@ var_dump($pServer-&gt;recv());
             
               <div class="tag-container">
                 
-                  <a href="https://xiusin.github.io/tag/3DnFO4FwD" class="tag">
+                  <a href="https://xiusin.github.io/tag/3DnFO4FwD/" class="tag">
                     PHP扩展
                   </a>
                 
-                  <a href="https://xiusin.github.io/tag/RaBOEiWy-D" class="tag">
+                  <a href="https://xiusin.github.io/tag/RaBOEiWy-D/" class="tag">
                     PHP
                   </a>
                 
-                  <a href="https://xiusin.github.io/tag/JENxKgSnvJ" class="tag">
+                  <a href="https://xiusin.github.io/tag/JENxKgSnvJ/" class="tag">
                     消息队列
                   </a>
                 
@@ -393,7 +400,7 @@ var_dump($pServer-&gt;recv());
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://xiusin.github.io/post/php-kuo-zhan-vld-cha-kan-opcodes">
+                <a href="https://xiusin.github.io/post/php-kuo-zhan-vld-cha-kan-opcodes/">
                   <h3 class="post-title">
                     PHP扩展vld查看opcodes
                   </h3>
@@ -415,13 +422,27 @@ var_dump($pServer-&gt;recv());
       </div>
     </div>
 
-    <script src="/post-images/prism.js"></script>
+    <!--
+<script src="/post-images/prism.js"></script>
 <link rel="stylesheet" href="/post-images/prism.css">
+-->
 <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
 
 <script type="application/javascript">
 
 AOS.init();
+
+// hljs.initHighlightingOnLoad()
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    if (block.className.indexOf('language-go') > -1) {
+	block.className='hljs go'
+    }
+    hljs.highlightBlock(block);
+  });
+});
 
 var app = new Vue({
   el: '#app',

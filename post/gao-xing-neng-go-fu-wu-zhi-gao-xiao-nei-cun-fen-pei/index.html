@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8" >
 
-<title>高性能go服务之高效内存分配 | Xiusin</title>
+<title>高性能go服务之高效内存分配 | 修心修己</title>
 <meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1572848931199">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1586743156105">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
 
@@ -22,6 +22,7 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
 
 <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
 
@@ -35,8 +36,8 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://xiusin.github.io">
-        <img src="https://xiusin.github.io/images/avatar.png?v=1572848931199" class="site-logo">
-        <h1 class="site-title">Xiusin</h1>
+        <img src="https://xiusin.github.io/images/avatar.png?v=1586743156105" class="site-logo">
+        <h1 class="site-title">修心修己</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
         <div class="line"></div>
@@ -65,6 +66,12 @@
         
           <a href="/post/about" class="site-nav">
             关于
+          </a>
+        
+      
+        
+          <a href="http://github.com/xiusin" class="site-nav" target="_blank">
+            GitHub
           </a>
         
       
@@ -211,12 +218,12 @@ func makeRetryItem(id ksuid.KSUID, time time.Time) retryItem {
 <p>slice使用很容易会产生低效分配代码。除非编译器知道slice的大小，否则slice(和maps)的底层数组会分配到堆上。我们来看一下一些方法，让slice在栈上分配而不是在堆上。</p>
 <p>Centrifuge集中使用了Mysql。整个程序的效率严重依赖了Mysql driver的效率。在使用<code>pprof</code>去分析了分配行为之后，我们发现Go MySQL driver代码序列化<code>time.Time</code>值的代价十分昂贵。</p>
 <p>分析器显示大部分堆分配都在序列化<code>time.Time</code>的代码中。</p>
-<figure data-type="image" tabindex="1"><img src="https://xiusin.github.io/post-images/assets/1566633010-3ac56abb4eaec7fe583e3f4dbf470c4b" alt=""></figure>
+<figure data-type="image" tabindex="1"><img src="https://xiusin.github.io/post-images/assets/1566633010-3ac56abb4eaec7fe583e3f4dbf470c4b" alt="" loading="lazy"></figure>
 <p>相关代码在调用<code>time.Time</code>的<code>Format</code>这里，它返回了一个<code>string</code>。等会儿，我们不是在说slices么？好吧，根据<a href="https://link.juejin.im/?target=https%3A%2F%2Fblog.golang.org%2Fslices">Go官方文档</a>，一个<code>string</code>其实就是个<strong>只读的bytes类型slices，加上一点额外的语言层面的支持</strong>。大多数分配规则都适用！</p>
 <p>分析数据告诉我们大量分配，即12.38%都产生在运行的这个<code>Format</code>方法里。这个<code>Format</code>做了些什么？</p>
-<figure data-type="image" tabindex="2"><img src="https://xiusin.github.io/post-images/assets/1566633010-cc331e43ab5fe28c66b2f64d3f4ee8f0" alt=""></figure>
+<figure data-type="image" tabindex="2"><img src="https://xiusin.github.io/post-images/assets/1566633010-cc331e43ab5fe28c66b2f64d3f4ee8f0" alt="" loading="lazy"></figure>
 <p>事实证明，有一种更加有效的方式来做同样的事情。虽然<code>Format()</code>方法方便容易，但是我们使用<code>AppendFormat()</code>在分配器上会更轻松。观察源码库，我们注意到所有内部的使用都是<code>AppendFormat()</code>而非<code>Format()</code>，这是一个重要提示，<code>AppendFormat()</code>的性能更高。</p>
-<figure data-type="image" tabindex="3"><img src="https://xiusin.github.io/post-images/assets/1566633010-64688e27442d687a75a6ca37d05a686f" alt=""></figure>
+<figure data-type="image" tabindex="3"><img src="https://xiusin.github.io/post-images/assets/1566633010-64688e27442d687a75a6ca37d05a686f" alt="" loading="lazy"></figure>
 <p>实际上，<code>Format</code>方法仅仅是包装了一下<code>AppendFormat</code>方法：</p>
 <pre><code>func (t Time) Format(layout string) string {
           const bufSize = 64
@@ -235,7 +242,7 @@ func makeRetryItem(id ksuid.KSUID, time time.Time) retryItem {
 </code></pre>
 <p>更重要的是，<code>AppendFormat()</code>给程序员提供更多分配控制。传递slice而不是像<code>Format()</code>自己在内部分配。相比<code>Format</code>，直接使用<code>AppendFormat()</code>可以使用固定大小的slice分配，因此内存分配会在栈空间上面。</p>
 <p>可以看一下我们给Go MySQL driver提的<a href="https://link.juejin.im/?target=https%3A%2F%2Fgithub.com%2Fgo-sql-driver%2Fmysql%2Fpull%2F615">这个PR</a></p>
-<figure data-type="image" tabindex="4"><img src="https://xiusin.github.io/post-images/assets/1566633010-301f80d123ef338aea25c2cab0bfc3cb" alt=""></figure>
+<figure data-type="image" tabindex="4"><img src="https://xiusin.github.io/post-images/assets/1566633010-301f80d123ef338aea25c2cab0bfc3cb" alt="" loading="lazy"></figure>
 <p>首先注意到<code>var a [64]byte</code>是一个大小固定的数组。编译期间我们知道它的大小，以及它的作用域仅在这个方法里，所以我们知道它会被分配在栈空间里。</p>
 <p>但是这个类型不能传给<code>AppendFormat()</code>，该方法只接受<code>[]byte</code>类型。使用<code>a[:0]</code>的表示法将固定大小的数组转换为由此数组所支持的<code>b</code>表示的切片类型。这样可以通过编译器检查，并且会在栈上面分配内存。</p>
 <p>更关键的是，<code>AppendFormat()</code>，这个方法本身通过编译器栈分配检查。而之前版本<code>Format()</code>，编译器不能确定需要分配的内存大小，所以不满足栈上分配规则。</p>
@@ -406,7 +413,7 @@ func main() {
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://xiusin.github.io/post/tu-jie-go-yu-yan-de-gc-suan-fa">
+                <a href="https://xiusin.github.io/post/tu-jie-go-yu-yan-de-gc-suan-fa/">
                   <h3 class="post-title">
                     图解Go语言的gc算法
                   </h3>
@@ -428,13 +435,27 @@ func main() {
       </div>
     </div>
 
-    <script src="/post-images/prism.js"></script>
+    <!--
+<script src="/post-images/prism.js"></script>
 <link rel="stylesheet" href="/post-images/prism.css">
+-->
 <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
 
 <script type="application/javascript">
 
 AOS.init();
+
+// hljs.initHighlightingOnLoad()
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    if (block.className.indexOf('language-go') > -1) {
+	block.className='hljs go'
+    }
+    hljs.highlightBlock(block);
+  });
+});
 
 var app = new Vue({
   el: '#app',

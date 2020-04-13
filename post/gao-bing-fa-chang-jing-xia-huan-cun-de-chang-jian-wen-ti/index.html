@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8" >
 
-<title>高并发场景下缓存的常见问题 | Xiusin</title>
+<title>高并发场景下缓存的常见问题 | 修心修己</title>
 <meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1572848931199">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1586743156105">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
 
@@ -22,6 +22,7 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
 
 <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
 
@@ -35,8 +36,8 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://xiusin.github.io">
-        <img src="https://xiusin.github.io/images/avatar.png?v=1572848931199" class="site-logo">
-        <h1 class="site-title">Xiusin</h1>
+        <img src="https://xiusin.github.io/images/avatar.png?v=1586743156105" class="site-logo">
+        <h1 class="site-title">修心修己</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
         <div class="line"></div>
@@ -65,6 +66,12 @@
         
           <a href="/post/about" class="site-nav">
             关于
+          </a>
+        
+      
+        
+          <a href="http://github.com/xiusin" class="site-nav" target="_blank">
+            GitHub
           </a>
         
       
@@ -104,12 +111,12 @@
               <h1 id="一-缓存一致性问题">一、缓存一致性问题</h1>
 <p>当数据时效性要求很高时，需要保证缓存中的数据与数据库中的保持一致，而且需要保证缓存节点和副本中的数据也保持一致，不能出现差异现象。</p>
 <p>这就比较依赖缓存的过期和更新策略。一般会在数据发生更改的时，主动更新缓存中的数据或者移除对应的缓存。</p>
-<figure data-type="image" tabindex="1"><img src="https://xiusin.github.io/post-images/media/1-1.jpeg" alt="1"></figure>
+<figure data-type="image" tabindex="1"><img src="https://xiusin.github.io/post-images/media/1-1.jpeg" alt="1" loading="lazy"></figure>
 <h1 id="二-缓存并发问题">二、缓存并发问题</h1>
 <p>缓存过期后将尝试从后端数据库获取数据，这是一个看似合理的流程。但是，在高并发场景下，有可能多个请求并发的去从数据库获取数据，对后端数据库造成极大的冲击，甚至导致 “雪崩”现象。</p>
 <p>此外，当某个缓存key在被更新时，同时也可能被大量请求在获取，这也会导致一致性的问题。那如何避免类似问题呢？</p>
 <p>我们会想到类似“锁”的机制，在缓存更新或者过期的情况下，先尝试获取到锁，当更新或者从数据库获取完成后再释放锁，其他的请求只需要牺牲一定的等待时间，即可直接从缓存中继续获取数据。</p>
-<figure data-type="image" tabindex="2"><img src="https://xiusin.github.io/post-images/media/2-1.jpeg" alt="2"></figure>
+<figure data-type="image" tabindex="2"><img src="https://xiusin.github.io/post-images/media/2-1.jpeg" alt="2" loading="lazy"></figure>
 <h1 id="三-缓存穿透问题">三、缓存穿透问题</h1>
 <p>缓存穿透在有些地方也称为“击穿”。很多朋友对缓存穿透的理解是：由于缓存故障或者缓存过期导致大量请求穿透到后端数据库服务器，从而对数据库造成巨大冲击。</p>
 <p>这其实是一种误解。真正的缓存穿透应该是这样的：</p>
@@ -120,7 +127,7 @@
 <p>同时，也需要保证缓存数据的时效性。这种方式实现起来成本较低，比较适合命中不高，但可能被频繁更新的数据。</p>
 <h2 id="2-单独过滤处理">2、单独过滤处理</h2>
 <p>对所有可能对应数据为空的key进行统一的存放，并在请求前做拦截，这样避免请求穿透到后端数据库。这种方式实现起来相对复杂，比较适合命中不高，但是更新不频繁的数据。</p>
-<figure data-type="image" tabindex="3"><img src="https://xiusin.github.io/post-images/media/3.jpeg" alt="3"></figure>
+<figure data-type="image" tabindex="3"><img src="https://xiusin.github.io/post-images/media/3.jpeg" alt="3" loading="lazy"></figure>
 <h1 id="四-缓存颠簸问题">四、缓存颠簸问题</h1>
 <p>缓存的颠簸问题，有些地方可能被成为“缓存抖动”，可以看做是一种比“雪崩”更轻微的故障，但是也会在一段时间内对系统造成冲击和性能影响。一般是由于缓存节点故障导致。业内推荐的做法是通过一致性Hash算法来解决。</p>
 <h1 id="五-缓存的雪崩现象">五、缓存的雪崩现象</h1>
@@ -129,11 +136,11 @@
 <p>还有一种情况，例如某个时间点内，系统预加载的缓存周期性集中失效了，也可能会导致雪崩。为了避免这种周期性失效，可以通过设置不同的过期时间，来错开缓存过期，从而避免缓存集中失效。</p>
 <p>从应用架构角度，我们可以通过限流、降级、熔断等手段来降低影响，也可以通过多级缓存来避免这种灾难。</p>
 <p>此外，从整个研发体系流程的角度，应该加强压力测试，尽量模拟真实场景，尽早的暴露问题从而防范。</p>
-<figure data-type="image" tabindex="4"><img src="https://xiusin.github.io/post-images/media/4.jpeg" alt="4"></figure>
+<figure data-type="image" tabindex="4"><img src="https://xiusin.github.io/post-images/media/4.jpeg" alt="4" loading="lazy"></figure>
 <h1 id="六-缓存无底洞现象">六、缓存无底洞现象</h1>
 <p>该问题由 facebook 的工作人员提出的， facebook 在 2010 年左右，memcached 节点就已经达3000 个，缓存数千 G 内容。</p>
 <p>他们发现了一个问题—memcached 连接频率，效率下降了，于是加 memcached 节点，添加了后，发现因为连接频率导致的问题，仍然存在，并没有好转，称之为”无底洞现象”。<br>
-<img src="https://xiusin.github.io/post-images/media/5.jpeg" alt="5"></p>
+<img src="https://xiusin.github.io/post-images/media/5.jpeg" alt="5" loading="lazy"></p>
 <p>目前主流的数据库、缓存、Nosql、搜索中间件等技术栈中，都支持“分片”技术，来满足“高性能、高并发、高可用、可扩展”等要求。</p>
 <p>有些是在client端通过Hash取模（或一致性Hash）将值映射到不同的实例上，有些是在client端通过范围取值的方式映射的。当然，也有些是在服务端进行的。</p>
 <p>但是，每一次操作都可能需要和不同节点进行网络通信来完成，实例节点越多，则开销会越大，对性能影响就越大。</p>
@@ -152,7 +159,7 @@
             
               <div class="tag-container">
                 
-                  <a href="https://xiusin.github.io/tag/ozwp3v4TV" class="tag">
+                  <a href="https://xiusin.github.io/tag/ozwp3v4TV/" class="tag">
                     缓存
                   </a>
                 
@@ -161,7 +168,7 @@
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://xiusin.github.io/post/huan-cun-xue-beng-huan-cun-chuan-tou-huan-cun-yu-re-huan-cun-geng-xin-huan-cun-jiang-ji-deng-wen-ti">
+                <a href="https://xiusin.github.io/post/huan-cun-xue-beng-huan-cun-chuan-tou-huan-cun-yu-re-huan-cun-geng-xin-huan-cun-jiang-ji-deng-wen-ti/">
                   <h3 class="post-title">
                     缓存雪崩、缓存穿透、缓存预热、缓存更新、缓存降级等问题
                   </h3>
@@ -183,13 +190,27 @@
       </div>
     </div>
 
-    <script src="/post-images/prism.js"></script>
+    <!--
+<script src="/post-images/prism.js"></script>
 <link rel="stylesheet" href="/post-images/prism.css">
+-->
 <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
 
 <script type="application/javascript">
 
 AOS.init();
+
+// hljs.initHighlightingOnLoad()
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    if (block.className.indexOf('language-go') > -1) {
+	block.className='hljs go'
+    }
+    hljs.highlightBlock(block);
+  });
+});
 
 var app = new Vue({
   el: '#app',

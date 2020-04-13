@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8" >
 
-<title>设计模式七大原则 | Xiusin</title>
+<title>设计模式七大原则 | 修心修己</title>
 <meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1572848931199">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1586743156105">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
 
@@ -22,6 +22,7 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
 
 <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
 
@@ -35,8 +36,8 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://xiusin.github.io">
-        <img src="https://xiusin.github.io/images/avatar.png?v=1572848931199" class="site-logo">
-        <h1 class="site-title">Xiusin</h1>
+        <img src="https://xiusin.github.io/images/avatar.png?v=1586743156105" class="site-logo">
+        <h1 class="site-title">修心修己</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
         <div class="line"></div>
@@ -65,6 +66,12 @@
         
           <a href="/post/about" class="site-nav">
             关于
+          </a>
+        
+      
+        
+          <a href="http://github.com/xiusin" class="site-nav" target="_blank">
+            GitHub
           </a>
         
       
@@ -159,7 +166,7 @@
 <li>核心<br>
 一个软件实体应当对<code>拓展开放</code>，对<code>修改关闭</code>。即：软件实体应尽量在不修改原有代码的情况下进行拓展。</li>
 </ul>
-<figure data-type="image" tabindex="1"><img src="https://images2017.cnblogs.com/blog/1173617/201709/1173617-20170928120255778-182350730.png" alt=""></figure>
+<figure data-type="image" tabindex="1"><img src="https://images2017.cnblogs.com/blog/1173617/201709/1173617-20170928120255778-182350730.png" alt="" loading="lazy"></figure>
 <blockquote>
 <p>对Operation类的修改关闭，对Operation类的继承（拓展）开放。</p>
 </blockquote>
@@ -346,7 +353,7 @@ func(m MainBoard) setCPU(cpu CPU) {
 <blockquote>
 <p>但是，接口也不能无限的小，那样会产生大量的接口，造成设计过于负责。</p>
 </blockquote>
-<h1 id="迪米特法则-又称最少知道原则demeter-principle">迪米特法则 又称最少知道原则（Demeter Principle）#</h1>
+<h1 id="迪米特法则-最少知道原则demeter-principle">迪米特法则, 最少知道原则（Demeter Principle）</h1>
 <ul>
 <li>核心<br>
 一个软件实体应当尽可能少地与其他实体发生作用。（无熟人难办事）. 降低类间的耦合性，如果两个类不必彼此通信，那么，这两个类就不要发生直接的作用。</li>
@@ -414,12 +421,12 @@ func (p *Phone) seeMovie(m Movie) {
 汽车分类管理程序:<br>
 汽车按“动力源”划分可分为汽油汽车、电动汽车等；按“颜色”划分可分为白色汽车、黑色汽车和红色汽车等。如果同时考虑这两种分类，其组合就很多。图 1 所示是用继淨：关系实现的汽车分类的类图。</li>
 </ul>
-<figure data-type="image" tabindex="2"><img src="https://xiusin.github.io/post-images/1572848826854.gif" alt=""></figure>
+<figure data-type="image" tabindex="2"><img src="https://xiusin.github.io/post-images/1572848826854.gif" alt="" loading="lazy"></figure>
 <p>从图 1 可以看出用继承关系实现会产生很多子类，而且增加新的“动力源”或者增加新的“颜色”都要修改源代码，这违背了开闭原则，显然不可取。但如果改用组合关系实现就能很好地解决以上问题，其类图如图 2 所示。</p>
-<figure data-type="image" tabindex="3"><img src="https://xiusin.github.io/post-images/1572848848798.gif" alt=""></figure>
+<figure data-type="image" tabindex="3"><img src="https://xiusin.github.io/post-images/1572848848798.gif" alt="" loading="lazy"></figure>
 <p>这 7 种设计原则是软件设计模式必须尽量遵循的原则，各种原则要求的侧重点不同。其中，开闭原则是总纲，它告诉我们要对扩展开放，对修改关闭；里氏替换原则告诉我们不要破坏继承体系；依赖倒置原则告诉我们要面向接口编程；单一职责原则告诉我们实现类要职责单一；接口隔离原则告诉我们在设计接口的时候要精简单一；迪米特法则告诉我们要降低耦合度；合成复用原则告诉我们要优先使用组合或者聚合关系复用，少用继承关系复用。</p>
 <h1 id="设计模式之间的关系">设计模式之间的关系</h1>
-<figure data-type="image" tabindex="4"><img src="https://xiusin.github.io/post-images/1572848892911.jpg" alt=""></figure>
+<figure data-type="image" tabindex="4"><img src="https://xiusin.github.io/post-images/1572848892911.jpg" alt="" loading="lazy"></figure>
 <h1 id="参考">参考</h1>
 <p><a href="https://www.cnblogs.com/guxuanqing/p/11185207.html">设计模式的六大原则</a><br>
 <a href="https://www.jianshu.com/p/1423193f5598">设计模式六大原则</a><br>
@@ -430,9 +437,9 @@ func (p *Phone) seeMovie(m Movie) {
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://xiusin.github.io/post/cha-xun-mysql-zhong-shi-fou-biao-bei-suo">
+                <a href="https://xiusin.github.io/post/guan-yu-mysql/">
                   <h3 class="post-title">
-                    查询mysql中是否表被锁
+                    性能记录
                   </h3>
                 </a>
               </div>
@@ -452,13 +459,27 @@ func (p *Phone) seeMovie(m Movie) {
       </div>
     </div>
 
-    <script src="/post-images/prism.js"></script>
+    <!--
+<script src="/post-images/prism.js"></script>
 <link rel="stylesheet" href="/post-images/prism.css">
+-->
 <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
 
 <script type="application/javascript">
 
 AOS.init();
+
+// hljs.initHighlightingOnLoad()
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    if (block.className.indexOf('language-go') > -1) {
+	block.className='hljs go'
+    }
+    hljs.highlightBlock(block);
+  });
+});
 
 var app = new Vue({
   el: '#app',

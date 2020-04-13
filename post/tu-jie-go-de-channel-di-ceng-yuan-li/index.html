@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8" >
 
-<title>图解Go的channel底层原理 | Xiusin</title>
+<title>图解Go的channel底层原理 | 修心修己</title>
 <meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1572848931199">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1586743156105">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
 
@@ -22,6 +22,7 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
 
 <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
 
@@ -35,8 +36,8 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://xiusin.github.io">
-        <img src="https://xiusin.github.io/images/avatar.png?v=1572848931199" class="site-logo">
-        <h1 class="site-title">Xiusin</h1>
+        <img src="https://xiusin.github.io/images/avatar.png?v=1586743156105" class="site-logo">
+        <h1 class="site-title">修心修己</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
         <div class="line"></div>
@@ -65,6 +66,12 @@
         
           <a href="/post/about" class="site-nav">
             关于
+          </a>
+        
+      
+        
+          <a href="http://github.com/xiusin" class="site-nav" target="_blank">
+            GitHub
           </a>
         
       
@@ -104,7 +111,7 @@
               <h1 id="图解go的channel底层原理">[图解Go的channel底层原理]</h1>
 <p>废话不多说，直奔主题。</p>
 <h2 id="channel的整体结构图">channel的整体结构图</h2>
-<figure data-type="image" tabindex="1"><img src="https://xiusin.github.io/post-images/assets/1555738911-4b76dbd582a57882b3c3782f524b3c82.png" alt=""></figure>
+<figure data-type="image" tabindex="1"><img src="https://xiusin.github.io/post-images/assets/1555738911-4b76dbd582a57882b3c3782f524b3c82.png" alt="" loading="lazy"></figure>
 <p>简单说明：</p>
 <ul>
 <li><code>buf</code>是有缓冲的channel所特有的结构，用来存储缓存数据。是个循环链表</li>
@@ -141,7 +148,7 @@
 <pre><code class="language-go">ch := make(chan int, 3)
 
 </code></pre>
-<figure data-type="image" tabindex="2"><img src="https://xiusin.github.io/post-images/assets/1555738911-f8d1c110bf72e732034496af01743357.png" alt=""></figure>
+<figure data-type="image" tabindex="2"><img src="https://xiusin.github.io/post-images/assets/1555738911-f8d1c110bf72e732034496af01743357.png" alt="" loading="lazy"></figure>
 <p>创建channel实际上就是在内存中实例化了一个<code>hchan</code>的结构体，并返回一个ch指针，我们使用过程中channel在函数之间的传递都是用的这个指针，这就是为什么函数传递中无需使用channel的指针，而直接用channel就行了，因为channel本身就是一个指针。</p>
 <h2 id="channel中发送sendch-xxx和recv-ch接收">channel中发送send(ch &lt;- xxx)和recv(&lt;- ch)接收</h2>
 <p>先考虑一个问题，如果你想让goroutine以先进先出(FIFO)的方式进入一个结构体中，你会怎么操作？ 加锁！对的！channel就是用了一个锁。hchan本身包含一个互斥锁<code>mutex</code></p>
@@ -150,9 +157,9 @@
 <pre><code class="language-go">ch := make(chan int, 3)
 
 </code></pre>
-<figure data-type="image" tabindex="3"><img src="https://xiusin.github.io/post-images/assets/1555738911-d076034a77086ba1e4ce98ed8f6690d1.png" alt=""></figure>
+<figure data-type="image" tabindex="3"><img src="https://xiusin.github.io/post-images/assets/1555738911-d076034a77086ba1e4ce98ed8f6690d1.png" alt="" loading="lazy"></figure>
 <p>当使用<code>send (ch &lt;- xx)</code>或者<code>recv ( &lt;-ch)</code>的时候，首先要锁住<code>hchan</code>这个结构体。</p>
-<figure data-type="image" tabindex="4"><img src="https://xiusin.github.io/post-images/assets/1555738911-eec2713b4b7fbb58de190dda477fa0af.png" alt=""></figure>
+<figure data-type="image" tabindex="4"><img src="https://xiusin.github.io/post-images/assets/1555738911-eec2713b4b7fbb58de190dda477fa0af.png" alt="" loading="lazy"></figure>
 <p>然后开始<code>send (ch &lt;- xx)</code>数据。 一</p>
 <pre><code class="language-go">ch &lt;- 1
 
@@ -165,9 +172,9 @@
 <pre><code class="language-go">ch &lt;- 1
 
 </code></pre>
-<p>这时候满了，队列塞不进去了 动态图表示为： <img src="https://xiusin.github.io/post-images/assets/1555738911-48eea9b38f95b384ab70255278349f9e.gif" alt=""></p>
+<p>这时候满了，队列塞不进去了 动态图表示为： <img src="https://xiusin.github.io/post-images/assets/1555738911-48eea9b38f95b384ab70255278349f9e.gif" alt="" loading="lazy"></p>
 <p>然后是取<code>recv ( &lt;-ch)</code>的过程，是个逆向的操作，也是需要加锁。</p>
-<figure data-type="image" tabindex="5"><img src="https://xiusin.github.io/post-images/assets/1555738911-ef0476ba1ab2b06af69b64bc02094e53.png" alt=""></figure>
+<figure data-type="image" tabindex="5"><img src="https://xiusin.github.io/post-images/assets/1555738911-ef0476ba1ab2b06af69b64bc02094e53.png" alt="" loading="lazy"></figure>
 <p>然后开始<code>recv (&lt;-ch)</code>数据。 一</p>
 <pre><code>&lt;-ch
 
@@ -180,7 +187,7 @@
 <pre><code>&lt;-ch
 
 </code></pre>
-<p>图为： <img src="https://xiusin.github.io/post-images/assets/1555738911-40fe95cd4d1c610e706dfae555a2523b.gif" alt=""></p>
+<p>图为： <img src="https://xiusin.github.io/post-images/assets/1555738911-40fe95cd4d1c610e706dfae555a2523b.gif" alt="" loading="lazy"></p>
 <p>注意以上两幅图中<code>buf</code>和<code>recvx</code>以及<code>sendx</code>的变化，<code>recvx</code>和<code>sendx</code>是根据循环链表<code>buf</code>的变动而改变的。 至于为什么channel会使用循环链表作为缓存结构，我个人认为是在缓存列表在动态的<code>send</code>和<code>recv</code>过程中，定位当前<code>send</code>或者<code>recvx</code>的位置、选择<code>send</code>的和<code>recvx</code>的位置比较方便吧，只要顺着链表顺序一直旋转操作就好。</p>
 <p>缓存中按链表顺序存放，取数据的时候按链表顺序读取，符合FIFO的原则。</p>
 <h3 id="sendrecv的细化操作">send/recv的细化操作</h3>
@@ -194,7 +201,7 @@
 <p>每一步的操作总结为动态图为：(https://xiusin.github.io/post-images/assets/1555738911-8ae67a03066bd8142b05c2116d63b6db.gif)</p>
 <p>或者为：(https://xiusin.github.io/post-images/assets/1555738911-4ea9391d740298f117c86413bdfa0ef3.gif)</p>
 <p>所以不难看出，Go中那句经典的话：<code>Do not communicate by sharing memory; instead, share memory by communicating.</code>的具体实现就是利用channel把数据从一端copy到了另一端！ 还真是符合<code>channel</code>的英文含义：</p>
-<figure data-type="image" tabindex="6"><img src="https://xiusin.github.io/post-images/assets/1555738911-8a27b8e3ca85115132ed0b1d267bef15.gif" alt=""></figure>
+<figure data-type="image" tabindex="6"><img src="https://xiusin.github.io/post-images/assets/1555738911-8a27b8e3ca85115132ed0b1d267bef15.gif" alt="" loading="lazy"></figure>
 <h3 id="当channel缓存满了之后会发生什么这其中的原理是怎样的">当channel缓存满了之后会发生什么？这其中的原理是怎样的？</h3>
 <p>使用的时候，我们都知道，当channel缓存满了，或者没有缓存的时候，我们继续send(ch &lt;- xxx)或者recv(&lt;- ch)会阻塞当前goroutine，但是，是如何实现的呢？</p>
 <p>我们知道，Go的goroutine是用户态的线程(<code>user-space threads</code>)，用户态的线程是需要自己去调度的，Go有运行时的scheduler去帮我们完成调度这件事情。关于Go的调度模型GMP模型我在此不做赘述，如果不了解，可以看我另一篇文章(<a href="https://i6448038.github.io/2017/12/04/golang-concurrency-principle/">Go调度原理</a>)</p>
@@ -208,29 +215,29 @@ ch &lt;- 1
 ch &lt;- 1
 
 </code></pre>
-<figure data-type="image" tabindex="7"><img src="https://xiusin.github.io/post-images/assets/1555738911-1ffd73d0340e9782bc660fa1fcb05ad7.png" alt=""></figure>
-<figure data-type="image" tabindex="8"><img src="https://xiusin.github.io/post-images/assets/1555738911-100991285c32f84fb72c19f727537bbf.png" alt=""></figure>
+<figure data-type="image" tabindex="7"><img src="https://xiusin.github.io/post-images/assets/1555738911-1ffd73d0340e9782bc660fa1fcb05ad7.png" alt="" loading="lazy"></figure>
+<figure data-type="image" tabindex="8"><img src="https://xiusin.github.io/post-images/assets/1555738911-100991285c32f84fb72c19f727537bbf.png" alt="" loading="lazy"></figure>
 <p>这个时候G1正在正常运行,当再次进行send操作(ch&lt;-1)的时候，会主动调用Go的调度器,让G1等待，并从让出M，让其他G去使用</p>
-<figure data-type="image" tabindex="9"><img src="https://xiusin.github.io/post-images/assets/1555738911-af79ad99e0c3d9aeb2f715ace84d399e.png" alt=""></figure>
+<figure data-type="image" tabindex="9"><img src="https://xiusin.github.io/post-images/assets/1555738911-af79ad99e0c3d9aeb2f715ace84d399e.png" alt="" loading="lazy"></figure>
 <p>同时G1也会被抽象成含有G1指针和send元素的<code>sudog</code>结构体保存到hchan的<code>sendq</code>中等待被唤醒。</p>
-<figure data-type="image" tabindex="10"><img src="https://xiusin.github.io/post-images/assets/1555738911-5df3d15aa472a25e88ed75d1ad7b7efc.gif" alt=""></figure>
+<figure data-type="image" tabindex="10"><img src="https://xiusin.github.io/post-images/assets/1555738911-5df3d15aa472a25e88ed75d1ad7b7efc.gif" alt="" loading="lazy"></figure>
 <p>那么，G1什么时候被唤醒呢？这个时候G2隆重登场。</p>
-<figure data-type="image" tabindex="11"><img src="https://xiusin.github.io/post-images/assets/1555738911-e19152eca168666c7c6d47eb2eec483f.png" alt=""></figure>
+<figure data-type="image" tabindex="11"><img src="https://xiusin.github.io/post-images/assets/1555738911-e19152eca168666c7c6d47eb2eec483f.png" alt="" loading="lazy"></figure>
 <p>G2执行了recv操作<code>p := &lt;-ch</code>，于是会发生以下的操作：</p>
-<figure data-type="image" tabindex="12"><img src="https://xiusin.github.io/post-images/assets/1555738911-9df62b63fc080a50db8ba32e6e2afbbf.gif" alt=""></figure>
+<figure data-type="image" tabindex="12"><img src="https://xiusin.github.io/post-images/assets/1555738911-9df62b63fc080a50db8ba32e6e2afbbf.gif" alt="" loading="lazy"></figure>
 <p>G2从缓存队列中取出数据，channel会将等待队列中的G1推出，将G1当时send的数据推到缓存中，然后调用Go的scheduler，唤醒G1，并把G1放到可运行的Goroutine队列中。</p>
-<figure data-type="image" tabindex="13"><img src="assets/1555738911-e309feedd1e04ba7390d5a56e77b5cbc.gif" alt=""></figure>
+<figure data-type="image" tabindex="13"><img src="assets/1555738911-e309feedd1e04ba7390d5a56e77b5cbc.gif" alt="" loading="lazy"></figure>
 <h3 id="假如是先进行执行recv操作的g2会怎么样">假如是先进行执行recv操作的G2会怎么样？</h3>
 <p>你可能会顺着以上的思路反推。首先：</p>
-<figure data-type="image" tabindex="14"><img src="https://xiusin.github.io/post-images/assets/1555738911-b0dcb5b23c6642cd449b27375f6f7043.png" alt=""></figure>
+<figure data-type="image" tabindex="14"><img src="https://xiusin.github.io/post-images/assets/1555738911-b0dcb5b23c6642cd449b27375f6f7043.png" alt="" loading="lazy"></figure>
 <p>这个时候G2会主动调用Go的调度器,让G2等待，并从让出M，让其他G去使用。 G2还会被抽象成含有G2指针和recv空元素的<code>sudog</code>结构体保存到hchan的<code>recvq</code>中等待被唤醒</p>
-<figure data-type="image" tabindex="15"><img src="https://xiusin.github.io/post-images/assets/1555738911-91c7983c7b6a04d4a31dc3ba0e51b5b5.gif" alt=""></figure>
+<figure data-type="image" tabindex="15"><img src="https://xiusin.github.io/post-images/assets/1555738911-91c7983c7b6a04d4a31dc3ba0e51b5b5.gif" alt="" loading="lazy"></figure>
 <p>此时恰好有个goroutine G1开始向channel中推送数据 <code>ch &lt;- 1</code>。 此时，非常有意思的事情发生了：</p>
-<figure data-type="image" tabindex="16"><img src="https://xiusin.github.io/post-images/assets/1555738911-258bc00c8d359576050e3db5f3319be3.gif" alt=""></figure>
+<figure data-type="image" tabindex="16"><img src="https://xiusin.github.io/post-images/assets/1555738911-258bc00c8d359576050e3db5f3319be3.gif" alt="" loading="lazy"></figure>
 <p>G1并没有锁住channel，然后将数据放到缓存中，而是直接把数据从G1直接copy到了G2的栈中。 这种方式非常的赞！在唤醒过程中，G2无需再获得channel的锁，然后从缓存中取数据。减少了内存的copy，提高了效率。</p>
-<p>之后的事情显而易见： <img src="https://xiusin.github.io/post-images/assets/1555738911-b4b67518cfc5d1d454236aabc4b281ad.gif" alt=""></p>
+<p>之后的事情显而易见： <img src="https://xiusin.github.io/post-images/assets/1555738911-b4b67518cfc5d1d454236aabc4b281ad.gif" alt="" loading="lazy"></p>
 <h2 id="更多精彩内容请关注我的微信公众号-互联网技术窝-或者加微信共同探讨交流">更多精彩内容，请关注我的微信公众号 <code>互联网技术窝</code> 或者加微信共同探讨交流：</h2>
-<figure data-type="image" tabindex="17"><img src="https://xiusin.github.io/post-images/assets/1555738911-4aaaec1de2b7cc401f99a12e9c56f6d2.jpg" alt=""></figure>
+<figure data-type="image" tabindex="17"><img src="https://xiusin.github.io/post-images/assets/1555738911-4aaaec1de2b7cc401f99a12e9c56f6d2.jpg" alt="" loading="lazy"></figure>
 <p>参考文献：</p>
 <ul>
 <li><a href="https://www.youtube.com/watch?v=KBZlN0izeiY">https://www.youtube.com/watch?v=KBZlN0izeiY</a></li>
@@ -243,11 +250,11 @@ ch &lt;- 1
             
               <div class="tag-container">
                 
-                  <a href="https://xiusin.github.io/tag/ymPPSYZBt" class="tag">
+                  <a href="https://xiusin.github.io/tag/ymPPSYZBt/" class="tag">
                     channel
                   </a>
                 
-                  <a href="https://xiusin.github.io/tag/8QTdjVvR4" class="tag">
+                  <a href="https://xiusin.github.io/tag/8QTdjVvR4/" class="tag">
                     golang
                   </a>
                 
@@ -256,7 +263,7 @@ ch &lt;- 1
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://xiusin.github.io/post/gin-lu-you-cha-zhao-zhi-radixtree-zhuan-zai">
+                <a href="https://xiusin.github.io/post/gin-lu-you-cha-zhao-zhi-radixtree-zhuan-zai/">
                   <h3 class="post-title">
                     gin路由查找之RadixTree [转载]
                   </h3>
@@ -278,13 +285,27 @@ ch &lt;- 1
       </div>
     </div>
 
-    <script src="/post-images/prism.js"></script>
+    <!--
+<script src="/post-images/prism.js"></script>
 <link rel="stylesheet" href="/post-images/prism.css">
+-->
 <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
 
 <script type="application/javascript">
 
 AOS.init();
+
+// hljs.initHighlightingOnLoad()
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    if (block.className.indexOf('language-go') > -1) {
+	block.className='hljs go'
+    }
+    hljs.highlightBlock(block);
+  });
+});
 
 var app = new Vue({
   el: '#app',

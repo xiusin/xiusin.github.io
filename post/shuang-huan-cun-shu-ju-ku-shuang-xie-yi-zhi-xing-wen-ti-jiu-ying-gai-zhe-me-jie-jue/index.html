@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8" >
 
-<title> 双缓存数据库双写一致性问题 | Xiusin</title>
+<title> 双缓存数据库双写一致性问题 | 修心修己</title>
 <meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1572848931199">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1586743156105">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
 
@@ -22,6 +22,7 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
 
 <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
 
@@ -35,8 +36,8 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://xiusin.github.io">
-        <img src="https://xiusin.github.io/images/avatar.png?v=1572848931199" class="site-logo">
-        <h1 class="site-title">Xiusin</h1>
+        <img src="https://xiusin.github.io/images/avatar.png?v=1586743156105" class="site-logo">
+        <h1 class="site-title">修心修己</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
         <div class="line"></div>
@@ -65,6 +66,12 @@
         
           <a href="/post/about" class="site-nav">
             关于
+          </a>
+        
+      
+        
+          <a href="http://github.com/xiusin" class="site-nav" target="_blank">
+            GitHub
           </a>
         
       
@@ -116,9 +123,9 @@
 <li>如何保证数据库与缓存的一致性</li>
 </ol>
 <p><strong>一、假设先写数据库，再淘汰缓存</strong></p>
-<figure data-type="image" tabindex="1"><img src="https://xiusin.github.io/post-images/assets/1568961361-9654e686f17a5827715cc6e94e39d394" alt="双缓存数据库双写一致性问题就应该这么解决"></figure>
+<figure data-type="image" tabindex="1"><img src="https://xiusin.github.io/post-images/assets/1568961361-9654e686f17a5827715cc6e94e39d394" alt="双缓存数据库双写一致性问题就应该这么解决" loading="lazy"></figure>
 <p>假设先写数据库，再淘汰缓存：第一步写数据库操作成功，第二步淘汰缓存失败，则会出现DB中是新数据，Cache中是旧数据，数据不一致【如上图：db中是新数据，cache中是旧数据】。</p>
-<figure data-type="image" tabindex="2"><img src="https://xiusin.github.io/post-images/assets/1568961361-e869abfb0bacc753d2e9b2936029824b" alt="双缓存数据库双写一致性问题就应该这么解决"></figure>
+<figure data-type="image" tabindex="2"><img src="https://xiusin.github.io/post-images/assets/1568961361-e869abfb0bacc753d2e9b2936029824b" alt="双缓存数据库双写一致性问题就应该这么解决" loading="lazy"></figure>
 <p><strong>二、假设先淘汰缓存，再写数据库：</strong></p>
 <p>第一步淘汰缓存成功，第二步写数据库失败，则只会引发一次Cache miss【如上图：cache中无数据，db中是旧数据】。</p>
 <p>结论：先淘汰缓存，再写数据库。</p>
@@ -131,7 +138,7 @@
 <p>（2）如果数据未命中miss则读db</p>
 <p>（3）将db中读取出来的数据入缓存</p>
 <p>什么情况下可能出现缓存和数据库中数据不一致呢？</p>
-<figure data-type="image" tabindex="3"><img src="https://xiusin.github.io/post-images/assets/1568961361-089929f9fbbdfa9a8329d7c736c92bd6" alt="双缓存数据库双写一致性问题就应该这么解决"></figure>
+<figure data-type="image" tabindex="3"><img src="https://xiusin.github.io/post-images/assets/1568961361-089929f9fbbdfa9a8329d7c736c92bd6" alt="双缓存数据库双写一致性问题就应该这么解决" loading="lazy"></figure>
 <p>在分布式环境下，数据的读写都是并发的，上游有多个应用，通过一个服务的多个部署（为了保证可用性，一定是部署多份的），对同一个数据进行读写，在数据库层面并发的读写并不能保证完成顺序，也就是说后发出的读请求很可能先完成（读出脏数据）：</p>
 <p>（a）发生了写请求A，A的第一步淘汰了cache（如上图中的1）</p>
 <p>（b）A的第二步写数据库，发出修改请求（如上图中的2）</p>
@@ -140,7 +147,7 @@
 <p>即在数据库层面，后发出的请求4比先发出的请求2先完成了，读出了脏数据，脏数据又入了缓存，缓存与数据库中的数据不一致出现了</p>
 <p>能否做到先发出的请求一定先执行完成呢？常见的思路是“串行化”，今天将和大家一起探讨“串行化”这个点。</p>
 <p>先一起细看一下，在一个服务中，并发的多个读写SQL一般是怎么执行的</p>
-<figure data-type="image" tabindex="4"><img src="https://xiusin.github.io/post-images/assets/1568961361-4bcf06e1280bf4f7b9164f7d7fd0cc0b" alt="双缓存数据库双写一致性问题就应该这么解决"></figure>
+<figure data-type="image" tabindex="4"><img src="https://xiusin.github.io/post-images/assets/1568961361-4bcf06e1280bf4f7b9164f7d7fd0cc0b" alt="双缓存数据库双写一致性问题就应该这么解决" loading="lazy"></figure>
 <p>上图是一个service服务的上下游及服务内部详细展开，细节如下：</p>
 <ol>
 <li>service的上游是多个业务应用，上游发起请求对同一个数据并发的进行读写操作，上例中并发进行了一个uid=1的余额修改（写）操作与uid=1的余额查询（读）操作</li>
@@ -175,7 +182,7 @@
 <p>这样的话，就能够保证同一个数据例如uid在数据库层面的执行一定是串行的</p>
 <p>稍等稍等，服务可是部署了很多份的，上述方案只能保证同一个数据在一个服务上的访问，在DB层面的执行是串行化的，实际上服务是分布式部署的，在全局范围内的访问仍是并行的，怎么解决呢？能不能做到同一个数据的访问一定落到同一个服务呢？</p>
 <p>上面分析了服务层service的上下游及内部结构，再一起看一下应用层上下游及内部结构</p>
-<figure data-type="image" tabindex="5"><img src="https://xiusin.github.io/post-images/assets/1568961361-530d7d099df58279ed442efa2f9d8f46" alt="双缓存数据库双写一致性问题就应该这么解决"></figure>
+<figure data-type="image" tabindex="5"><img src="https://xiusin.github.io/post-images/assets/1568961361-530d7d099df58279ed442efa2f9d8f46" alt="双缓存数据库双写一致性问题就应该这么解决" loading="lazy"></figure>
 <p>上图是一个业务应用的上下游及服务内部详细展开，细节如下：</p>
 <p>（1）业务应用的上游不确定是啥，可能是直接是http请求，可能也是一个服务的上游调用</p>
 <p>（2）业务应用的下游是多个服务service</p>
@@ -209,7 +216,7 @@
             
               <div class="tag-container">
                 
-                  <a href="https://xiusin.github.io/tag/X9cuCTbYm" class="tag">
+                  <a href="https://xiusin.github.io/tag/X9cuCTbYm/" class="tag">
                     缓存一致性
                   </a>
                 
@@ -218,7 +225,7 @@
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://xiusin.github.io/post/yi-wen-gao-dong-mysql-de-join-liao-yi-liao-miao-sha-jia-gou-she-ji">
+                <a href="https://xiusin.github.io/post/yi-wen-gao-dong-mysql-de-join-liao-yi-liao-miao-sha-jia-gou-she-ji/">
                   <h3 class="post-title">
                     一文搞懂MySQL的Join-聊一聊秒杀架构设计
                   </h3>
@@ -240,13 +247,27 @@
       </div>
     </div>
 
-    <script src="/post-images/prism.js"></script>
+    <!--
+<script src="/post-images/prism.js"></script>
 <link rel="stylesheet" href="/post-images/prism.css">
+-->
 <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
 
 <script type="application/javascript">
 
 AOS.init();
+
+// hljs.initHighlightingOnLoad()
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    if (block.className.indexOf('language-go') > -1) {
+	block.className='hljs go'
+    }
+    hljs.highlightBlock(block);
+  });
+});
 
 var app = new Vue({
   el: '#app',

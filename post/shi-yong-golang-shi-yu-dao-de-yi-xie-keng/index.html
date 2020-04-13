@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8" >
 
-<title>使用Golang时遇到的一些坑 | Xiusin</title>
+<title>使用Golang时遇到的一些坑 | 修心修己</title>
 <meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1572848931199">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1586743156105">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
 
@@ -22,6 +22,7 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
 
 <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
 
@@ -35,8 +36,8 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://xiusin.github.io">
-        <img src="https://xiusin.github.io/images/avatar.png?v=1572848931199" class="site-logo">
-        <h1 class="site-title">Xiusin</h1>
+        <img src="https://xiusin.github.io/images/avatar.png?v=1586743156105" class="site-logo">
+        <h1 class="site-title">修心修己</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
         <div class="line"></div>
@@ -65,6 +66,12 @@
         
           <a href="/post/about" class="site-nav">
             关于
+          </a>
+        
+      
+        
+          <a href="http://github.com/xiusin" class="site-nav" target="_blank">
+            GitHub
           </a>
         
       
@@ -106,14 +113,14 @@
 <p>1、 【致命】不是所有Panic都能捕获</p>
 <p>我们知道Golang给开发人员提供recover()机制，对堆栈异常（panic）进行捕获并自定义其处理逻辑。下面举个例子：</p>
 <p>构造一个除0的异常场景：</p>
-<figure data-type="image" tabindex="1"><img src="https://xiusin.github.io/post-images/assets/1565320315-bc136341f2aa5a109d50f34327a8b424.png" alt=""></figure>
+<figure data-type="image" tabindex="1"><img src="https://xiusin.github.io/post-images/assets/1565320315-bc136341f2aa5a109d50f34327a8b424.png" alt="" loading="lazy"></figure>
 <p>输出结果：</p>
-<figure data-type="image" tabindex="2"><img src="https://xiusin.github.io/post-images/assets/1565320315-c5962ce1e956b5db95b8a3a0806bb00a.png" alt=""></figure>
+<figure data-type="image" tabindex="2"><img src="https://xiusin.github.io/post-images/assets/1565320315-c5962ce1e956b5db95b8a3a0806bb00a.png" alt="" loading="lazy"></figure>
 <p>我们看到程序正常退出，没有异常，说明recover()按照预期捕获到panic异常；但不是所有panic都能通过recover()捕捉到的，比如：并发操作map实例。</p>
 <p>构造并发操作map的场景：</p>
-<figure data-type="image" tabindex="3"><img src="https://xiusin.github.io/post-images/assets/1565320315-c17223a2a3cd99346a2363890daf952f.png" alt=""></figure>
+<figure data-type="image" tabindex="3"><img src="https://xiusin.github.io/post-images/assets/1565320315-c17223a2a3cd99346a2363890daf952f.png" alt="" loading="lazy"></figure>
 <p>输出结果：</p>
-<figure data-type="image" tabindex="4"><img src="https://xiusin.github.io/post-images/assets/1565320315-2a6591a5ee5b324973f8a33235275dca.png" alt=""></figure>
+<figure data-type="image" tabindex="4"><img src="https://xiusin.github.io/post-images/assets/1565320315-2a6591a5ee5b324973f8a33235275dca.png" alt="" loading="lazy"></figure>
 <p>以上结果可知，我们不能单纯依靠recover()解决函数内部所有panic异常，应该做到以下几点：</p>
 <p>a) 通过编写代码校验，防止能预期到的panic，比如：空指针引用的指针判断。</p>
 <p>b) 对于无法预期的panic，使用recover()捕获并加以处理。</p>
@@ -123,26 +130,26 @@
 <p>当然这个并非是唯一一个无法通过recover()捕获的场景，还有可能Go本身的bug，https://github.com/golang/go/issues/21717；这个Bug在Go1.9.2才修复</p>
 <p>2、 【严重】小心Map的内存泄露</p>
 <p>大部分Golang程序做业务缓存实现时，都使用了map，看以下代码片段，简单模拟了这种使用场景：</p>
-<figure data-type="image" tabindex="5"><img src="https://xiusin.github.io/post-images/assets/1565320315-26d75950ac150d24b7439dd2e8021223.png" alt=""></figure>
+<figure data-type="image" tabindex="5"><img src="https://xiusin.github.io/post-images/assets/1565320315-26d75950ac150d24b7439dd2e8021223.png" alt="" loading="lazy"></figure>
 <p>增加环境变量GODEBUG=gctrace=1，运行可见，即使代码逻辑清空了map，但进程内存使用并没有像预期那样“实报实销”：</p>
-<figure data-type="image" tabindex="6"><img src="https://xiusin.github.io/post-images/assets/1565320315-363df076dff4d87b530524b696993036.png" alt=""></figure>
+<figure data-type="image" tabindex="6"><img src="https://xiusin.github.io/post-images/assets/1565320315-363df076dff4d87b530524b696993036.png" alt="" loading="lazy"></figure>
 <p>应如何解决：定期替换成新的map，释放旧的map对象。</p>
 <p>3、 【提示】不是每次Map遍历都能得到相同排序的集合</p>
 <p>经常遇到一些业务场景，需要将map的所有元素打印输出，在Golang里面实现是非常简单的，一个for range就可以实现，但结果却有点出人意料：</p>
-<figure data-type="image" tabindex="7"><img src="https://xiusin.github.io/post-images/assets/1565320315-98f7616d6aa95b50ef5ae4bd7a3804c4.png" alt=""></figure>
+<figure data-type="image" tabindex="7"><img src="https://xiusin.github.io/post-images/assets/1565320315-98f7616d6aa95b50ef5ae4bd7a3804c4.png" alt="" loading="lazy"></figure>
 <p>输出结果：</p>
-<figure data-type="image" tabindex="8"><img src="https://xiusin.github.io/post-images/assets/1565320315-59618bb7e790caf729d875dde0d9912f.png" alt=""></figure>
+<figure data-type="image" tabindex="8"><img src="https://xiusin.github.io/post-images/assets/1565320315-59618bb7e790caf729d875dde0d9912f.png" alt="" loading="lazy"></figure>
 <p>两次遍历的结果均不相同，这是为什么呢？这是Golang故意增加的一个随机数导致的，https://blog.golang.org/go-maps-in-action；所以如果对结果一致性有要求的业务逻辑，就不能简单的遍历map了，可以这样实现：</p>
-<figure data-type="image" tabindex="9"><img src="https://xiusin.github.io/post-images/assets/1565320315-4c2c7b841c76b19fb3beb90d34fb174a.png" alt=""></figure>
+<figure data-type="image" tabindex="9"><img src="https://xiusin.github.io/post-images/assets/1565320315-4c2c7b841c76b19fb3beb90d34fb174a.png" alt="" loading="lazy"></figure>
 <p>4、 【严重】客户端执行Response.Body.Close()后HTTP连接真的关闭了吗？</p>
 <p>按照官方文档对标准库中的http client包的说明，在使用时需要主动调用Response.Body.Close()将连接关闭，但并不说明只要写了这句话就能关闭连接的。看看以下场景：</p>
-<figure data-type="image" tabindex="10"><img src="https://xiusin.github.io/post-images/assets/1565320315-d46adab3b54c03e349406dc34d6c0484.png" alt=""></figure>
+<figure data-type="image" tabindex="10"><img src="https://xiusin.github.io/post-images/assets/1565320315-d46adab3b54c03e349406dc34d6c0484.png" alt="" loading="lazy"></figure>
 <p>执行后，统计了下连接数，发现大量TIME_WAIT连接没有按预期回收，看来Response.Body.Close()没生效。</p>
-<figure data-type="image" tabindex="11"><img src="https://xiusin.github.io/post-images/assets/1565320315-6f93948c39af3eee241d90a936387068.png" alt=""></figure>
+<figure data-type="image" tabindex="11"><img src="https://xiusin.github.io/post-images/assets/1565320315-6f93948c39af3eee241d90a936387068.png" alt="" loading="lazy"></figure>
 <p>我们把代码调整如下：</p>
-<figure data-type="image" tabindex="12"><img src="https://xiusin.github.io/post-images/assets/1565320315-72d0ccade62a52280fa1d7f48f943be9.png" alt=""></figure>
+<figure data-type="image" tabindex="12"><img src="https://xiusin.github.io/post-images/assets/1565320315-72d0ccade62a52280fa1d7f48f943be9.png" alt="" loading="lazy"></figure>
 <p>再看看连接数统计：</p>
-<figure data-type="image" tabindex="13"><img src="https://xiusin.github.io/post-images/assets/1565320315-0ce0e4449d1d98346a414bf8545f07f0.png" alt=""></figure>
+<figure data-type="image" tabindex="13"><img src="https://xiusin.github.io/post-images/assets/1565320315-0ce0e4449d1d98346a414bf8545f07f0.png" alt="" loading="lazy"></figure>
 <p>为什么？以上是个较为特殊的场景，业务只关心请求的响应码，并不关心响应体，所以没有加入读取resp.Body的代码。可以看到此时关闭Body读取数据通道，会导致Golang底层没有真正关闭连接。要解决这个这种场景出现的连接泄露问题，需要在Close前额外加入io.Copy(ioutil.Discard, resp.Body)，来完成TCP响应体读取流程。</p>
 <p>Go语言未来的前景很不错，而在国内的大厂中，华为云对此的支持还是可以的，在其微服务应用平台、微服务引擎中开放了Go语言的服务框架。</p>
 <p>目前，华为云有一个关于微服务的活动，有想应用服务微服务化需求的朋友可以考虑试用一下！</p>
@@ -155,7 +162,7 @@
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://xiusin.github.io/post/yuan-ma-pou-xi-golang-zhong-syncmutex">
+                <a href="https://xiusin.github.io/post/yuan-ma-pou-xi-golang-zhong-syncmutex/">
                   <h3 class="post-title">
                     源码剖析golang中sync.Mutex
                   </h3>
@@ -177,13 +184,27 @@
       </div>
     </div>
 
-    <script src="/post-images/prism.js"></script>
+    <!--
+<script src="/post-images/prism.js"></script>
 <link rel="stylesheet" href="/post-images/prism.css">
+-->
 <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
 
 <script type="application/javascript">
 
 AOS.init();
+
+// hljs.initHighlightingOnLoad()
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    if (block.className.indexOf('language-go') > -1) {
+	block.className='hljs go'
+    }
+    hljs.highlightBlock(block);
+  });
+});
 
 var app = new Vue({
   el: '#app',

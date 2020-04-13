@@ -765,11 +765,20 @@ a {
     border-bottom: 1px solid #ced4da;
 }
 .post-detail {
-    max-width: 1280px;
+    max-width: inherit;
     margin: 0 auto;
 }
 .post-detail .post-content p {
    font-size: 14px;
+}
+.content-container {
+   max-width: none;
+}
+.post-detail .post-content pre code {
+   border-radius: 0;
+}
+.post-detail .post-content blockquote {
+    border-left: 3px solid  #191c1f;
 }
 </style>
     

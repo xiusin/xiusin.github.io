@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8" >
 
-<title>一份详细注释的go-Mutex源码 | Xiusin</title>
+<title>一份详细注释的go-Mutex源码 | 修心修己</title>
 <meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1572848931199">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1586743156105">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
 
@@ -22,6 +22,7 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
 
 <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
 
@@ -35,8 +36,8 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://xiusin.github.io">
-        <img src="https://xiusin.github.io/images/avatar.png?v=1572848931199" class="site-logo">
-        <h1 class="site-title">Xiusin</h1>
+        <img src="https://xiusin.github.io/images/avatar.png?v=1586743156105" class="site-logo">
+        <h1 class="site-title">修心修己</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
         <div class="line"></div>
@@ -65,6 +66,12 @@
         
           <a href="/post/about" class="site-nav">
             关于
+          </a>
+        
+      
+        
+          <a href="http://github.com/xiusin" class="site-nav" target="_blank">
+            GitHub
           </a>
         
       
@@ -179,7 +186,7 @@ func sync_runtime_canSpin(i int) bool {
 }
 </code></pre>
 <p>Mutex结构简单的就只有两个成员变量。sema是信号量，下文会介绍到。这里主要介绍state的结构。</p>
-<figure data-type="image" tabindex="1"><img src="https://xiusin.github.io/post-images/assets/1565575219-3086715a11c1f9c21ffc67c12b3cda04.png" alt=""></figure>
+<figure data-type="image" tabindex="1"><img src="https://xiusin.github.io/post-images/assets/1565575219-3086715a11c1f9c21ffc67c12b3cda04.png" alt="" loading="lazy"></figure>
 <p>一个32位的变量，被划分成上图的样子。右边的标识也有对应的常量</p>
 <pre><code>const (
   mutexLocked = 1 &lt;&lt; iota // mutex is locked
@@ -249,7 +256,7 @@ func (m *Mutex) Lock() {
 </li>
 </ol>
 <p>饥饿问题是会积压的。要尽快解决。举个例子解释一下：</p>
-<figure data-type="image" tabindex="2"><img src="https://xiusin.github.io/post-images/assets/1565575219-2056afb3a146ea989adc0a9dd2594502.jpg" alt=""></figure>
+<figure data-type="image" tabindex="2"><img src="https://xiusin.github.io/post-images/assets/1565575219-2056afb3a146ea989adc0a9dd2594502.jpg" alt="" loading="lazy"></figure>
 <p>蓝色是新竞争者，红色是阻塞等待时间超过阀值的竞争者。每次持锁时间是0.3ms。</p>
 <p>只要有竞争者阻塞超时了，锁就会转换为饥饿模式。饥饿模式下，所有的新竞争者都得排队。</p>
 <p>图中时刻4中的G3就是被积压的。如果时刻0中的竞争者更多时，并且抢锁顺序不变。那么时刻4的积压就更严重。</p>
@@ -489,7 +496,7 @@ func (m *Mutex) Unlock() {
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://xiusin.github.io/post/yi-ge-bao-han-nil-zhi-zhen-de-jie-kou-bu-shi-nil-jie-kou-cai-keng-zhuan-zai">
+                <a href="https://xiusin.github.io/post/yi-ge-bao-han-nil-zhi-zhen-de-jie-kou-bu-shi-nil-jie-kou-cai-keng-zhuan-zai/">
                   <h3 class="post-title">
                     “一个包含nil指针的接口不是nil接口”踩坑 [转载]
                   </h3>
@@ -511,13 +518,27 @@ func (m *Mutex) Unlock() {
       </div>
     </div>
 
-    <script src="/post-images/prism.js"></script>
+    <!--
+<script src="/post-images/prism.js"></script>
 <link rel="stylesheet" href="/post-images/prism.css">
+-->
 <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
 
 <script type="application/javascript">
 
 AOS.init();
+
+// hljs.initHighlightingOnLoad()
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    if (block.className.indexOf('language-go') > -1) {
+	block.className='hljs go'
+    }
+    hljs.highlightBlock(block);
+  });
+});
 
 var app = new Vue({
   el: '#app',

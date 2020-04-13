@@ -3,13 +3,13 @@
   <head>
     <meta charset="utf-8" >
 
-<title>数据库事务隔离级别-- 脏读、幻读、不可重复读（清晰解释） | Xiusin</title>
+<title>数据库事务隔离级别-- 脏读、幻读、不可重复读（清晰解释） | 修心修己</title>
 <meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
 
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 
 <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1572848931199">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1586743156105">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
 <link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
 
@@ -22,6 +22,7 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
 
 <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
 
@@ -35,8 +36,8 @@
   <div class="top-container" data-aos="fade-right">
     <div class="top-header-container">
       <a class="site-title-container" href="https://xiusin.github.io">
-        <img src="https://xiusin.github.io/images/avatar.png?v=1572848931199" class="site-logo">
-        <h1 class="site-title">Xiusin</h1>
+        <img src="https://xiusin.github.io/images/avatar.png?v=1586743156105" class="site-logo">
+        <h1 class="site-title">修心修己</h1>
       </a>
       <div class="menu-btn" @click="menuVisible = !menuVisible">
         <div class="line"></div>
@@ -65,6 +66,12 @@
         
           <a href="/post/about" class="site-nav">
             关于
+          </a>
+        
+      
+        
+          <a href="http://github.com/xiusin" class="site-nav" target="_blank">
+            GitHub
           </a>
         
       
@@ -144,7 +151,7 @@
 <p>注意：我们讨论隔离级别的场景，主要是在多个事务并发 的情况下，因此，接下来的讲解都围绕事务并发。</p>
 <p>Read uncommitted 读未提交</p>
 <p>公司发工资了，领导把5000元打到singo的账号上，但是该事务并未提交，而singo正好去查看账户，发现工资已经到账，是5000元整，非常高 兴。可是不幸的是，领导发现发给singo的工资金额不对，是2000元，于是迅速回滚了事务，修改金额后，将事务提交，最后singo实际的工资只有 2000元，singo空欢喜一场。</p>
-<figure data-type="image" tabindex="1"><img src="https://xiusin.github.io/post-images/media/f244ae46-c8f4-3bc1-906e-d1d9c1af3516.gif" alt="f244ae46-c8f4-3bc1-906e-d1d9c1af3516"></figure>
+<figure data-type="image" tabindex="1"><img src="https://xiusin.github.io/post-images/media/f244ae46-c8f4-3bc1-906e-d1d9c1af3516.gif" alt="f244ae46-c8f4-3bc1-906e-d1d9c1af3516" loading="lazy"></figure>
 <p>出现上述情况，即我们所说的脏读 ，两个并发的事务，“事务A：领导给singo发工资”、“事务B：singo查询工资账户”，事务B读取了事务A尚未提交的数据。</p>
 <p>当隔离级别设置为Read uncommitted 时，就可能出现脏读，如何避免脏读，请看下一个隔离级别。</p>
 <p>Read committed 读提交</p>
@@ -174,11 +181,11 @@
             
               <div class="tag-container">
                 
-                  <a href="https://xiusin.github.io/tag/e-FLWpTX1" class="tag">
+                  <a href="https://xiusin.github.io/tag/e-FLWpTX1/" class="tag">
                     MYSQL
                   </a>
                 
-                  <a href="https://xiusin.github.io/tag/W5UTXfVoKc" class="tag">
+                  <a href="https://xiusin.github.io/tag/W5UTXfVoKc/" class="tag">
                     隔离级别
                   </a>
                 
@@ -187,7 +194,7 @@
             
               <div class="next-post">
                 <div class="next">下一篇</div>
-                <a href="https://xiusin.github.io/post/qq-zhuang-tai-tong-bu-jiu-jing-shi-tui-huan-shi-la">
+                <a href="https://xiusin.github.io/post/qq-zhuang-tai-tong-bu-jiu-jing-shi-tui-huan-shi-la/">
                   <h3 class="post-title">
                     QQ状态同步究竟是推还是拉？
                   </h3>
@@ -209,13 +216,27 @@
       </div>
     </div>
 
-    <script src="/post-images/prism.js"></script>
+    <!--
+<script src="/post-images/prism.js"></script>
 <link rel="stylesheet" href="/post-images/prism.css">
+-->
 <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
 
 <script type="application/javascript">
 
 AOS.init();
+
+// hljs.initHighlightingOnLoad()
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    if (block.className.indexOf('language-go') > -1) {
+	block.className='hljs go'
+    }
+    hljs.highlightBlock(block);
+  });
+});
 
 var app = new Vue({
   el: '#app',

@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>GO中关于range迭代和解析 | 修心修己</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1586743156105">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css" />
+  
+
+  
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1586743156105" class="site-logo">
+        <h1 class="site-title">修心修己</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="http://github.com/xiusin" class="site-nav" target="_blank">
+            GitHub
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">GO中关于range迭代和解析</h2>
+            <div class="post-date">2019-12-11</div>
+            
+            <div class="post-content">
+              <p>关于数据的迭代, 对于大部分人都是老生常谈了, 这里记录一下现象与现象解析. 因为自己老是看过就忘, 属于非常笨的人, 那么就记录下来吧.</p>
+<h1 id="表现">表现</h1>
+<h2 id="forrange-切片">for..range <code>切片</code></h2>
+<pre><code class="language-go">v := []int{1,2,3}
+
+for i := range v {
+    v = append(v, i)
+}
+// 结果是什么?
+</code></pre>
+<p>下面是本人测试的结果:</p>
+<pre><code>[1 2 3 0 1 2]
+</code></pre>
+<p>为什么会这样,而不是无限循环下去?</p>
+<blockquote>
+<p>迭代切片的时候, <code>for..range</code>其实是<code>for a;b;c {}</code>的语法糖, 具体可以直接换成下面代码:</p>
+</blockquote>
+<p>查看官方代码: <a href="https://github.com/golang/gofrontend/blob/master/go/statements.cc#L6419">statements.cc</a> 可以看到注释:</p>
+<pre><code>// Arrange to do a loop appropriate for the type.  We will produce
+//  
+//   for INIT ; COND ; POST {
+//           ITER_INIT
+//           INDEX = INDEX_TEMP
+//           VALUE = VALUE_TEMP // If there is a value
+//           original statements
+//   }
+</code></pre>
+<pre><code class="language-go">for_data_tmp := v
+len_tmp := len(v)
+// k方式
+for index_tmp := 0; index_tmp &lt;len_tmp; index_tmp++ {
+    v = append(v, v[index_tmp]) 
+}
+// k, v方式
+for index_tmp := 0; index_tmp &lt;len_tmp; index_tmp++ {
+    value_temp = range_temp[index_temp] // 这里是从副本里取出数据,追加到v上, 所以修改v不会影响for_data_tmp
+    index = index_tmp
+    value = value_tmp
+    v = append(v, value_tmp) 
+}
+</code></pre>
+<blockquote>
+<p>从上面得知, go实现循环迭代,都是c语言的一种实现方式, 迭代的时候会给迭代对象分配一个临时变量.</p>
+</blockquote>
+<h2 id="forrange-map">for..range <code>map</code></h2>
+<pre><code class="language-go">m := map[string]int{
+    &quot;1&quot;: 1,
+    &quot;2&quot;: 2,
+    &quot;3&quot;: 3,
+}
+rand.Seed(time.Now().Unix())
+for k,v := range m {
+    m[k + &quot;--&gt;&quot; + strconv.Itoa(rand.Intn(30))] = v
+}
+// 输出结果是什么?
+</code></pre>
+<p>这个没有固定的结果, 可能每次执行的结果的元素数量都不一样.</p>
+<p>为什么会是这样的结果, 首先得需要了解hash的工作原理, 个人理解认为, 在一个hash内,如果发生碰撞会形成链表想下追加元素, 所以在插入数据的时候如果已经迭代过hash值, 将不会迭代到, 如果没有迭代到那么就可能会在接下来的过程中迭代出来.</p>
+<h1 id="关于go的map实现">关于go的map实现</h1>
+<h4 id="开篇语">开篇语</h4>
+<blockquote>
+<p>Map是一种常用的kv数据结构，程序设计中经常使用，且作为一种最基础的数据结构，很多编程语言本身提供的api都会有实现，Go也不例外，今天我们将从一下三个方面为大家分析Go中的Map。</p>
+</blockquote>
+<ul>
+<li>什么是Map？</li>
+<li>Go中如何使用Map？</li>
+<li>以及Go的Map实现机制是什么样？</li>
+</ul>
+<blockquote>
+<p>希望通过这几个方面的讲解，让大家真正理解Go的Map使用和实现。</p>
+</blockquote>
+<h4 id="什么是map">什么是Map</h4>
+<h5 id="keyvalue存储">key，value存储</h5>
+<blockquote>
+<p>最通俗的话说Map是一种通过key来获取value的一个数据结构，其底层存储方式为数组，在存储时key不能重复，当key重复时，value进行覆盖，我们通过key进行hash运算（可以简单理解为把key转化为一个整形数字）然后对数组的长度取余，得到key存储在数组的哪个下标位置，最后将key和value组装为一个结构体，放入数组下标处，看下图：</p>
+</blockquote>
+<pre><code>length = len(array) = 4
+hashkey1 = hash(xiaoming) = 4
+index1  = hashkey1% length= 0
+hashkey2 = hash(xiaoli) = 6
+index2  = hashkey2% length= 2
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="https://xiusin.github.io/post-images/1576033940514.png" alt="" loading="lazy"></figure>
+<h5 id="hash冲突">hash冲突</h5>
+<blockquote>
+<p>如上图所示，数组一个下标处只能存储一个元素，也就是说一个数组下标只能存储一对key，value, hashkey(xiaoming)=4占用了下标0的位置，假设我们遇到另一个key，hashkey(xiaowang)也是4，这就是hash冲突（不同的key经过hash之后得到的值一样），那么key=xiaowang的怎么存储？</p>
+</blockquote>
+<blockquote>
+<p>hash冲突的常见解决方法</p>
+</blockquote>
+<ul>
+<li>开放定址法</li>
+</ul>
+<blockquote>
+<p>也就是说当我们存储一个key，value时，发现hashkey(key)的下标已经被别key占用，那我们在这个数组中空间中重新找一个没被占用的存储这个冲突的key，那么没被占用的有很多，找哪个好呢？常见的有线性探测法，线性补偿探测法，随机探测法，这里我们主要说一下线性探测法</p>
+</blockquote>
+<blockquote>
+<p><strong>线性探测</strong>，字面意思就是按照顺序来，从冲突的下标处开始往后探测，到达数组末尾时，从数组开始处探测，直到找到一个空位置存储这个key，当数组都找不到的情况下回扩容（事实上当数组容量快满的时候就会扩容了）；查找某一个key的时候，找到key对应的下标，比较key是否相等，如果相等直接取出来，否则按照顺寻探测直到碰到一个空位置，说明key不存在。如下图：</p>
+</blockquote>
+<figure data-type="image" tabindex="2"><img src="https://xiusin.github.io/post-images/1576033952065.png" alt="" loading="lazy"></figure>
+<blockquote>
+<p>首先存储key=xiaoming在下标0处，当存储key=xiaowang时，hash冲突了，按照线性探测，存储在下标1处，（红色的线是冲突或者下标已经被占用了）<br>
+再者key=xiaozhao存储在下标4处，当存储key=xiaoliu是，hash冲突了，按照线性探测，从头开始，存储在下标2处 （黄色的是冲突或者下标已经被占用了）</p>
+</blockquote>
+<ul>
+<li>拉链法</li>
+</ul>
+<blockquote>
+<p>何为拉链，简单理解为链表，当key的hash冲突时，我们在冲突位置的元素上形成一个链表，通过指针互连接，当查找时，发现key冲突，顺着链表一直往下找，直到链表的尾节点，找不到则返回空，如下图：</p>
+</blockquote>
+<figure data-type="image" tabindex="3"><img src="https://xiusin.github.io/post-images/1576033960849.png" alt="" loading="lazy"></figure>
+<ul>
+<li>开放定址（线性探测）和拉链的优缺点
+<ol>
+<li>由上面可以看出拉链法比线性探测处理简单</li>
+<li>线性探测查找是会被拉链法会更消耗时间</li>
+<li>线性探测会更加容易导致扩容，而拉链不会</li>
+<li>拉链存储了指针，所以空间上会比线性探测占用多一点</li>
+<li>拉链是动态申请存储空间的，所以更适合链长不确定的</li>
+</ol>
+</li>
+</ul>
+<h4 id="go中map的使用">Go中Map的使用</h4>
+<blockquote>
+<p>直接用代码描述，直观，简单，易理解</p>
+</blockquote>
+<pre><code class="language-go">
+//直接创建初始化一个mao
+var mapInit = map[string]string {&quot;xiaoli&quot;:&quot;湖南&quot;, &quot;xiaoliu&quot;:&quot;天津&quot;}
+//声明一个map类型变量,
+//map的key的类型是string，value的类型是string
+var mapTemp map[string]string
+//使用make函数初始化这个变量,并指定大小(也可以不指定)
+mapTemp = make(map[string]string,10)
+//存储key ，value
+mapTemp[&quot;xiaoming&quot;] = &quot;北京&quot;
+mapTemp[&quot;xiaowang&quot;]= &quot;河北&quot;
+//根据key获取value,
+//如果key存在，则ok是true，否则是flase
+//v1用来接收key对应的value,当ok是false时，v1是nil
+v1,ok := mapTemp[&quot;xiaoming&quot;]
+fmt.Println(ok,v1)
+//当key=xiaowang存在时打印value
+if v2,ok := mapTemp[&quot;xiaowang&quot;]; ok{
+    fmt.Println(v2)
+}
+//遍历map,打印key和value
+for k,v := range mapTemp{
+    fmt.Println(k,v)
+}
+//删除map中的key
+delete(mapTemp,&quot;xiaoming&quot;)
+//获取map的大小
+l := len(mapTemp)
+fmt.Println(l)
+</code></pre>
+<blockquote>
+<p>看了上面的map创建，初始化，增删改查等操作，我们发现go的api其实挺简单易学的</p>
+</blockquote>
+<h4 id="go中map的实现原理">Go中Map的实现原理</h4>
+<blockquote>
+<p>知其然，更得知其所以然，会使用map了，多问问为什么，go底层map到底怎么存储呢?接下来我们一探究竟。</p>
+</blockquote>
+<blockquote>
+<p><strong>map的源码位于 src/runtime/map.go中 笔者go的版本是1.12</strong></p>
+</blockquote>
+<blockquote>
+<p>在go中，map同样也是数组存储的的，每个数组下标处存储的是一个bucket,这个bucket的类型见下面代码，每个bucket中可以存储8个kv键值对，当每个bucket存储的kv对到达8个之后，会通过overflow指针指向一个新的bucket，从而形成一个链表,看bmap的结构，我想大家应该很纳闷，没看见kv的结构和overflow指针啊，事实上，这两个结构体并没有显示定义，是通过指针运算进行访问的。</p>
+</blockquote>
+<pre><code class="language-go">
+//bucket结构体定义 b就是bucket
+type bmap{
+    // tophash generally contains the top byte of the hash value// for each key  in this bucket. If tophash[0] &amp;lt; minTopHash,// tophash[0] is a bucket               evacuation state instead.
+    //翻译：top hash通常包含该bucket中每个键的hash值的高八位。如果tophash[0]小于mintophash，则tophash[0]为桶疏散状态
+    //bucketCnt 的初始值是8
+    tophash [bucketCnt]uint8
+    // Followed by bucketCnt keys and then bucketCnt values.// NOTE: packing all the keys together and then all the values together makes the// code a bit more complicated than alternating key/value/key/value/... but it allows// us to eliminate padding which would be needed for, e.g., map[int64]int8.// Followed by an overflow pointer.
+    //翻译：接下来是bucketcnt键，然后是bucketcnt值。注意：将所有键打包在一起，然后将所有值打包在一起，使得//代码比交替键/值/键/值/更复杂。但它允许//我们消除可能需要的填充，例如map[int64]int8./后面跟一个溢出指针
+}
+</code></pre>
+<blockquote>
+<p>看上面代码以及注释，我们能得到bucket中存储的kv是这样的，tophash用来快速查找key值是否在该bucket中，而不同每次都通过真值进行比较；还有kv的存放，为什么不是k1v1，k2v2..... 而是k1k2...v1v2...，我们看上面的注释说的 map[int64]int8,key是int64（8个字节），value是int8（一个字节），kv的长度不同，如果按照kv格式存放，则考虑内存对齐v也会占用int64，而按照后者存储时，8个v刚好占用一个int64,从这个就可以看出go的map设计之巧妙。</p>
+</blockquote>
+<figure data-type="image" tabindex="4"><img src="https://xiusin.github.io/post-images/1576033979224.png" alt="" loading="lazy"></figure>
+<blockquote>
+<p>最后我们分析一下go的整体内存结构，阅读一下map存储的源码，如下图所示，当往map中存储一个kv对时，通过k获取hash值，hash值的低八位和bucket数组长度取余，定位到在数组中的那个下标，hash值的高八位存储在bucket中的tophash中，用来快速判断key是否存在，key和value的具体值则通过指针运算存储，当一个bucket满时，通过overfolw指针链接到下一个bucket。</p>
+</blockquote>
+<figure data-type="image" tabindex="5"><img src="https://xiusin.github.io/post-images/1576033990776.png" alt="" loading="lazy"></figure>
+<blockquote>
+<p>go的map存储源码如下，省略了一些无关紧要的代码</p>
+</blockquote>
+<pre><code class="language-go">func mapassign(t *maptype, h *hmap, key unsafe.Pointer) unsafe.Pointer {
+	//获取hash算法
+	alg := t.key.alg
+    //计算hash值
+	hash := alg.hash(key, uintptr(h.hash0))
+    //如果bucket数组一开始为空，则初始化
+	if h.buckets == nil {
+		h.buckets = newobject(t.bucket) // newarray(t.bucket, 1)
+	}
+again:
+    // 定位存储在哪一个bucket中
+	bucket := hash &amp;amp; bucketMask(h.B)
+	//得到bucket的结构体
+	b := (*bmap)(unsafe.Pointer(uintptr(h.buckets) +bucket*uintptr(t.bucketsize)))
+    //获取高八位hash值
+	top := tophash(hash)
+	var inserti *uint8
+	var insertk unsafe.Pointer
+	var val unsafe.Pointer
+bucketloop:
+    //死循环
+	for {
+        //循环bucket中的tophash数组
+		for i := uintptr(0); i &amp;lt; bucketCnt; i++ {
+            //如果hash不相等
+			if b.tophash[i] != top {
+             //判断是否为空，为空则插入
+				if isEmpty(b.tophash[i]) &amp;amp;&amp;amp; inserti == nil {
+					inserti = &amp;amp;b.tophash[i]
+					insertk = add(unsafe.Pointer(b), dataOffset+i*uintptr(t.keysize))
+					val = add( unsafe.Pointer(b), 
+                    dataOffset+bucketCnt*uintptr(t.keysize)+i*uintptr(t.valuesize) )
+				}
+              //插入成功，终止最外层循环
+				if b.tophash[i] == emptyRest {
+					break bucketloop
+				}
+				continue
+			}
+            //到这里说明高八位hash一样，获取已存在的key
+			k := add(unsafe.Pointer(b), dataOffset+i*uintptr(t.keysize))
+			if t.indirectkey() {
+				k = *((*unsafe.Pointer)(k))
+			}
+            //判断两个key是否相等，不相等就循环下一个
+			if !alg.equal(key, k) {
+				continue
+			}
+			// 如果相等则更新
+			if t.needkeyupdate() {
+				typedmemmove(t.key, k, key)
+			}
+            //获取已存在的value
+			val = add(unsafe.Pointer(b), dataOffset+bucketCnt*uintptr(t.keysize)+i*uintptr(t.valuesize))
+			goto done
+		}
+        //如果上一个bucket没能插入，则通过overflow获取链表上的下一个bucket
+		ovf := b.overflow(t)
+		if ovf == nil {
+			break
+		}
+		b = ovf
+	}
+
+	if inserti == nil {
+		// all current buckets are full, allocate a new one.
+		newb := h.newoverflow(t, b)
+		inserti = &amp;amp;newb.tophash[0]
+		insertk = add(unsafe.Pointer(newb), dataOffset)
+		val = add(insertk, bucketCnt*uintptr(t.keysize))
+	}
+
+	// store new key/value at insert position
+	if t.indirectkey() {
+		kmem := newobject(t.key)
+		*(*unsafe.Pointer)(insertk) = kmem
+		insertk = kmem
+	}
+	if t.indirectvalue() {
+		vmem := newobject(t.elem)
+		*(*unsafe.Pointer)(val) = vmem
+	}
+	typedmemmove(t.key, insertk, key)
+    //将高八位hash值存储
+	*inserti = top
+	h.count++;
+	return val
+}
+</code></pre>
+<h1 id="参考">参考</h1>
+<p><a href="https://garbagecollected.org/2017/02/22/go-range-loop-internals/">英文</a><br>
+<a href="https://www.jianshu.com/p/35c2662b5b57">中文</a><br>
+<a href="https://blog.csdn.net/i6448038/article/details/82057424">解析go语言map底层实现</a><br>
+<a href="https://studygolang.com/articles/22236?fr=sidebar">深入Go的Map使用和实现原理</a><br>
+<a href="https://my.oschina.net/renhc/blog/2208417?nocache=1539143037904">Go map实现原理</a></p>
+
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/zhuan-zai-protobuf3-yu-fa-zhi-nan/">
+                  <h3 class="post-title">
+                    [转载] Protobuf3 语法指南
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+              
+                <div id="gitalk-container" data-aos="fade-in"></div>
+              
+
+              
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!--
+<script src="/post-images/prism.js"></script>
+<link rel="stylesheet" href="/post-images/prism.css">
+-->
+<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+// hljs.initHighlightingOnLoad()
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    if (block.className.indexOf('language-go') > -1) {
+	block.className='hljs go'
+    }
+    hljs.highlightBlock(block);
+  });
+});
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+  
+    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+    <script>
+
+      var gitalk = new Gitalk({
+        clientID: 'a526dbb05037d7bf1972',
+        clientSecret: '0238529511fc560513e8b6ed865d3e33c11e3ccb',
+        repo: 'xiusin.github.io',
+        owner: 'xiusin',
+        admin: ['xiusin'],
+        id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+      })
+
+      gitalk.render('gitalk-container')
+
+    </script>
+  
+
+  
+
+
+
+
+  </body>
+</html>

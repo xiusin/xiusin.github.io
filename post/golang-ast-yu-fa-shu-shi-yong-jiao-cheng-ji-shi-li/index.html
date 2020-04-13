@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>Golang AST语法树使用教程及示例 | 修心修己</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1586743156105">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css" />
+  
+
+  
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1586743156105" class="site-logo">
+        <h1 class="site-title">修心修己</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="http://github.com/xiusin" class="site-nav" target="_blank">
+            GitHub
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">Golang AST语法树使用教程及示例</h2>
+            <div class="post-date">2019-11-11</div>
+            
+            <div class="post-content">
+              <p>许多自动化代码生成工具都离不开语法树分析，例如<a href="https://godoc.org/golang.org/x/tools/cmd/goimports">goimport</a>，<a href="https://github.com/golang/mock">gomock</a>，<a href="https://github.com/google/wire">wire</a>等项目都离不开语法树分析。基于语法树分析，可以实现许多有趣实用的工具。本篇将结合示例，展示如何基于<code>ast</code>标准包操作语法树。</p>
+<p>本篇中的代码的完整示例可以在这里找到：<a href="https://github.com/DrmagicE/ast-example">ast-example</a></p>
+<p>首先我们看下语法树长什么样子，以下代码将打印<code>./demo.go</code>文件的语法树：</p>
+<pre><code class="language-go">package main
+
+import (
+	&quot;go/ast&quot;
+	&quot;go/parser&quot;
+	&quot;go/token&quot;
+	&quot;log&quot;
+	&quot;path/filepath&quot;
+)
+
+func main() {
+	fset := token.NewFileSet()
+	// 这里取绝对路径，方便打印出来的语法树可以转跳到编辑器
+	path, _ := filepath.Abs(&quot;./demo.go&quot;)
+	f, err := parser.ParseFile(fset, path, nil, parser.AllErrors)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	// 打印语法树
+	ast.Print(fset, f)
+}
+
+复制代码
+</code></pre>
+<blockquote>
+<p>demo.go:</p>
+</blockquote>
+<pre><code class="language-go">package main
+
+import (
+	&quot;context&quot;
+)
+
+// Foo 结构体
+type Foo struct {
+	i int
+}
+
+// Bar 接口
+type Bar interface {
+	Do(ctx context.Context) error
+}
+
+// main方法
+func main() {
+    a := 1
+}
+复制代码
+</code></pre>
+<p><code>demo.go</code>文件已尽量简化，但其语法树的输出内容依旧十分庞大。我们截取部分来做一些简要的说明。</p>
+<p>首先是文件所属的包名，和其声明在文件中的位置：</p>
+<pre><code class="language-go"> 0  *ast.File {
+     1  .  Package: /usr/local/gopath/src/github.com/DrmagicE/ast-example/quickstart/demo.go:1:1
+     2  .  Name: *ast.Ident {
+     3  .  .  NamePos: /usr/local/gopath/src/github.com/DrmagicE/ast-example/quickstart/demo.go:1:9
+     4  .  .  Name: &quot;main&quot;
+     5  .  }
+     ...
+复制代码
+</code></pre>
+<p>紧接着是<code>Decls</code>，也就是Declarations，其包含了声明的一些变量，方法，接口等：</p>
+<pre><code class="language-go">...
+     6  .  Decls: []ast.Decl (len = 4) {
+     7  .  .  0: *ast.GenDecl {
+     8  .  .  .  TokPos: /usr/local/gopath/src/github.com/DrmagicE/ast-example/quickstart/demo.go:3:1
+     9  .  .  .  Tok: import
+    10  .  .  .  Lparen: /usr/local/gopath/src/github.com/DrmagicE/ast-example/quickstart/demo.go:3:8
+    11  .  .  .  Specs: []ast.Spec (len = 1) {
+    12  .  .  .  .  0: *ast.ImportSpec {
+    13  .  .  .  .  .  Path: *ast.BasicLit {
+    14  .  .  .  .  .  .  ValuePos: /usr/local/gopath/src/github.com/DrmagicE/ast-example/quickstart/demo.go:4:2
+    15  .  .  .  .  .  .  Kind: STRING
+    16  .  .  .  .  .  .  Value: &quot;\&quot;context\&quot;&quot;
+    17  .  .  .  .  .  }
+    18  .  .  .  .  .  EndPos: -
+    19  .  .  .  .  }
+    20  .  .  .  }
+    21  .  .  .  Rparen: /usr/local/gopath/src/github.com/DrmagicE/ast-example/quickstart/demo.go:5:1
+    22  .  .  }
+ ....
+复制代码
+</code></pre>
+<p>可以看到该语法树包含了4条<code>Decl</code>记录，我们取第一条记录为例，该记录为<code>*ast.GenDecl</code>类型。不难看出这条记录对应的是我们的<code>import</code>代码段。始位置(TokPos)，左右括号的位置(Lparen,Rparen)，和import的包（Specs）等信息都能从语法树中得到。</p>
+<p>语法树的打印信来自<code>ast.File</code>结构体：</p>
+<blockquote>
+<p>$GOROOT/src/go/ast/ast.go</p>
+</blockquote>
+<pre><code class="language-go">// 该结构体位于标准包 go/ast/ast.go 中，有兴趣可以转跳到源码阅读更详尽的注释
+type File struct {
+	Doc        *CommentGroup   // associated documentation; or nil
+	Package    token.Pos       // position of &quot;package&quot; keyword
+	Name       *Ident          // package name
+	Decls      []Decl          // top-level declarations; or nil
+	Scope      *Scope          // package scope (this file only)
+	Imports    []*ImportSpec   // imports in this file
+	Unresolved []*Ident        // unresolved identifiers in this file
+	Comments   []*CommentGroup // list of all comments in the source file
+}
+复制代码
+</code></pre>
+<p>结合注释和字段名我们大概知道每个字段的含义，接下来我们详细梳理一下语法树的组成结构。</p>
+<p>整个语法树由不同的node组成，从源码注释中可以得知主要有如下三种node：</p>
+<blockquote>
+<p>There are 3 main classes of nodes: Expressions and type nodes, statement nodes, and declaration nodes.</p>
+</blockquote>
+<blockquote>
+<p>在Go的<a href="https://golang.org/ref/spec">Language Specification</a>中可以找到这些节点类型详细规范和说明，有兴趣的小伙伴可以深入研究一下，在此不做展开。</p>
+</blockquote>
+<p>但实际在代码，出现了第四种node：Spec Node，每种node都有专门的接口定义：</p>
+<blockquote>
+<p>$GOROOT/src/go/ast/ast.go</p>
+</blockquote>
+<pre><code class="language-go">...
+// All node types implement the Node interface.
+type Node interface {
+	Pos() token.Pos // position of first character belonging to the node
+	End() token.Pos // position of first character immediately after the node
+}
+
+// All expression nodes implement the Expr interface.
+type Expr interface {
+	Node
+	exprNode()
+}
+
+// All statement nodes implement the Stmt interface.
+type Stmt interface {
+	Node
+	stmtNode()
+}
+
+// All declaration nodes implement the Decl interface.
+type Decl interface {
+	Node
+	declNode()
+}
+...
+
+// A Spec node represents a single (non-parenthesized) import,
+// constant, type, or variable declaration.
+//
+type (
+	// The Spec type stands for any of *ImportSpec, *ValueSpec, and *TypeSpec.
+	Spec interface {
+		Node
+		specNode()
+	}
+....
+)
+复制代码
+</code></pre>
+<p>可以看到所有的node都继承<code>Node</code>接口，记录了node的开始和结束位置。还记得Quick Start示例中的<code>Decls</code>吗？它正是<strong>declaration nodes</strong>。除去上述四种使用接口进行分类的node，还有些node没有再额外定义接口细分类别，仅实现了<code>Node</code>接口，为了方便描述，在本篇中我把这些节点称为<strong>common node</strong>。 <code>$GOROOT/src/go/ast/ast.go</code>列举了所有所有节点的实现，我们从中挑选几个作为例子，感受一下它们的区别。</p>
+<h2 id="expression-and-type">Expression and Type</h2>
+<p>先来看expression node。</p>
+<blockquote>
+<p>$GOROOT/src/go/ast/ast.go</p>
+</blockquote>
+<pre><code class="language-go">...
+	// An Ident node represents an identifier.
+	Ident struct {
+		NamePos token.Pos // identifier position
+		Name    string    // identifier name
+		Obj     *Object   // denoted object; or nil
+	}
+...
+复制代码
+</code></pre>
+<p><code>Indent</code>（identifier）表示一个标识符，比如Quick Start示例中表示包名的<code>Name</code>字段就是一个expression node：</p>
+<pre><code class="language-go"> 0  *ast.File {
+     1  .  Package: /usr/local/gopath/src/github.com/DrmagicE/ast-example/quickstart/demo.go:1:1
+     2  .  Name: *ast.Ident { &lt;----
+     3  .  .  NamePos: /usr/local/gopath/src/github.com/DrmagicE/ast-example/quickstart/demo.go:1:9
+     4  .  .  Name: &quot;main&quot;
+     5  .  }
+     ...
+复制代码
+</code></pre>
+<p>接下来是type node。</p>
+<blockquote>
+<p>$GOROOT/src/go/ast/ast.go</p>
+</blockquote>
+<pre><code class="language-go">...
+	// A StructType node represents a struct type.
+	StructType struct {
+		Struct     token.Pos  // position of &quot;struct&quot; keyword
+		Fields     *FieldList // list of field declarations
+		Incomplete bool       // true if (source) fields are missing in the Fields list
+	}
+
+	// Pointer types are represented via StarExpr nodes.
+
+	// A FuncType node represents a function type.
+	FuncType struct {
+		Func    token.Pos  // position of &quot;func&quot; keyword (token.NoPos if there is no &quot;func&quot;)
+		Params  *FieldList // (incoming) parameters; non-nil
+		Results *FieldList // (outgoing) results; or nil
+	}
+
+	// An InterfaceType node represents an interface type.
+	InterfaceType struct {
+		Interface  token.Pos  // position of &quot;interface&quot; keyword
+		Methods    *FieldList // list of methods
+		Incomplete bool       // true if (source) methods are missing in the Methods list
+	}
+...
+复制代码
+</code></pre>
+<p>type node很好理解，它包含一些复合类型，例如在Quick Start中出现的<code>StructType</code>,<code>FuncType</code>和<code>InterfaceType</code>。</p>
+<h2 id="statement">Statement</h2>
+<p>赋值语句，控制语句（if，else,for，select...）等均属于statement node。</p>
+<blockquote>
+<p>$GOROOT/src/go/ast/ast.go</p>
+</blockquote>
+<pre><code class="language-go">...
+	// An AssignStmt node represents an assignment or
+	// a short variable declaration.
+	//
+	AssignStmt struct {
+		Lhs    []Expr
+		TokPos token.Pos   // position of Tok
+		Tok    token.Token // assignment token, DEFINE
+		Rhs    []Expr
+	}
+...
+
+	// An IfStmt node represents an if statement.
+	IfStmt struct {
+		If   token.Pos // position of &quot;if&quot; keyword
+		Init Stmt      // initialization statement; or nil
+		Cond Expr      // condition
+		Body *BlockStmt
+		Else Stmt // else branch; or nil
+	}
+...
+复制代码
+</code></pre>
+<p>例如Quick Start中，我们在<code>main</code>函数中对变量a赋值的程序片段就属于<code>AssignStmt</code>:</p>
+<pre><code class="language-go">...
+ 174  .  .  .  Body: *ast.BlockStmt {
+   175  .  .  .  .  Lbrace: /usr/local/gopath/src/github.com/DrmagicE/ast-example/quickstart/demo.go:18:13
+   176  .  .  .  .  List: []ast.Stmt (len = 1) {
+   177  .  .  .  .  .  0: *ast.AssignStmt { &lt;--- 这里
+   178  .  .  .  .  .  .  Lhs: []ast.Expr (len = 1) {
+   179  .  .  .  .  .  .  .  0: *ast.Ident {
+   180  .  .  .  .  .  .  .  .  NamePos: /usr/local/gopath/src/github.com/DrmagicE/ast-example/quickstart/demo.go:19:2
+   181  .  .  .  .  .  .  .  .  Name: &quot;a&quot;
+...
+复制代码
+</code></pre>
+<h2 id="spec-node">Spec Node</h2>
+<p>Spec node只有3种，分别是<code>ImportSpec</code>，<code>ValueSpec</code>和<code>TypeSpec</code>：</p>
+<blockquote>
+<p>$GOROOT/src/go/ast/ast.go</p>
+</blockquote>
+<pre><code class="language-go">	// An ImportSpec node represents a single package import.
+	ImportSpec struct {
+		Doc     *CommentGroup // associated documentation; or nil
+		Name    *Ident        // local package name (including &quot;.&quot;); or nil
+		Path    *BasicLit     // import path
+		Comment *CommentGroup // line comments; or nil
+		EndPos  token.Pos     // end of spec (overrides Path.Pos if nonzero)
+	}
+
+	// A ValueSpec node represents a constant or variable declaration
+	// (ConstSpec or VarSpec production).
+	//
+	ValueSpec struct {
+		Doc     *CommentGroup // associated documentation; or nil
+		Names   []*Ident      // value names (len(Names) &gt; 0)
+		Type    Expr          // value type; or nil
+		Values  []Expr        // initial values; or nil
+		Comment *CommentGroup // line comments; or nil
+	}
+
+	// A TypeSpec node represents a type declaration (TypeSpec production).
+	TypeSpec struct {
+		Doc     *CommentGroup // associated documentation; or nil
+		Name    *Ident        // type name
+		Assign  token.Pos     // position of '=', if any
+		Type    Expr          // *Ident, *ParenExpr, *SelectorExpr, *StarExpr, or any of the *XxxTypes
+		Comment *CommentGroup // line comments; or nil
+	}
+复制代码
+</code></pre>
+<p><code>ImportSpec</code>表示一个单独的import，<code>ValueSpec</code>表示一个常量或变量的声明，<code>TypeSpec</code>则表示一个type声明。例如 在Quick Start示例中，出现了<code>ImportSpec</code>和<code>TypeSpec</code></p>
+<pre><code class="language-go">import (
+	&quot;context&quot; // &lt;--- 这里是一个ImportSpec node
+)
+
+// Foo 结构体
+type Foo struct { // &lt;--- 这里是一个TypeSpec node
+	i int
+}
+复制代码
+</code></pre>
+<p>在语法树的打印结果中可以看到对应的输出，小伙伴们可自行查找。</p>
+<h2 id="declaration-node">Declaration Node</h2>
+<p>Declaration node也只有三种：</p>
+<blockquote>
+<p>$GOROOT/src/go/ast/ast.go</p>
+</blockquote>
+<pre><code class="language-go">...
+type (
+	// A BadDecl node is a placeholder for declarations containing
+	// syntax errors for which no correct declaration nodes can be
+	// created.
+	//
+	BadDecl struct {
+		From, To token.Pos // position range of bad declaration
+	}
+
+	// A GenDecl node (generic declaration node) represents an import,
+	// constant, type or variable declaration. A valid Lparen position
+	// (Lparen.IsValid()) indicates a parenthesized declaration.
+	//
+	// Relationship between Tok value and Specs element type:
+	//
+	//	token.IMPORT  *ImportSpec
+	//	token.CONST   *ValueSpec
+	//	token.TYPE    *TypeSpec
+	//	token.VAR     *ValueSpec
+	//
+	GenDecl struct {
+		Doc    *CommentGroup // associated documentation; or nil
+		TokPos token.Pos     // position of Tok
+		Tok    token.Token   // IMPORT, CONST, TYPE, VAR
+		Lparen token.Pos     // position of '(', if any
+		Specs  []Spec
+		Rparen token.Pos // position of ')', if any
+	}
+
+	// A FuncDecl node represents a function declaration.
+	FuncDecl struct {
+		Doc  *CommentGroup // associated documentation; or nil
+		Recv *FieldList    // receiver (methods); or nil (functions)
+		Name *Ident        // function/method name
+		Type *FuncType     // function signature: parameters, results, and position of &quot;func&quot; keyword
+		Body *BlockStmt    // function body; or nil for external (non-Go) function
+	}
+)
+...
+复制代码
+</code></pre>
+<p><code>BadDecl</code>表示一个有语法错误的节点； <code>GenDecl</code>用于表示import, const，type或变量声明；<code>FunDecl</code>用于表示函数声明。 <code>GenDecl</code>和<code>FunDecl</code>在Quick Start例子中均有出现，小伙伴们可自行查找。</p>
+<h2 id="common-node">Common Node</h2>
+<p>除去上述四种类别划分的node,还有一些node不属于上面四种类别：</p>
+<blockquote>
+<p>$GOROOT/src/go/ast/ast.go</p>
+</blockquote>
+<pre><code class="language-go">// Comment 注释节点，代表单行的 //-格式 或 /*-格式的注释.
+type Comment struct {
+    ...
+}
+...
+// CommentGroup 注释块节点，包含多个连续的Comment
+type CommentGroup struct {
+    ...
+}
+
+// Field 字段节点, 可以代表结构体定义中的字段，接口定义中的方法列表，函数前面中的入参和返回值字段
+type Field struct {
+    ...
+}
+...
+// FieldList 包含多个Field
+type FieldList struct {
+    ...
+}
+
+// File 表示一个文件节点
+type File struct {
+	...
+}
+
+// Package 表示一个包节点
+type Package struct {
+    ...
+}
+复制代码
+</code></pre>
+<p>Quick Start示例包含了上面列举的所有node，小伙伴们可以自行查找。更为详细的注释和具体的结构体字段请查阅源码。</p>
+<p>所有的节点类型大致列举完毕，其中还有许多具体的节点类型未能一一列举，但基本上都是大同小异，源码注释也比较清晰，等用到的时候再细看也不迟。现在我们对整个语法树的构造有了基本的了解，接下来通过几个示例来演示具体用法。</p>
+<h2 id="为文件中所有接口方法添加context参数">为文件中所有接口方法添加context参数</h2>
+<p>实现这个功能我们需要四步：</p>
+<ol>
+<li>遍历整个语法树</li>
+<li>判断是否已经import<code>context</code>包，如果没有则import</li>
+<li>遍历所有的接口方法，判断方法列表中是否有<code>context.Context</code>类型的入参，如果没有我们将其添加到方法的第一个参数</li>
+<li>将修改过后的语法树转换成Go代码并输出</li>
+</ol>
+<h3 id="遍历语法树">遍历语法树</h3>
+<p>语法树层级较深，嵌套关系复杂，如果不能完全掌握node之间的关系和嵌套规则，我们很难自己写出正确的遍历方法。不过好在<code>ast</code>包已经为我们提供了遍历方法：</p>
+<blockquote>
+<p>$GOROOT/src/go/ast/ast.go</p>
+</blockquote>
+<pre><code class="language-go">func Walk(v Visitor, node Node) 
+复制代码
+</code></pre>
+<pre><code class="language-go">type Visitor interface {
+	Visit(node Node) (w Visitor)
+}
+复制代码
+</code></pre>
+<p><code>Walk</code>方法会按照深度优先搜索方法（depth-first order）遍历整个语法树，我们只需按照我们的业务需要，实现<code>Visitor</code>接口即可。 <code>Walk</code>每遍历一个节点就会调用<code>Visitor.Visit</code>方法，传入当前节点。如果<code>Visit</code>返回<code>nil</code>，则停止遍历当前节点的子节点。本示例的<code>Visitor</code>实现如下：</p>
+<pre><code class="language-go">// Visitor
+type Visitor struct {
+}
+func (v *Visitor) Visit(node ast.Node) ast.Visitor {
+	switch node.(type) {
+	case *ast.GenDecl:
+		genDecl := node.(*ast.GenDecl)
+		// 查找有没有import context包
+		// Notice：没有考虑没有import任何包的情况
+		if genDecl.Tok == token.IMPORT {
+			v.addImport(genDecl)
+			// 不需要再遍历子树
+			return nil
+		}
+	case *ast.InterfaceType:
+		// 遍历所有的接口类型
+		iface := node.(*ast.InterfaceType)
+		addContext(iface)
+		// 不需要再遍历子树
+		return nil
+	}
+	return v
+}
+复制代码
+</code></pre>
+<h3 id="添加import">添加import</h3>
+<pre><code class="language-go">// addImport 引入context包
+func (v *Visitor) addImport(genDecl *ast.GenDecl) {
+	// 是否已经import
+	hasImported := false
+	for _, v := range genDecl.Specs {
+		imptSpec := v.(*ast.ImportSpec)
+		// 如果已经包含&quot;context&quot;
+		if imptSpec.Path.Value == strconv.Quote(&quot;context&quot;) {
+			hasImported = true
+		}
+	}
+	// 如果没有import context，则import
+	if !hasImported {
+		genDecl.Specs = append(genDecl.Specs, &amp;ast.ImportSpec{
+			Path: &amp;ast.BasicLit{
+				Kind:  token.STRING,
+				Value: strconv.Quote(&quot;context&quot;),
+			},
+		})
+	}
+}
+
+复制代码
+</code></pre>
+<h3 id="为接口方法添加参数">为接口方法添加参数</h3>
+<pre><code class="language-go">// addContext 添加context参数
+func addContext(iface *ast.InterfaceType) {
+	// 接口方法不为空时，遍历接口方法
+	if iface.Methods != nil || iface.Methods.List != nil {
+		for _, v := range iface.Methods.List {
+			ft := v.Type.(*ast.FuncType)
+			hasContext := false
+			// 判断参数中是否包含context.Context类型
+			for _, v := range ft.Params.List {
+				if expr, ok := v.Type.(*ast.SelectorExpr); ok {
+					if ident, ok := expr.X.(*ast.Ident); ok {
+						if ident.Name == &quot;context&quot; {
+							hasContext = true
+						}
+					}
+				}
+			}
+			// 为没有context参数的方法添加context参数
+			if !hasContext {
+				ctxField := &amp;ast.Field{
+					Names: []*ast.Ident{
+						ast.NewIdent(&quot;ctx&quot;),
+					},
+					// Notice: 没有考虑import别名的情况
+					Type: &amp;ast.SelectorExpr{
+						X:   ast.NewIdent(&quot;context&quot;),
+						Sel: ast.NewIdent(&quot;Context&quot;),
+					},
+				}
+				list := []*ast.Field{
+					ctxField,
+				}
+				ft.Params.List = append(list, ft.Params.List...)
+			}
+		}
+	}
+}
+复制代码
+</code></pre>
+<h3 id="将语法树转换成go代码">将语法树转换成Go代码</h3>
+<p><code>format</code>包为我们提供了转换函数，<code>format.Node</code>会将语法树按照<code>gofmt</code>的格式输出：</p>
+<pre><code class="language-go">...
+	var output []byte
+	buffer := bytes.NewBuffer(output)
+	err = format.Node(buffer, fset, f)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// 输出Go代码
+	fmt.Println(buffer.String())
+...
+复制代码
+</code></pre>
+<p>输出结果如下：</p>
+<pre><code class="language-go">package main
+
+import (
+        &quot;context&quot;
+)
+
+type Foo interface {
+        FooA(ctx context.Context, i int)
+        FooB(ctx context.Context, j int)
+        FooC(ctx context.Context)
+}
+
+type Bar interface {
+        BarA(ctx context.Context, i int)
+        BarB(ctx context.Context)
+        BarC(ctx context.Context)
+}
+复制代码
+</code></pre>
+<p>可以看到我们所有的接口方的第一个参数都变成了<code>context.Context</code>。建议将示例中的语法树先打印出来，再对照着代码看，方便理解。</p>
+<p>至此我们已经完成了语法树的解析，遍历，修改以及输出。但细心的小伙伴可能已经发现：示例中的文件并没有出现一行注释。这的确是有意为之，如果我们加上注释，会发现最终生成文件的注释就像迷途的羔羊，完全找不到自己的位置。比如这样：</p>
+<pre><code class="language-go">//修改前
+type Foo interface {
+	FooA(i int)
+	// FooB
+	FooB(j int)
+	FooC(ctx context.Context)
+}
+
+// 修改后
+type Foo interface {
+    FooA(ctx context.
+            // FooB
+            Context, i int)
+
+    FooB(ctx context.Context, j int)
+    FooC(ctx context.Context)
+}
+复制代码
+</code></pre>
+<p>导致这种现象的原因在于：<code>ast</code>包生成的语法树中的注释是&quot;free-floating&quot;的。还记得每个node都有<code>Pos()</code>和<code>End()</code>方法来标识其位置吗？对于非注释节点，语法树能够正确的调整他们的位置，但却不能自动调整注释节点的位置。如果我们想要让注释出现在正确的位置上，我们必须手动设置节点<code>Pos</code>和<code>End</code>。源码注释中提到了这个问题：</p>
+<blockquote>
+<p>Whether and how a comment is associated with a node depends on the interpretation of the syntax tree by the manipulating program: Except for Doc and Comment comments directly associated with nodes, the remaining comments are &quot;free-floating&quot; (see also issues #18593, #20744).</p>
+</blockquote>
+<p>issue中有具体的讨论，官方承认这是一个设计缺陷，但还是迟迟未能改进。其中有位迫不及待的小哥提供了自己的方案：</p>
+<blockquote>
+<p><a href="https://note.youdao.com/">github.com/dave/dst</a></p>
+</blockquote>
+<p>如果实在是要对有注释的语法树进行修改，可以尝试一下。 虽然语法树的确存在修改困难问题，但其还是能满足大部分基于语法树分析的代码生成工作了(gomock,wire等等)。</p>
+<blockquote>
+<p><a href="https://syslog.ravelin.com/how-to-make-functions-easily-mockable-57d698088510">syslog.ravelin.com/how-to-make…</a><br>
+<a href="https://medium.com/@astrid.degaste/why-go-generation-hates-comment-a17f84965d9a">medium.com/@astrid.deg…</a><br>
+<a href="https://stackoverflow.com/questions/31628613/comments-out-of-order-after-adding-item-to-go-ast">stackoverflow.com/questions/3…</a><br>
+<a href="https://github.com/golang/go/issues/18593">github.com/golang/go/i…</a><br>
+<a href="https://github.com/golang/go/issues/20744">github.com/golang/go/i…</a><br>
+<a href="https://golang.org/src/go/ast/example_test.go">golang.org/src/go/ast/…</a></p>
+</blockquote>
+
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/99de-ren-du-li-jie-cuo-liao-http-zhong-get-yu-post-de-qu-bie/">
+                  <h3 class="post-title">
+                    99%的人都理解错了HTTP中GET与POST的区别
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+              
+                <div id="gitalk-container" data-aos="fade-in"></div>
+              
+
+              
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!--
+<script src="/post-images/prism.js"></script>
+<link rel="stylesheet" href="/post-images/prism.css">
+-->
+<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+// hljs.initHighlightingOnLoad()
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    if (block.className.indexOf('language-go') > -1) {
+	block.className='hljs go'
+    }
+    hljs.highlightBlock(block);
+  });
+});
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+  
+    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+    <script>
+
+      var gitalk = new Gitalk({
+        clientID: 'a526dbb05037d7bf1972',
+        clientSecret: '0238529511fc560513e8b6ed865d3e33c11e3ccb',
+        repo: 'xiusin.github.io',
+        owner: 'xiusin',
+        admin: ['xiusin'],
+        id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+      })
+
+      gitalk.render('gitalk-container')
+
+    </script>
+  
+
+  
+
+
+
+
+  </body>
+</html>

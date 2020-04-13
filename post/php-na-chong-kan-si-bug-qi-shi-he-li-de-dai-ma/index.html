@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" >
+
+<title>PHP 那种看似BUG其实合理的代码 | 修心修己</title>
+<meta name="description" content="山不向我来，我便向它去，若一去不回，便一去不回。">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+<link rel="shortcut icon" href="https://xiusin.github.io/favicon.ico?v=1586743156105">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.10.0/katex.min.css">
+<link rel="stylesheet" href="https://xiusin.github.io/styles/main.css">
+
+
+  
+    <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css" />
+  
+
+  
+
+
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://cdn.bootcss.com/highlight.js/9.12.0/highlight.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+
+
+  </head>
+  <body>
+    <div id="app" class="main">
+
+      <div class="sidebar" :class="{ 'full-height': menuVisible }">
+  <div class="top-container" data-aos="fade-right">
+    <div class="top-header-container">
+      <a class="site-title-container" href="https://xiusin.github.io">
+        <img src="https://xiusin.github.io/images/avatar.png?v=1586743156105" class="site-logo">
+        <h1 class="site-title">修心修己</h1>
+      </a>
+      <div class="menu-btn" @click="menuVisible = !menuVisible">
+        <div class="line"></div>
+      </div>
+    </div>
+    <div>
+      
+        
+          <a href="/" class="site-nav">
+            首页
+          </a>
+        
+      
+        
+          <a href="/archives" class="site-nav">
+            归档
+          </a>
+        
+      
+        
+          <a href="/tags" class="site-nav">
+            标签
+          </a>
+        
+      
+        
+          <a href="/post/about" class="site-nav">
+            关于
+          </a>
+        
+      
+        
+          <a href="http://github.com/xiusin" class="site-nav" target="_blank">
+            GitHub
+          </a>
+        
+      
+    </div>
+  </div>
+  <div class="bottom-container" data-aos="flip-up" data-aos-offset="0">
+    <div class="social-container">
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    </div>
+    <div class="site-description">
+      山不向我来，我便向它去，若一去不回，便一去不回。
+    </div>
+    <div class="site-footer">
+      Powered by <a href="https://github.com/xiusin" target="_blank">xiusin</a> | <a class="rss" href="https://xiusin.github.io/atom.xml" target="_blank">RSS</a>
+    </div>
+  </div>
+</div>
+
+
+      <div class="main-container">
+        <div class="content-container" data-aos="fade-up">
+          <div class="post-detail">
+            <h2 class="post-title">PHP 那种看似BUG其实合理的代码</h2>
+            <div class="post-date">2019-11-04</div>
+            
+            <div class="post-content">
+              <h1 id="中0aa的结果是true">中0=='aa'的结果是true</h1>
+<p>看一段代码:</p>
+<pre><code class="language-php">&lt;?php
+$arr = [0 =&gt; 1, 'aa' =&gt; 2, 3, 4];
+foreach($arr as $key=&gt; $val) {
+    echo $key == 'aa' ? 5 : $val;
+}
+?&gt;
+</code></pre>
+<p>上面的代码输出结果是什么?</p>
+<pre><code>// 正确答案
+5534
+</code></pre>
+<p>为什么是5534呢, 难道系统出语言出BUG了, 怎么会 aa 也会等于0呢.</p>
+<p>这里就牵扯到php里的<code>类型转换规则</code></p>
+<ol>
+<li>如果一个数字和一个字符串比较, 那么会把字符串转换成数字在进行比较.</li>
+<li>字符串的转换法则, 若字符串以数字开头,则取开头的数字,直到不为数字的地方的位置. 若无数字, 则值为0. (根据数据类型,编译器自动选择转换类型, 比如: int float).</li>
+</ol>
+<pre><code class="language-php">&lt;?php
+var_dump(1234 == &quot;1234a&quot;); //true
+var_dump(1234 == &quot;1234.01a&quot;);   // false
+var_dump(1234.0 == &quot;1234a&quot;); // true
+var_dump(1234.01 == &quot;1234.01a&quot;); // true
+?&gt;
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="https://xiusin.github.io/post-images/1572850063279.png" alt="" loading="lazy"></figure>
+<p><a href="https://www.php.net/manual/zh/types.comparisons.php">PHP 类型比较表</a><br>
+<img src="https://xiusin.github.io/post-images/1572850348370.png" alt="" loading="lazy"><br>
+<img src="https://xiusin.github.io/post-images/1572850354068.png" alt="" loading="lazy"><br>
+<img src="https://xiusin.github.io/post-images/1572850360754.png" alt="" loading="lazy"></p>
+<h1 id="关于php浮点数之-intval010710-为什么是7">关于PHP浮点数之 intval((0.1+0.7)*10) 为什么是7</h1>
+<p>为啥输出是57啊? PHP的bug么?</p>
+<p>我相信有很多的同学有过这样的疑问, 因为光问我类似问题的人就很多, 更不用说bugs.php.net上经常有人问…</p>
+<p>要搞明白这个原因, 首先我们要知道浮点数的表示(IEEE 754):</p>
+<p>浮点数, 以64位的长度(双精度)为例, 会采用1位符号位(E), 11指数位(Q), 52位尾数(M)表示(一共64位).</p>
+<p>符号位：最高位表示数据的正负，0表示正数，1表示负数。</p>
+<p>指数位：表示数据以2为底的幂，指数采用偏移码表示</p>
+<p>尾数：表示数据小数点后的有效数字.</p>
+<p>这里的关键点就在于, 小数在二进制的表示, 关于小数如何用二进制表示, 大家可以百度一下, 我这里就不再赘述, 我们关键的要了解, 0.58 对于二进制表示来说, 是无限长的值(下面的数字省掉了隐含的1)..</p>
+<p>0.58的二进制表示基本上(52位)是: 0010100011110101110000101000111101011100001010001111<br>
+0.57的二进制表示基本上(52位)是: 0010001111010111000010100011110101110000101000111101<br>
+而两者的二进制, 如果只是通过这52位计算的话,分别是:</p>
+<p>0.58 -&gt; 0.57999999999999996<br>
+0.57 -&gt; 0.56999999999999995<br>
+至于0.58 * 100的具体浮点数乘法, 我们不考虑那么细,  我们就模糊的以心算来看 <code>0.58 * 100 = 57.999999999</code></p>
+<p>那你intval一下, 自然就是57了….</p>
+<p>可见, 这个问题的关键点就是: <code>“你看似有穷的小数, 在计算机的二进制表示里却是无穷的”</code></p>
+<p>so, 不要再以为这是PHP的bug了, 这就是这样的…..<br>
+<a href="https://www.cnblogs.com/datang6777/p/7049159.html">原文</a></p>
+<h1 id="foreach内两次迭代引用时引发的问题">foreach内两次迭代引用时引发的问题</h1>
+<pre><code>&lt;?php
+    $arr = [1,2,3];
+    foreach($arr as &amp;$v) {
+        //nothing todo.
+    }
+    foreach($arr as $v) {
+        //nothing todo.
+    }
+    var_export($arr);
+    //output:array(0=&gt;1,1=&gt;2,2=&gt;2)，你的答案对了吗？为什么
+?&gt;
+</code></pre>
+<blockquote>
+<p>标准的写法：在使用了“ &amp; ”的 foreach 之后，需要写一句 unset(<span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>v</mi><mo>)</mo><mo separator="true">;</mo><mi mathvariant="normal">释</mi><mi mathvariant="normal">放</mi><mi mathvariant="normal">掉</mi><mi mathvariant="normal">临</mi><mi mathvariant="normal">时</mi><mi mathvariant="normal">的</mi><mi mathvariant="normal">引</mi><mi mathvariant="normal">用</mi><mi mathvariant="normal">。</mi><mi mathvariant="normal">不</mi><mi>u</mi><mi>n</mi><mi>s</mi><mi>e</mi><mi>t</mi><mi mathvariant="normal">变</mi><mi mathvariant="normal">量</mi><mi mathvariant="normal">‘</mi></mrow><annotation encoding="application/x-tex">v); 释放掉临时的引用。
+不unset变量`</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathdefault" style="margin-right:0.03588em;">v</span><span class="mclose">)</span><span class="mpunct">;</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord cjk_fallback">释</span><span class="mord cjk_fallback">放</span><span class="mord cjk_fallback">掉</span><span class="mord cjk_fallback">临</span><span class="mord cjk_fallback">时</span><span class="mord cjk_fallback">的</span><span class="mord cjk_fallback">引</span><span class="mord cjk_fallback">用</span><span class="mord cjk_fallback">。</span><span class="mord cjk_fallback">不</span><span class="mord mathdefault">u</span><span class="mord mathdefault">n</span><span class="mord mathdefault">s</span><span class="mord mathdefault">e</span><span class="mord mathdefault">t</span><span class="mord cjk_fallback">变</span><span class="mord cjk_fallback">量</span><span class="mord">‘</span></span></span></span>v<code>的后果就是,在第一次迭代以后,</code><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mi>v</mi><mi mathvariant="normal">‘</mi><mi mathvariant="normal">就</mi><mi mathvariant="normal">指</mi><mi mathvariant="normal">向</mi><mi mathvariant="normal">了</mi><mi mathvariant="normal">‘</mi></mrow><annotation encoding="application/x-tex">v`就指向了`</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathdefault" style="margin-right:0.03588em;">v</span><span class="mord">‘</span><span class="mord cjk_fallback">就</span><span class="mord cjk_fallback">指</span><span class="mord cjk_fallback">向</span><span class="mord cjk_fallback">了</span><span class="mord">‘</span></span></span></span>arr[2]<code>的位置, 所以, 后面每次迭代都是对</code>$v`的赋值.<br>
+过程:</p>
+</blockquote>
+<pre><code class="language-php">$v = &amp;$arr[0];
+$v = &amp;$arr[1];
+$v = &amp;$arr[2];
+//var_dump($arr);
+
+//请注意，从这个时候开始，$v和$arr[2]是等价的
+
+$v = $arr[0];
+$v = $arr[1];
+$v = $arr[2];
+//var_dump($arr);
+</code></pre>
+<p>其次 :</p>
+<blockquote>
+<p>php是没有块级作用域的！！！<br>
+第一个循环结束后，$item依然指向数组的第三个成员。<br>
+之后每次循环，就把数组的第一个值写到第三个成员，然后是第二个值写个第三个成员，然后是第三个值写到第三个成员，<code>但此时第三个值已经被上次修改成2了，所以这次第三个值会被修改成2</code>.</p>
+</blockquote>
+<h1 id="读取一个超大的日志文件">读取一个超大的日志文件</h1>
+<p>常规操作中,如果需要读取一个超大文件需要直接<code>file_get_contents</code>,加载到内存里, 这样在小文件操作是完全可行的, 但是大文件如果这样读取,那么导致内存溢出. 怎么才能用PHP读取一个超大的文件呢.<br>
+没错, 使用PHP的生成器, 即<code>yield</code>.</p>
+<p>看下面生成器代码:</p>
+<pre><code class="language-php">&lt;?php
+function createRange($number){
+    for($i=0;$i&lt;$number;$i++){
+        yield time();
+    }
+}
+
+$result = createRange(10); // 这里调用上面我们创建的函数
+foreach($result as $value){
+    sleep(1);
+    echo $value.'&lt;br /&gt;';
+}
+?&gt;
+</code></pre>
+<p>我们来还原一下代码执行过程。</p>
+<ol>
+<li>首先调用<code>createRange</code>函数，传入参数<code>10</code>，但是<code>for</code>值执行了一次然后<code>停止</code>了，并且告诉foreach<code>第一次循环可以用的值</code>。</li>
+<li>foreach开始对$result循环，进来首先<code>sleep(1)</code>，然后开始使用for给的一个值执行输出。</li>
+<li>foreach准备第二次循环，开始第二次循环之前，它向for循环又请求了一次。</li>
+<li>for循环于是又执行了一次，将生成的时间戳告诉foreach.</li>
+<li>foreach拿到第二个值，并且输出。由于<code>foreach</code>中<code>sleep(1)</code>，所以，for循环延迟了1秒生成当前时间<br>
+所以，整个代码执行中，始终只有一个记录值参与循环，内存中也只有一条信息。</li>
+</ol>
+<p>无论开始传入的<code>$number</code>有多大，由于并不会立即生成所有结果集，所以内存始终是一条循环的值。</p>
+<h2 id="概念理解">概念理解</h2>
+<p>到这里，你应该已经大概理解什么是生成器了。下面我们来说下生成器原理。</p>
+<p>首先明确一个概念：<code>生成器yield关键字不是返回值，他的专业术语叫产出值，只是生成一个值</code></p>
+<p>那么代码中<code>foreach</code>循环的是什么？其实是PHP在使用生成器的时候，会返回一个<code>Generator</code>类的对象。<code>foreach</code>可以对该对象进行迭代，每一次迭代，PHP会通过<code>Generator</code>实例计算出<code>下一次需要迭代的值</code>。这样foreach就知道下一次需要迭代的值了。</p>
+<p>而且，在运行中for循环执行后，会立即停止。等待foreach下次循环时候再次和for索要下次的值的时候，for循环才会再执行一次，然后立即再次停止。直到不满足条件不执行结束。</p>
+<p>所以可以这样操作超大的日志:</p>
+<pre><code class="language-php">&lt;?php
+header(&quot;content-type:text/html;charset=utf-8&quot;);
+function readTxt()
+{
+    # code...
+    $handle = fopen(&quot;./test.txt&quot;, 'rb');
+    while (feof($handle)===false) {
+        # code...
+        yield fgets($handle);
+    }
+    fclose($handle);
+}
+
+foreach (readTxt() as $key =&gt; $value) {
+    # code...
+    echo $value.'&lt;br /&gt;';
+}
+</code></pre>
+<p>使用生成器读取文件，第一次读取了第一行，第二次读取了第二行，以此类推，每次被加载到内存中的文字只有一行，大大的减小了<code>内存</code>的使用。</p>
+<p>这样，即使读取上G的文本也不用担心，完全可以像读取很小文件一样编写代码。</p>
+<p><a href="https://segmentfault.com/a/1190000012334856">PHP中被忽略的性能优化利器：生成器</a></p>
+
+            </div>
+            
+            
+              <div class="next-post">
+                <div class="next">下一篇</div>
+                <a href="https://xiusin.github.io/post/she-ji-mo-shi-qi-da-yuan-ze/">
+                  <h3 class="post-title">
+                    设计模式七大原则
+                  </h3>
+                </a>
+              </div>
+            
+
+            
+              
+                <div id="gitalk-container" data-aos="fade-in"></div>
+              
+
+              
+            
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!--
+<script src="/post-images/prism.js"></script>
+<link rel="stylesheet" href="/post-images/prism.css">
+-->
+<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+
+<script type="application/javascript">
+
+AOS.init();
+
+// hljs.initHighlightingOnLoad()
+
+
+document.addEventListener('DOMContentLoaded', (event) => {
+  document.querySelectorAll('pre code').forEach((block) => {
+    if (block.className.indexOf('language-go') > -1) {
+	block.className='hljs go'
+    }
+    hljs.highlightBlock(block);
+  });
+});
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    menuVisible: false,
+  },
+})
+
+</script>
+
+
+
+  
+    <script src="https://unpkg.com/gitalk/dist/gitalk.min.js"></script>
+    <script>
+
+      var gitalk = new Gitalk({
+        clientID: 'a526dbb05037d7bf1972',
+        clientSecret: '0238529511fc560513e8b6ed865d3e33c11e3ccb',
+        repo: 'xiusin.github.io',
+        owner: 'xiusin',
+        admin: ['xiusin'],
+        id: (location.pathname).substring(0, 49),      // Ensure uniqueness and length less than 50
+        distractionFreeMode: false  // Facebook-like distraction free mode
+      })
+
+      gitalk.render('gitalk-container')
+
+    </script>
+  
+
+  
+
+
+
+
+  </body>
+</html>
